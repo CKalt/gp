@@ -1,0 +1,16 @@
+-----------------------------------------
+Mon 08 Feb 2021 10:02:17 AM EST
+
+Fist goal is to create a rust version of gp that solves the
+ant problem as I have it currently working with my gp.c project.
+
+This is strictly a first iteration expecting many more.
+
+I will try to make this very simple. For example this version
+will be a single thread, and I will try not to get too hung up 
+on best modeling details leveraging all of rust features.
+
+That will all be put off to future iterations.
+
+
+
