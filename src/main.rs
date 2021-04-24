@@ -5,7 +5,9 @@ use tree::*;
 
 /////////////////////// STUBS /////////////////////////////
 
-fn push_tree(mut _trees: &TreeSet, mut _tree: Tree) -> () {
+fn push_tree(trees: &mut TreeSet, tree: Tree) -> () {
+    assert!(trees.tree_vec.len() < CONTROL.M);
+    trees.tree_vec.push(tree);
 }
 
 fn create_unique_tree(_trees: &TreeSet, _d: u16) -> Tree {
@@ -64,20 +66,22 @@ fn create_initial_population() -> TreeSet {
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
     //
-    let trees = TreeSet::new();
+    let mut trees = TreeSet::new();
     let seg = trees.tree_vec.len() as f64 / (CONTROL.Di as f64 - 1.0f64);
     let mut bdr = 0.0f64;
 
     for d in 2..=CONTROL.Di {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize {
-            push_tree(&trees, create_unique_tree(&trees, d));
+            let new_tree = create_unique_tree(&trees, d);
+            push_tree(&mut trees, new_tree); // (UC)
         }
     }
 
     // fill out to end in case there are "left-overs" due to rounding
     while trees.tree_vec.len() < trees.tree_vec.len() {
-        push_tree(&trees, create_unique_tree(&trees, CONTROL.Di));
+        let new_tree = create_unique_tree(&trees, CONTROL.Di);
+        push_tree(&mut trees, new_tree);
     }
     trees
 }
@@ -88,7 +92,7 @@ fn use_reproduction(index: usize ) -> bool {
 }
 
 fn run() -> Option<Tree> {
-    let mut trees = create_initial_population();
+    let mut trees = create_initial_population(); // (UC)
     count_nodes(&trees);
 
     let mut gen = 0u16;
@@ -108,12 +112,12 @@ fn run() -> Option<Tree> {
             break;
         }
 
-        let trees2 = TreeSet::new();
+        let mut trees2 = TreeSet::new();
         for i in (0..CONTROL.M).step_by(2) {
             if use_reproduction(i) {
                 // do reproduction
                 let t = select_tree(&trees);
-                push_tree(&trees2, count_tree_nodes(clone_tree(t)));
+                push_tree(&mut trees2, count_tree_nodes(clone_tree(t)));
             }
             else {
                 // do crossover
@@ -129,10 +133,10 @@ fn run() -> Option<Tree> {
                         break;
                     }
                 }
-                push_tree(&trees2, count_tree_nodes(nt1));
+                push_tree(&mut trees2, count_tree_nodes(nt1));
 
                 if i+1 < CONTROL.M {
-                    push_tree(&trees2, count_tree_nodes(nt2));
+                    push_tree(&mut trees2, count_tree_nodes(nt2));
                 }
             }
         }
