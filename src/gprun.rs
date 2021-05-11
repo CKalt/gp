@@ -55,14 +55,14 @@ pub fn prepare_run(_rc: &mut RunContext) {
 pub fn exec_trees(mut trees: &mut TreeSet) {
     let mut rc = RunContext::new();
 
-    for (i, tree_ref) in trees.tree_vec.iter_mut().enumerate() {
+    for (i, tree) in trees.tree_vec.iter_mut().enumerate() {
         prepare_run(&mut rc);
         while rc.clock < RUN_CONTROL.max_clock {
-            exec_node(&mut rc, &mut tree_ref.root);
+            exec_node(&mut rc, &mut tree.root);
         }
 
-        if compute_fitness(tree_ref) {
-            report_tree_result(tree_ref, tree_ref.tfid, 0, -1.0);
+        if tree.compute_fitness(&rc) {
+            report_tree_result(tree, tree.tfid, 0, -1.0);
             print_grid(&rc, "Have Winner!");
             trees.winning_index = Some(i);
             break;
@@ -73,11 +73,6 @@ pub fn exec_trees(mut trees: &mut TreeSet) {
 pub fn exec_single_tree(_tree : &Tree) {
     println!("exec_single_tree not implemented");
 }
-
-fn compute_fitness(_t: &mut Tree) -> bool {
-    true
-}
-
 
 fn report_tree_result(_t: &Tree, _i: usize , _gen: u16, _avg_raw_f: f64) {
     // STUB

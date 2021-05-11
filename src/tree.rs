@@ -358,23 +358,46 @@ impl TreeSet {
             tree.count_nodes();
         }
     }
+
+    pub fn compute_normalized_fitness(&mut self) {
+        let mut sum_a = 0.0f64;
+        let mut sum_raw = 0.0f64;
+
+        for t in self.tree_vec.iter() {
+            sum_a += t.fitness.a;
+            sum_raw += t.fitness.raw;
+        }
+
+        self.avg_raw_f = sum_raw / (self.tree_vec.len() as f64);
+
+        for t in self.tree_vec.iter_mut() {
+            t.fitness.n = t.fitness.a / sum_a;
+        }
+    }
 }
 
 #[allow(dead_code)]
-struct BaseFitness {
+struct Fitness {
+    // Base values
     nfr: f64,
     n:   f64,
     a:   f64,
     raw: f64,           // note that if run Fitness uses integer type
                         // and then this just contains a converted copy
+
+    // Ren Values
+    r: u16,
+    s: u16,
 }
-impl BaseFitness {
-    fn new() -> BaseFitness {
-        BaseFitness {
+impl Fitness {
+    fn new() -> Fitness {
+        Fitness {
             nfr: 0.0,
             n:   0.0,
             a:   0.0,
             raw: 0.0,
+            r: 0,
+            s: 0,
         }
     }
 }
@@ -385,7 +408,7 @@ pub struct Tree {
                       // after sorting for fitness (least fit are lower valued)
     tcid: usize,      // The id of the Tree when first created and put into the array
     pub root: Node,
-    fitness: BaseFitness,
+    fitness: Fitness,
     num_functions: u32,
     num_terminals: u32,
     hits: u32,
@@ -396,7 +419,7 @@ impl Tree {
             tfid: 0,
             tcid: 0,
             root: FNode(root),
-            fitness: BaseFitness::new(),
+            fitness: Fitness::new(),
             num_functions: 0,
             num_terminals: 0,
             hits: 0,
@@ -409,7 +432,7 @@ impl Tree {
             tfid: 0,
             tcid: 0,
             root: new_root,
-            fitness: BaseFitness::new(),
+            fitness: Fitness::new(),
             num_functions: self.num_functions,
             num_terminals: self.num_terminals,
             hits: 0,
@@ -421,6 +444,25 @@ impl Tree {
         self.num_terminals = counts.0;
         self.num_functions = counts.1;
     }
+
+    /// computes fitness returns true if winner
+    pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
+        let mut f = &mut self.fitness;
+        f.r = rc.eat_count;
+        self.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1.0;
+        f.a = -1.0;
+        f.nfr = -1.0;
+        f.raw = f.r.into();
+
+        // average over generation
+        f.s = rc.n_pellets - rc.eat_count;
+        f.a = 1.0f64 / (1.0f64 + (f.s as f64));
+
+        return f.s == 0;
+   }
 }
 
 pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {
