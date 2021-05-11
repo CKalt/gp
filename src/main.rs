@@ -1,23 +1,114 @@
-mod gploc;
+mod gprun;
 mod tree;
-use gploc::*;
-use tree::*;
 
-/////////////////////// STUBS /////////////////////////////
+use gprun::*;
+use tree::*;
+use Node::*;
 
 fn push_tree(trees: &mut TreeSet, tree: Tree) -> () {
     assert!(trees.tree_vec.len() < CONTROL.M);
     trees.tree_vec.push(tree);
 }
 
-fn create_unique_tree(_trees: &TreeSet, _d: u16) -> Tree {
-    Tree::new()
+fn gen_tree(generate_method : GenerateMethod, d: u16) -> Tree {
+    match generate_method {
+        GenerateMethod::Full => gen_tree_full_method(d),
+        GenerateMethod::Grow => gen_tree_grow_method(d),
+    }
 }
 
-fn count_nodes(mut _trees: &TreeSet) -> () {
-
+fn tree_match(t1: &Tree, t2: &Tree) -> bool {
+    t1.root.deep_match(&t2.root)
 }
-        
+
+fn tree_match_exists(trees: &TreeSet, target_tree: &Tree) -> bool {
+    for tree in trees.tree_vec.iter() {
+        if tree_match(tree, target_tree) {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
+    let mut i = 1u16;
+    let gen_method = 
+        if (trees.tree_vec.len() % 2) == 0 {
+            GenerateMethod::Full
+        }
+        else {
+            GenerateMethod::Grow
+        };
+
+    let mut t = gen_tree(gen_method, d);
+
+    while tree_match_exists(trees, &t) {
+        i += 1;
+        if i > 11 {
+            d += 1;
+            i = 1;
+        }
+        t = gen_tree(gen_method, d);
+    }
+    return t;
+}
+
+fn gen_tree_full_method(depth: u16) -> Tree {
+    let mut root = FunctionNode::new_rnd();
+    gen_tree_full_method_r(&mut root, 2, depth);
+    Tree::new(root)
+}
+
+fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) {
+    if level >= depth {
+        for i in 0..func_node.fnc.arity {
+            let rnd_tref = Terminal::get_rnd_ref(); // Always a Terminal Node
+            func_node.set_arg(i, TNode(rnd_tref));
+        }
+    }
+    else {
+        let c_depth = level+1;
+        for i in 0..func_node.fnc.arity {
+            let rnd_fn = FunctionNode::new_rnd(); // Always a Funciton Node
+            let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+
+            match *node {
+                FNode(ref mut fn_ref) =>
+                    gen_tree_full_method_r(fn_ref, c_depth, depth),
+                _ => panic!("expected FunctionNode"),
+            }
+        }
+    }
+}
+
+fn gen_tree_grow_method(depth: u16) -> Tree {
+    let mut root = FunctionNode::new_rnd();
+    gen_tree_grow_method_r(&mut root, 2, depth);
+
+    Tree::new(root)
+}
+    
+fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
+    depth: u16) {
+    if level >= depth {
+        for i in 0..func_node.fnc.arity {
+            let rnd_tref = Terminal::get_rnd_ref(); // Always a Terminal Node
+            func_node.set_arg(i, TNode(rnd_tref));
+        }
+    }
+    else {
+        let c_depth = level+1;
+        for i in 0..func_node.fnc.arity {
+            let rnd_ft_node = Node::new_rnd(); // Either a Function or Terminal Node
+            let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+            if let FNode(ref mut fn_ref) = node {
+                gen_tree_grow_method_r(fn_ref, c_depth, depth);
+            }
+        }
+    }
+}
+
+/////////////////////// STUBS /////////////////////////////
 fn compute_normalized_fitness(mut _trees: &TreeSet) ->() {
 
 }
@@ -39,15 +130,8 @@ fn select_tree(trees: &TreeSet) -> &Tree {
     &trees.tree_vec[0]
 }
 
-fn count_tree_nodes(tree: Tree) -> Tree {
-    tree
-}
-
-fn clone_tree(_tree: &Tree) -> Tree {
-    Tree::new()
-}
-                    
 fn perform_crossover(mut _t1: &Tree, mut _t2: &Tree) -> () {
+
 }
 
 fn new_tree_qualifies(_tree: &Tree) -> bool {
@@ -65,7 +149,6 @@ fn create_initial_population() -> TreeSet {
     // we will evenly produce population segments starting with 2
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
-    //
     let mut trees = TreeSet::new();
     let seg = trees.tree_vec.len() as f64 / (CONTROL.Di as f64 - 1.0f64);
     let mut bdr = 0.0f64;
@@ -74,7 +157,7 @@ fn create_initial_population() -> TreeSet {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize {
             let new_tree = create_unique_tree(&trees, d);
-            push_tree(&mut trees, new_tree); // (UC)
+            push_tree(&mut trees, new_tree);
         }
     }
 
@@ -92,21 +175,21 @@ fn use_reproduction(index: usize ) -> bool {
 }
 
 fn run() -> Option<Tree> {
-    let mut trees = create_initial_population(); // (UC)
-    count_nodes(&trees);
+    let mut trees = create_initial_population();
+    trees.count_nodes();
 
     let mut gen = 0u16;
     while gen <= CONTROL.G && trees.winning_index == None {
-        exec_trees(&trees);
+        exec_trees(&mut trees);
         if trees.winning_index != None {
             break;
         }
 
-        compute_normalized_fitness(&trees);
-        sort_by_normalized_fitness(&trees);
-        assign_nf_rankings(&trees);
+        compute_normalized_fitness(&mut trees);
+        sort_by_normalized_fitness(&mut trees);
+        assign_nf_rankings(&mut trees);
 
-        report_results(gen, &trees);
+        report_results(gen, &mut trees);
 
         if gen >= CONTROL.G {
             break;
@@ -116,8 +199,9 @@ fn run() -> Option<Tree> {
         for i in (0..CONTROL.M).step_by(2) {
             if use_reproduction(i) {
                 // do reproduction
-                let t = select_tree(&trees);
-                push_tree(&mut trees2, count_tree_nodes(clone_tree(t)));
+                let mut t = select_tree(&trees).clone();
+                t.count_nodes();
+                push_tree(&mut trees2, t);
             }
             else {
                 // do crossover
@@ -125,18 +209,20 @@ fn run() -> Option<Tree> {
                 loop {
                     let t1 = select_tree(&trees);
                     let t2 = select_tree(&trees);
-                    nt1 = clone_tree(t1);
-                    nt2 = clone_tree(t2);
+                    nt1 = t1.clone();
+                    nt2 = t2.clone();
                     perform_crossover(&nt1, &nt2);
 
                     if new_tree_qualifies(&nt1) && new_tree_qualifies(&nt2) {
                         break;
                     }
                 }
-                push_tree(&mut trees2, count_tree_nodes(nt1));
+                nt1.count_nodes();
+                push_tree(&mut trees2, nt1);
 
                 if i+1 < CONTROL.M {
-                    push_tree(&mut trees2, count_tree_nodes(nt2));
+                    nt2.count_nodes();
+                    push_tree(&mut trees2, nt2);
                 }
             }
         }
@@ -146,7 +232,7 @@ fn run() -> Option<Tree> {
 
     match trees.winning_index {
         Some(i) => {
-            let winner = clone_tree(&trees.tree_vec[i]);
+            let winner = trees.tree_vec[i].clone();
             Some(winner)
         },
         _ => None,
@@ -155,7 +241,7 @@ fn run() -> Option<Tree> {
 
 
 fn main() {
-    init_loc();
+    init_run();
     let mut total_runs = 0i32;
     let winner = loop { // go until we have a winner
         total_runs += 1;
