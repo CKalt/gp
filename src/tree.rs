@@ -374,6 +374,10 @@ impl TreeSet {
             t.fitness.n = t.fitness.a / sum_a;
         }
     }
+
+    pub fn sort_by_normalized_fitness(&mut self) {
+        self.tree_vec.sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
+    }
 }
 
 #[allow(dead_code)]
