@@ -109,10 +109,6 @@ fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
 }
 
 /////////////////////// STUBS /////////////////////////////
-fn assign_nf_rankings(mut _trees: &TreeSet) ->() {
-
-}
-        
 fn report_results(_gen: u16, _trees: &TreeSet) -> () {
 
 }
@@ -177,9 +173,8 @@ fn run() -> Option<Tree> {
             break;
         }
 
-        trees.compute_normalized_fitness();
-        trees.sort_by_normalized_fitness();
-        assign_nf_rankings(&mut trees);
+        trees.compute_normalized_fitness()
+             .sort_by_normalized_fitness();
 
         report_results(gen, &mut trees);
 

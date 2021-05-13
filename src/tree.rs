@@ -359,7 +359,7 @@ impl TreeSet {
         }
     }
 
-    pub fn compute_normalized_fitness(&mut self) {
+    pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
         let mut sum_a = 0.0f64;
         let mut sum_raw = 0.0f64;
 
@@ -373,10 +373,24 @@ impl TreeSet {
         for t in self.tree_vec.iter_mut() {
             t.fitness.n = t.fitness.a / sum_a;
         }
+
+        self
     }
 
-    pub fn sort_by_normalized_fitness(&mut self) {
-        self.tree_vec.sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
+    pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
+        self.tree_vec
+            .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
+            
+        self.assign_nf_rankings()
+    }
+
+    fn assign_nf_rankings(&mut self) -> &mut TreeSet {
+        let mut nfr = 0.0f64;
+        for t in self.tree_vec.iter_mut() {
+            nfr += t.fitness.n;
+            t.fitness.nfr = nfr;
+        }
+        self
     }
 }
 
