@@ -1,8 +1,10 @@
 mod gprun;
 mod tree;
+mod control;
 
 use gprun::*;
 use tree::*;
+use control::*;
 use Node::*;
 
 fn push_tree(trees: &mut TreeSet, tree: Tree) -> () {
