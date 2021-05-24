@@ -62,7 +62,7 @@ pub fn exec_trees(mut trees: &mut TreeSet) {
         }
 
         if tree.compute_fitness(&rc) {
-            report_tree_result(tree, tree.tfid, 0, -1.0);
+            report_tree_result(tree, tree.tfid, None, -1.0);
             print_grid(&rc, "Have Winner!");
             trees.winning_index = Some(i);
             break;
@@ -70,15 +70,47 @@ pub fn exec_trees(mut trees: &mut TreeSet) {
     }
 }
 
-pub fn exec_single_tree(_tree : &Tree) {
-    println!("exec_single_tree not implemented");
+pub fn exec_single_tree(tree : &mut Tree) {
+    let mut rc = RunContext::new();
+    prepare_run(&mut rc);
+    print_grid(&rc, "Before Run");
+    while rc.clock < RUN_CONTROL.max_clock {
+        exec_node(&mut rc, &mut tree.root);
+    }
+
+    if tree.compute_fitness(&rc) {
+        println!("Have Winner");
+    }
+    print_grid(&rc, "After Run");
 }
 
-fn report_tree_result(_t: &Tree, _i: usize , _gen: u16, _avg_raw_f: f64) {
-    // STUB
+pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: f64) {
+    assert_eq!(i, t.tfid);
+    let f = &t.fitness;
+    let tfid = if let Some(num) = t.tfid { num } else { 0 };
+    if let Some(gen) = opt_gen {
+        println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
+                 gen, tfid, t.tcid, t.hits, f.r, f.s, f.a, f.n, f.nfr, avg_raw_f);
+    } else {
+        println!("{:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
+                tfid, t.tcid, t.hits, f.r, f.s, f.a, f.n, f.nfr, avg_raw_f);
+    }
+}
+
+pub fn tree_result_header(opt_gen: Option<u16>) {
+    if let Some(_) = opt_gen {
+        println!("{:6} {:4} {:4} {:6} {:6} {:6} {:8} {:8} {:8} {:6}", 
+            "gen", "tfid", "tcid", "hits", "r", "s", "a", "n", "nfr", "avgRawF");
+        println!("{:6} {:4} {:4} {:6} {:6} {:6} {:8} {:8} {:8}", 
+            "----", "---", "---", "-----", "---", "---", "------", "------", "------");
+    } else {
+        println!("{:4} {:4} {:6} {:6} {:6} {:8} {:8} {:8}", 
+            "tfid", "tcid", "hits", "r", "s", "a", "n", "nfr");
+        println!("{:4} {:4} {:6} {:6} {:6} {:8} {:8} {:8}", 
+            "---", "---", "-----", "---", "---", "------", "------", "------");
+    }
 }
 
 fn print_grid(_rc: &RunContext, _label: &str) {
     // STUB
 }
-

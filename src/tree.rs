@@ -1,6 +1,7 @@
 use rand::Rng;
 use crate::gprun::*;
-use crate::control::*;
+use crate::control::CONTROL;
+use crate::control::TreeDepth;
 use Node::*;
 
 pub enum GpType {
@@ -64,6 +65,37 @@ impl Node {
                     node.count_nodes(counts);
                 }
             }
+        }
+    }
+    pub fn print(&self) {
+        self.print_r(0)
+    }
+    fn print_r(&self, depth: TreeDepth) {
+        match self {
+            TNode(tn_ref) => print!(" {}", tn_ref.name),
+            FNode(func_node) => {
+                println!("");
+                Node::print_tab(depth * 2);
+                for node in &func_node.branch {
+                    node.print_r(depth+1);
+                }
+                if depth == 0 {
+                    // if there are one or more functions here
+                    // we skip a line here for readabiility
+                    for node in &func_node.branch {
+                        if let FNode(_) = node {
+                            println!("");
+                            break;
+                        }
+                    }
+                }
+                println!(")")
+            }
+        }
+    }
+    fn print_tab(count: u16) {
+        for _ in 0..count {
+            print!(" ");
         }
     }
 }
@@ -295,10 +327,129 @@ pub enum GenerateMethod {
     Grow
 }
 
+/// NodeLocation identifies the location of a Node within a Tree.
+/// The location for `node` is identified by `pos' which is the
+/// zero based index of the Node within the `parent.unwrap().branch`
+/// vector.
+/// If `node` is an FNode then `ni` is the unique function index
+/// in the range 0..tree.num_function_nodes.unwrap() in the order
+/// of a depth first sequence in the recursive tree.
+/// If the `node` is a TNode then `ni` is the unique terminal index
+/// in the range 0..tree.num_terminal_nodes.unwrap() in the order
+/// of a depth first traversal in the recursive tree.
+/// `parent` identifies the optional function node that owns the
+/// branch vector for the Node-- if None, then the Node is the
+/// `tree.root` and `pos` is 0.
+#[allow(dead_code)]
+pub struct NodeLocation<'a> {
+    tree: &'a Tree,
+    pub node: &'a Node,
+    parent: Option<&'a FunctionNode>,
+    pos: usize,             // arg number in parent (0..parent.arity)
+    pub ni: TreeNodeIndex,  // node index (cur) - depth first sequence
+}
+impl <'a> NodeLocation<'a> {
+    fn new(tree: &Tree) -> NodeLocation {
+        NodeLocation{
+            tree,
+            node: &tree.root,
+            parent: None,
+            pos: 0,
+            ni: 0,
+        }
+    }
+    fn find_function_node(tree: &Tree, fi: TreeNodeIndex) -> NodeLocation {
+        match tree.root {
+            TNode(_) => panic!(
+              "Invalid attempt to find a Function node with a terminal tree."),
+            FNode(_) => {
+                let mut nl = NodeLocation::new(tree);
+                assert!(nl.find_function_node_r(fi));
+                nl
+            }
+        }
+    }
+    /// recursively iterate tree using depth first search to locate function
+    /// node at index `fi`. At each entry `self.node` should be a function node.
+    /// candidate at `self.ni`
+    fn find_function_node_r(&mut self, fi: TreeNodeIndex) -> bool {
+        if let FNode(fn_ref) = self.node {
+            if fi == self.ni {
+                return true;
+            }
+            else {
+                // not found yet, so recursively descend into each
+                // child function node of this function node (skiping
+                // terminal nodes). Before each call (descent) the `self`
+                // currencly values are set according to the location in tree.
+                self.parent = Some(fn_ref);
+                for (i, cn) in fn_ref.branch.iter().enumerate() {
+                    if let FNode(_) = cn {
+                        self.ni += 1;
+                        self.node = cn;
+                        self.parent = Some(fn_ref);
+                        self.pos = i;
+                        if self.find_function_node_r(fi) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        else {
+            panic!("expected function node");
+        }
+    }
+    fn find_terminal_node(tree: &Tree, ti: TreeNodeIndex) -> NodeLocation {
+        match tree.root {
+            TNode(_) => panic!(
+              "Invalid recursive attempt find a node for a single node root."),
+            FNode(_) => {
+                let mut nl = NodeLocation::new(tree);
+                assert!(nl.find_terminal_node_r(ti));
+                nl
+            }
+        }
+    }
+    /// recursively iterate tree using depth first search to locate terminal
+    /// node at index `ti`. At each entry `self.node` should be a function node.
+    /// candidate at `self.ni`
+    fn find_terminal_node_r(&mut self, ti: TreeNodeIndex) -> bool {
+        match self.node {
+            TNode(_) => 
+                if ti == self.ni {
+                    true // found
+                } else {
+                    self.ni += 1;
+                    false // not found
+                },
+            FNode(fn_ref) => {
+                    // not found yet, so recursively descend into each
+                    // child function node of this function node 
+                    // Before each call (descent) the `self`
+                    // currencly values are set according to the location in tree.
+                    self.parent = Some(fn_ref);
+                    for (i, cn) in fn_ref.branch.iter().enumerate() {
+                        if let FNode(_) = cn {
+                            self.node = cn;
+                            self.pos = i;
+                            if self.find_terminal_node_r(ti) {
+                                return true;
+                            }
+                        }
+                    }
+                    false
+                }
+        }
+    }
+}
+
+type TreeNodeIndex = u32;
 #[allow(dead_code)]
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
-    avg_raw_f:          f64,
+    pub avg_raw_f:          f64,
     pub tree_vec:       Vec<Tree>,
     tag_array:          [bool; CONTROL.M], // used for temporary individual state
                         // marking during tournament selection to insure
@@ -312,6 +463,18 @@ impl TreeSet {
             avg_raw_f:      0.0,
             tree_vec:       Vec::new(), // TODO: for better performance change to array (must find good init method)
             tag_array:      [false; CONTROL.M], // This is easy to init
+        }
+    }
+
+    pub fn get_rnd_tree(&self) -> &Tree {
+        let mut rng = rand::thread_rng();
+        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len());
+        &self.tree_vec[rnd_index]
+    }
+
+    pub fn print(&self) {
+        for tree in self.tree_vec.iter() {
+            tree.print();
         }
     }
 
@@ -350,26 +513,27 @@ impl TreeSet {
 
     fn assign_nf_rankings(&mut self) -> &mut TreeSet {
         let mut nfr = 0.0f64;
-        for t in self.tree_vec.iter_mut() {
+        for (i, t) in self.tree_vec.iter_mut().enumerate() {
             nfr += t.fitness.n;
             t.fitness.nfr = nfr;
+            t.tfid = Some(i);
         }
         self
     }
 }
 
 #[allow(dead_code)]
-struct Fitness {
+pub struct Fitness {
     // Base values
-    nfr: f64,
-    n:   f64,
-    a:   f64,
-    raw: f64,           // note that if run Fitness uses integer type
+    pub nfr: f64,
+    pub n:   f64,
+    pub a:   f64,
+    pub raw: f64,           // note that if run Fitness uses integer type
                         // and then this just contains a converted copy
 
     // Ren Values
-    r: u16,
-    s: u16,
+    pub r: u16,
+    pub s: u16,
 }
 impl Fitness {
     fn new() -> Fitness {
@@ -386,24 +550,25 @@ impl Fitness {
 
 #[allow(dead_code)]
 pub struct Tree {
-    pub tfid: usize,  // This is Tree's zero based index within TreeSet.tree_vec
-                      // after sorting for fitness (least fit are lower valued)
-    tcid: usize,      // The id of the Tree when first created and put into the array
+    pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
+                      // based index within TreeSet.tree_vec after sorting for
+                      // fitness (least fit are lower valued)
+    pub tcid: usize,      // The id of the Tree when first created and put into the array
     pub root: Node,
-    fitness: Fitness,
-    num_functions: u32,
-    num_terminals: u32,
-    hits: u32,
+    pub fitness: Fitness,
+    num_function_nodes: Option<TreeNodeIndex>,
+    num_terminal_nodes: Option<TreeNodeIndex>,
+    pub hits: u32,
 }
 impl Tree {
     pub fn new(root: FunctionNode) -> Tree {
         Tree { 
-            tfid: 0,
+            tfid: None,
             tcid: 0,
             root: FNode(root),
             fitness: Fitness::new(),
-            num_functions: 0,
-            num_terminals: 0,
+            num_function_nodes: None,     // None until count_nodes is called
+            num_terminal_nodes: None,     // None until count_nodes is called
             hits: 0,
         }
     }
@@ -411,22 +576,28 @@ impl Tree {
         let new_root = self.root.clone(); // clone Node
 
         Tree { 
-            tfid: 0,
+            tfid: None,
             tcid: 0,
             root: new_root,
             fitness: Fitness::new(),
-            num_functions: self.num_functions,
-            num_terminals: self.num_terminals,
+            num_function_nodes: self.num_function_nodes,
+            num_terminal_nodes: self.num_terminal_nodes,
             hits: 0,
         }
     }
+    /// count_nodes descends through tree and computes counts.
+    /// To insure code performs efficiently we assert that counts are not
+    /// counted twice. If this is infact needed
+    /// I.e. Expects that nodes have not already been counted as represented by
+    /// num_terminal_nodes and num_function_nodes values of None.
     pub fn count_nodes(&mut self) {
+        assert_eq!(self.num_terminal_nodes, None);
+        assert_eq!(self.num_function_nodes, None);
         let mut counts = (0u32, 0u32); // (num_terms, num_funcs)
         self.root.count_nodes(&mut counts);
-        self.num_terminals = counts.0;
-        self.num_functions = counts.1;
+        self.num_terminal_nodes = Some(counts.0);
+        self.num_function_nodes = Some(counts.1);
     }
-
     /// computes fitness returns true if winner
     pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
         let mut f = &mut self.fitness;
@@ -444,7 +615,45 @@ impl Tree {
         f.a = 1.0f64 / (1.0f64 + (f.s as f64));
 
         return f.s == 0;
-   }
+    }
+    pub fn print(&self) {
+        println!("-------------tree ({:?}/{})----------------",
+            self.tfid, self.tcid);
+        println!("nFunctions = {:?}\nnTerminals= {:?}", self.num_function_nodes,
+            self.num_terminal_nodes);
+        self.root.print();
+        println!("");
+    }
+    pub fn get_rnd_function_node(&self) -> NodeLocation {
+        let fi = self.get_rnd_function_index();
+        self.find_function_node(fi)
+    }
+    fn get_rnd_terminal_index(&self) -> TreeNodeIndex {
+        let num_tnodes = self
+            .num_terminal_nodes
+            .expect("Tree does not have count of terminal nodes. ");
+
+        let mut rng = rand::thread_rng();
+        rng.gen_range(0..num_tnodes)
+    }
+    fn get_rnd_function_index(&self) -> TreeNodeIndex {
+        let num_fnodes = self
+            .num_function_nodes
+            .expect("Tree does not have count of function nodes. ");
+
+        let mut rng = rand::thread_rng();
+        rng.gen_range(0..num_fnodes)
+    }
+    fn find_function_node(&self, fi: TreeNodeIndex) -> NodeLocation {
+        NodeLocation::find_function_node(self, fi)
+    }
+    pub fn get_rnd_terminal_node(&self) -> NodeLocation {
+        let ti = self.get_rnd_terminal_index();
+        self.find_terminal_node(ti)
+    }
+    fn find_terminal_node(&self, ti: TreeNodeIndex) -> NodeLocation {
+        NodeLocation::find_terminal_node(self, ti)
+    }
 }
 
 pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {

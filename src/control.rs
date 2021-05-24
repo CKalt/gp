@@ -1,9 +1,11 @@
+pub type TreeDepth = u16;
+
 #[allow(non_snake_case)]
 pub struct Control {
     pub M:   usize,             // Number of individuals in each generation
     pub G:   u16,               // Number of generations to run
-    pub Di:  u16,               // Maximum depth of S Expressions for an initial tree
-    pub Dc:  u16,               // Maximum depth of S Expressions for a created tree
+    pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
+    pub Dc:  TreeDepth,         // Maximum depth of S Expressions for a created tree
     pub Pc:  f64,               // Probability of cross over
     pub Pr:  f64,               // Probability of reproduction
     pub Pip:  f64,              // Probability of cross over internal point
@@ -19,6 +21,10 @@ pub struct Control {
                             // GRc = 32/2^n
     pub no_fitness_cases:  u16,
     pub show_all_trees:    bool,
+    pub show_all_tree_results: bool,
+    pub show_best_tree_results: bool,
+    pub show_controls: bool,
+    pub run_tests: bool,
 }
 
 #[warn(non_snake_case)]
@@ -35,4 +41,8 @@ pub const CONTROL: Control = Control {
     GRc:                0.0,
     no_fitness_cases:   0,
     show_all_trees:     false,
+    show_all_tree_results: false,
+    show_best_tree_results: true,
+    show_controls: true,
+    run_tests: false,
 };

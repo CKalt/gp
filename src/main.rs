@@ -7,8 +7,10 @@ use tree::*;
 use control::*;
 use Node::*;
 
-fn push_tree(trees: &mut TreeSet, tree: Tree) -> () {
-    assert!(trees.tree_vec.len() < CONTROL.M);
+fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
+    let index = trees.tree_vec.len();
+    assert!(index < CONTROL.M);
+    tree.tcid = index;
     trees.tree_vec.push(tree);
 }
 
@@ -111,8 +113,29 @@ fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
 }
 
 /////////////////////// STUBS /////////////////////////////
-fn report_results(_gen: u16, _trees: &TreeSet) -> () {
-
+fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool) -> () {
+    if CONTROL.show_all_trees {
+        println!("Generation {}", gen);
+        trees.print();
+    }
+    if CONTROL.show_all_tree_results {
+        tree_result_header(None);
+        for (i,t) in trees.tree_vec.iter().enumerate() {
+            report_tree_result(t, Some(i), None, -1.0);
+        }
+    }
+    if CONTROL.show_best_tree_results {
+        if *header_need {
+            tree_result_header(Some(gen));
+            *header_need = false;
+        }
+        let i = trees.tree_vec.len()-1;
+        let best_tree = &trees.tree_vec[i];
+        report_tree_result(best_tree, Some(i), Some(gen), trees.avg_raw_f);
+    }
+    if CONTROL.run_tests {
+        run_tests(trees);
+    }
 }
 
 fn select_tree(trees: &TreeSet) -> &Tree {
@@ -126,10 +149,6 @@ fn perform_crossover(mut _t1: &Tree, mut _t2: &Tree) -> () {
 
 fn new_tree_qualifies(_tree: &Tree) -> bool {
     true
-}
-
-fn print_tree(_tree : &Tree) {
-
 }
 
 /////////////////////// NOT STUBS /////////////////////////////
@@ -169,6 +188,7 @@ fn run() -> Option<Tree> {
     trees.count_nodes();
 
     let mut gen = 0u16;
+    let mut header_need: bool = true;
     while gen <= CONTROL.G && trees.winning_index == None {
         exec_trees(&mut trees);
         if trees.winning_index != None {
@@ -178,7 +198,7 @@ fn run() -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-        report_results(gen, &mut trees);
+        report_results(gen, &mut trees, &mut header_need);
 
         if gen >= CONTROL.G {
             break;
@@ -228,11 +248,28 @@ fn run() -> Option<Tree> {
     }
 }
 
+fn run_tests(trees: &mut TreeSet) {
+    trees.count_nodes();
+    println!("Testing getRndFunctionIndex and getRndTerminalIndex");
+    for i in 1..=10 {
+        println!("=============\n| Trial {:3} |\n=============", i);
+        let t = trees.get_rnd_tree();
+        t.print();
+
+        let nl = t.get_rnd_function_node();
+        println!("\n--------\nRnd fi={} Subtree -->\n", nl.ni);
+        nl.node.print();
+
+        let nl = t.get_rnd_terminal_node();
+        nl.node.print();
+        println!("\n--------");
+    }
+}
 
 fn main() {
     init_run();
     let mut total_runs = 0i32;
-    let winner = loop { // go until we have a winner
+    let mut winner = loop { // go until we have a winner
         total_runs += 1;
         println!("Run #{}", total_runs);
         if let Some(winner) = run() {
@@ -241,6 +278,6 @@ fn main() {
     };
         
     println!("total_runs={}", total_runs);
-    print_tree(&winner);
-    exec_single_tree(&winner);
+    winner.print();
+    exec_single_tree(&mut winner);
 }
