@@ -12,7 +12,6 @@ pub enum GpType {
 type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
 type TermNodeCode = fn (rc: &mut RunContext) -> GpType;
 
-#[allow(dead_code)]
 pub enum Node {
     TNode(& 'static Terminal), // Terminal nodes are borrowed references
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
@@ -264,7 +263,6 @@ fn prog_n3(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     exec_node(rc, &func.branch[2])
 }
 
-#[allow(dead_code)]
 pub struct Terminal {
     tid:    u8,
     name:   & 'static str,
@@ -486,7 +484,6 @@ impl TreeSet {
     }
 }
 
-#[allow(dead_code)]
 pub struct Fitness {
     // Base values
     pub nfr: f64,
@@ -512,7 +509,6 @@ impl Fitness {
     }
 }
 
-#[allow(dead_code)]
 pub struct Tree {
     pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
                       // based index within TreeSet.tree_vec after sorting for
