@@ -98,6 +98,88 @@ impl Node {
             print!(" ");
         }
     }
+    fn find_function_node_ref(tree: &mut Tree, fi: TreeNodeIndex) -> &mut Node {
+        match tree.root {
+            TNode(_) => panic!(
+              "Invalid attempt to find a Function node with a terminal tree."),
+            FNode(_) => {
+                let mut cur_fi: TreeNodeIndex = 0;
+                tree.root.find_function_node_ref_r(fi, &mut cur_fi).unwrap()
+            }
+        }
+    }
+    /// recursively iterate tree using depth first search to locate function
+    /// node at index `fi`. At each entry `self` is a candidate a function node.
+    /// `*cur_fi` is incremented for each candidate when when equal to `fi`
+    /// `self` is the found result returned up the recursive call stack.
+    fn find_function_node_ref_r(&mut self, fi: TreeNodeIndex,
+            cur_fi: &mut TreeNodeIndex) -> Option<&mut Node> {
+        if let FNode(_) = self {
+            if fi == *cur_fi {
+                return Some(self);
+            }
+            else {
+                // not found yet, so recursively descend into each
+                // child function node of this function node (skiping
+                // terminal nodes). Before each call (descent) the `self`
+                // currencly values are set according to the location in tree.
+                if let FNode(ref mut fn_ref) = self {
+                    for cn in fn_ref.branch.iter_mut() {
+                        if let FNode(_) = cn {
+                            *cur_fi += 1;
+                            let result = cn.find_function_node_ref_r(fi, cur_fi);
+                            if let Some(_) = result {
+                                return result;
+                            }
+                        }
+                    }
+                }
+                else {
+                    panic!("expected FNode.")
+                }
+            }
+            return None;
+        }
+        else {
+            panic!("expected function node");
+        }
+    }
+    fn find_terminal_node_ref(tree: &mut Tree, ti: TreeNodeIndex) -> &mut Node {
+        match tree.root {
+            TNode(_) => panic!(
+              "Invalid recursive attempt find a node for a single node root."),
+            FNode(_) => {
+                let mut cur_ti: TreeNodeIndex = 0;
+                tree.root.find_terminal_node_ref_r(ti, &mut cur_ti).unwrap()
+            }
+        }
+    }
+    /// recursively iterate tree using depth first search to locate terminal
+    /// node at index `ti`. At each entry `self.node` should be a function node.
+    /// candidate at `self.ni`
+    fn find_terminal_node_ref_r(&mut self, ti: TreeNodeIndex,
+            cur_ti: &mut TreeNodeIndex) -> Option<&mut Node> {
+        match self {
+            TNode(_) => 
+                if ti == *cur_ti {
+                    Some(self)
+                } else {
+                    *cur_ti += 1;
+                    None // not found yet
+                },
+            FNode(fn_ref) => {
+                    // not found yet, so recursively descend into each
+                    // child function node 
+                    for cn in fn_ref.branch.iter_mut() {
+                        let result = cn.find_terminal_node_ref_r(ti, cur_ti);
+                        if let Some(_) = result {
+                            return result;
+                        }
+                    }
+                    None
+                }
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -327,124 +409,6 @@ pub enum GenerateMethod {
     Grow
 }
 
-/// NodeLocation identifies the location of a Node within a Tree.
-/// The location for `node` is identified by `pos' which is the
-/// zero based index of the Node within the `parent.unwrap().branch`
-/// vector.
-/// If `node` is an FNode then `ni` is the unique function index
-/// in the range 0..tree.num_function_nodes.unwrap() in the order
-/// of a depth first sequence in the recursive tree.
-/// If the `node` is a TNode then `ni` is the unique terminal index
-/// in the range 0..tree.num_terminal_nodes.unwrap() in the order
-/// of a depth first traversal in the recursive tree.
-/// `parent` identifies the optional function node that owns the
-/// branch vector for the Node-- if None, then the Node is the
-/// `tree.root` and `pos` is 0.
-#[allow(dead_code)]
-pub struct NodeLocation<'a> {
-    tree: &'a Tree,
-    pub node: &'a Node,
-    parent: Option<&'a FunctionNode>,
-    pos: usize,             // arg number in parent (0..parent.arity)
-    pub ni: TreeNodeIndex,  // node index (cur) - depth first sequence
-}
-impl <'a> NodeLocation<'a> {
-    fn new(tree: &Tree) -> NodeLocation {
-        NodeLocation{
-            tree,
-            node: &tree.root,
-            parent: None,
-            pos: 0,
-            ni: 0,
-        }
-    }
-    fn find_function_node(tree: &Tree, fi: TreeNodeIndex) -> NodeLocation {
-        match tree.root {
-            TNode(_) => panic!(
-              "Invalid attempt to find a Function node with a terminal tree."),
-            FNode(_) => {
-                let mut nl = NodeLocation::new(tree);
-                assert!(nl.find_function_node_r(fi));
-                nl
-            }
-        }
-    }
-    /// recursively iterate tree using depth first search to locate function
-    /// node at index `fi`. At each entry `self.node` should be a function node.
-    /// candidate at `self.ni`
-    fn find_function_node_r(&mut self, fi: TreeNodeIndex) -> bool {
-        if let FNode(fn_ref) = self.node {
-            if fi == self.ni {
-                return true;
-            }
-            else {
-                // not found yet, so recursively descend into each
-                // child function node of this function node (skiping
-                // terminal nodes). Before each call (descent) the `self`
-                // currencly values are set according to the location in tree.
-                self.parent = Some(fn_ref);
-                for (i, cn) in fn_ref.branch.iter().enumerate() {
-                    if let FNode(_) = cn {
-                        self.ni += 1;
-                        self.node = cn;
-                        self.parent = Some(fn_ref);
-                        self.pos = i;
-                        if self.find_function_node_r(fi) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-        else {
-            panic!("expected function node");
-        }
-    }
-    fn find_terminal_node(tree: &Tree, ti: TreeNodeIndex) -> NodeLocation {
-        match tree.root {
-            TNode(_) => panic!(
-              "Invalid recursive attempt find a node for a single node root."),
-            FNode(_) => {
-                let mut nl = NodeLocation::new(tree);
-                assert!(nl.find_terminal_node_r(ti));
-                nl
-            }
-        }
-    }
-    /// recursively iterate tree using depth first search to locate terminal
-    /// node at index `ti`. At each entry `self.node` should be a function node.
-    /// candidate at `self.ni`
-    fn find_terminal_node_r(&mut self, ti: TreeNodeIndex) -> bool {
-        match self.node {
-            TNode(_) => 
-                if ti == self.ni {
-                    true // found
-                } else {
-                    self.ni += 1;
-                    false // not found
-                },
-            FNode(fn_ref) => {
-                    // not found yet, so recursively descend into each
-                    // child function node of this function node 
-                    // Before each call (descent) the `self`
-                    // currencly values are set according to the location in tree.
-                    self.parent = Some(fn_ref);
-                    for (i, cn) in fn_ref.branch.iter().enumerate() {
-                        if let FNode(_) = cn {
-                            self.node = cn;
-                            self.pos = i;
-                            if self.find_terminal_node_r(ti) {
-                                return true;
-                            }
-                        }
-                    }
-                    false
-                }
-        }
-    }
-}
-
 type TreeNodeIndex = u32;
 #[allow(dead_code)]
 pub struct TreeSet {
@@ -466,10 +430,10 @@ impl TreeSet {
         }
     }
 
-    pub fn get_rnd_tree(&self) -> &Tree {
+    pub fn get_rnd_tree(&mut self) -> &mut Tree {
         let mut rng = rand::thread_rng();
         let rnd_index: usize = rng.gen_range(0..self.tree_vec.len());
-        &self.tree_vec[rnd_index]
+        &mut self.tree_vec[rnd_index]
     }
 
     pub fn print(&self) {
@@ -553,11 +517,11 @@ pub struct Tree {
     pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
                       // based index within TreeSet.tree_vec after sorting for
                       // fitness (least fit are lower valued)
-    pub tcid: usize,      // The id of the Tree when first created and put into the array
+    pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub root: Node,
     pub fitness: Fitness,
-    num_function_nodes: Option<TreeNodeIndex>,
-    num_terminal_nodes: Option<TreeNodeIndex>,
+    pub num_function_nodes: Option<TreeNodeIndex>,
+    pub num_terminal_nodes: Option<TreeNodeIndex>,
     pub hits: u32,
 }
 impl Tree {
@@ -624,17 +588,14 @@ impl Tree {
         self.root.print();
         println!("");
     }
-    pub fn get_rnd_function_node(&self) -> NodeLocation {
+    pub fn get_rnd_function_node_ref_i(&mut self)
+        -> (TreeNodeIndex, &mut Node) {
         let fi = self.get_rnd_function_index();
-        self.find_function_node(fi)
+        (fi, Node::find_function_node_ref(self, fi))
     }
-    fn get_rnd_terminal_index(&self) -> TreeNodeIndex {
-        let num_tnodes = self
-            .num_terminal_nodes
-            .expect("Tree does not have count of terminal nodes. ");
-
-        let mut rng = rand::thread_rng();
-        rng.gen_range(0..num_tnodes)
+    pub fn get_rnd_function_node_ref(&mut self) -> &mut Node {
+        let fi = self.get_rnd_function_index();
+        Node::find_function_node_ref(self, fi)
     }
     fn get_rnd_function_index(&self) -> TreeNodeIndex {
         let num_fnodes = self
@@ -644,15 +605,17 @@ impl Tree {
         let mut rng = rand::thread_rng();
         rng.gen_range(0..num_fnodes)
     }
-    fn find_function_node(&self, fi: TreeNodeIndex) -> NodeLocation {
-        NodeLocation::find_function_node(self, fi)
-    }
-    pub fn get_rnd_terminal_node(&self) -> NodeLocation {
+    pub fn get_rnd_terminal_node_ref(&mut self) -> &mut Node {
         let ti = self.get_rnd_terminal_index();
-        self.find_terminal_node(ti)
+        Node::find_terminal_node_ref(self, ti)
     }
-    fn find_terminal_node(&self, ti: TreeNodeIndex) -> NodeLocation {
-        NodeLocation::find_terminal_node(self, ti)
+    fn get_rnd_terminal_index(&self) -> TreeNodeIndex {
+        let num_tnodes = self
+            .num_terminal_nodes
+            .expect("Tree does not have count of terminal nodes. ");
+
+        let mut rng = rand::thread_rng();
+        rng.gen_range(0..num_tnodes)
     }
 }
 

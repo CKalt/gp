@@ -7,6 +7,9 @@ use tree::*;
 use control::*;
 use Node::*;
 
+use rand::Rng;
+use std::mem;
+
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
     let index = trees.tree_vec.len();
     assert!(index < CONTROL.M);
@@ -143,8 +146,34 @@ fn select_tree(trees: &TreeSet) -> &Tree {
     &trees.tree_vec[0]
 }
 
-fn perform_crossover(mut _t1: &Tree, mut _t2: &Tree) -> () {
+// rnd_internal_point - randomly decides whether to do crossover at an
+// internal point (function) or terminal based on control Pip value.
+fn rnd_internal_point() -> bool {
+    let mut rng = rand::thread_rng();
+    let num: f64 = rng.gen_range(0.0..1.0);
 
+    num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
+}
+
+fn perform_crossover(t1: &mut Tree, t2: &mut Tree) {
+    assert_ne!(t1.num_terminal_nodes, None);
+    assert_ne!(t2.num_terminal_nodes, None);
+
+    let swap_target1 : &mut Node =
+        if t1.num_function_nodes.unwrap() > 0 && rnd_internal_point() {
+            t1.get_rnd_function_node_ref()
+        } else {
+            t1.get_rnd_terminal_node_ref()
+        };
+
+    let swap_target2 : &mut Node =
+        if t2.num_function_nodes.unwrap() > 0 && rnd_internal_point() {
+            t2.get_rnd_function_node_ref()
+        } else {
+            t2.get_rnd_terminal_node_ref()
+        };
+
+    mem::swap(swap_target1, swap_target2);
 }
 
 fn new_tree_qualifies(_tree: &Tree) -> bool {
@@ -220,7 +249,7 @@ fn run() -> Option<Tree> {
                     let t2 = select_tree(&trees);
                     nt1 = t1.clone();
                     nt2 = t2.clone();
-                    perform_crossover(&nt1, &nt2);
+                    perform_crossover(&mut nt1, &mut nt2);
 
                     if new_tree_qualifies(&nt1) && new_tree_qualifies(&nt2) {
                         break;
@@ -256,12 +285,12 @@ fn run_tests(trees: &mut TreeSet) {
         let t = trees.get_rnd_tree();
         t.print();
 
-        let nl = t.get_rnd_function_node();
-        println!("\n--------\nRnd fi={} Subtree -->\n", nl.ni);
-        nl.node.print();
+        let (fi, fnode) = t.get_rnd_function_node_ref_i();
+        println!("\n--------\nRnd fi={} Subtree -->\n", fi);
+        fnode.print();
 
-        let nl = t.get_rnd_terminal_node();
-        nl.node.print();
+        let tnode = t.get_rnd_terminal_node_ref();
+        tnode.print();
         println!("\n--------");
     }
 }
