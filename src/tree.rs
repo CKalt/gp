@@ -97,6 +97,9 @@ impl Node {
             print!(" ");
         }
     }
+    /// always performed against a Tree.root node
+    /// which is why a tree is used instead of a Node here.
+    /// It sets up the recursive call to find_function_node_ref_r.
     fn find_function_node_ref(tree: &mut Tree, fi: TreeNodeIndex) -> &mut Node {
         match tree.root {
             TNode(_) => panic!(
@@ -107,10 +110,11 @@ impl Node {
             }
         }
     }
-    /// recursively iterate tree using depth first search to locate function
-    /// node at index `fi`. At each entry `self` is a candidate a function node.
-    /// `*cur_fi` is incremented for each candidate when when equal to `fi`
-    /// `self` is the found result returned up the recursive call stack.
+    /// recursively iterate Node tree using depth first search to locate function
+    /// node at index `fi`. At each entry `self` is a candidate function node.
+    /// `*cur_fi` is incremented for each candidate and when equal to `fi`
+    /// `self` is the found Some(result) returned up the recursive call stack,
+    /// recursive iteration continues for None return values.
     fn find_function_node_ref_r(&mut self, fi: TreeNodeIndex,
             cur_fi: &mut TreeNodeIndex) -> Option<&mut Node> {
         if let FNode(_) = self {
@@ -143,6 +147,9 @@ impl Node {
             panic!("expected function node");
         }
     }
+    /// always performed against a Tree.root node
+    /// which is why a tree is used instead of a Node here.
+    /// It sets up the recursive call to find_terminal_node_ref_r.
     fn find_terminal_node_ref(tree: &mut Tree, ti: TreeNodeIndex) -> &mut Node {
         match tree.root {
             TNode(_) => panic!(
@@ -154,14 +161,15 @@ impl Node {
         }
     }
     /// recursively iterate tree using depth first search to locate terminal
-    /// node at index `ti`. At each entry `self.node` should be a function node.
-    /// candidate at `self.ni`
+    /// node at index `ti`. Function children are recursiviely called, and 
+    /// Terminal Nodes either return Some(self) if `ti` == `*cur_ti` or None
+    /// causing iteration to continue.
     fn find_terminal_node_ref_r(&mut self, ti: TreeNodeIndex,
             cur_ti: &mut TreeNodeIndex) -> Option<&mut Node> {
         match self {
             TNode(_) => 
                 if ti == *cur_ti {
-                    Some(self)
+                    Some(self) // found terminal we're looking for.
                 } else {
                     *cur_ti += 1;
                     None // not found yet
