@@ -236,6 +236,7 @@ fn run() -> Option<Tree> {
             if use_reproduction(i) {
                 // do reproduction
                 let mut t = select_tree(&trees).clone();
+                t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
             }
@@ -253,10 +254,12 @@ fn run() -> Option<Tree> {
                         break;
                     }
                 }
+                nt1.clear_node_counts();
                 nt1.count_nodes();
                 push_tree(&mut trees2, nt1);
 
                 if i+1 < CONTROL.M {
+                    nt2.clear_node_counts();
                     nt2.count_nodes();
                     push_tree(&mut trees2, nt2);
                 }

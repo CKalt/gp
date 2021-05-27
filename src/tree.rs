@@ -554,6 +554,10 @@ impl Tree {
             hits: 0,
         }
     }
+    pub fn clear_node_counts(&mut self) {
+        self.num_terminal_nodes = None;
+        self.num_function_nodes = None;
+    }
     /// count_nodes descends through tree and computes counts.
     /// To insure code performs efficiently we assert that counts are not
     /// counted twice. If this is infact needed
