@@ -1,5 +1,6 @@
 use rand::Rng;
 use crate::gprun::*;
+use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use Node::*;
@@ -200,19 +201,19 @@ pub struct Function {
 static FUNCTION: [Function; CONTROL.num_functions as usize] = [
     Function {
         fid:  0u8,
-        name: "IfFoodAhead",
+        name: "if_food_ahead",
         arity: 2,
         code: if_food_ahead,
     },
     Function {
         fid:  1u8,
-        name: "ProgN2",
+        name: "prog_n2",
         arity: 2,
         code: prog_n2
     },
     Function {
         fid:  2u8,
-        name: "ProgN3",
+        name: "prog_n3",
         arity: 3,
         code: prog_n3
     },
@@ -249,7 +250,7 @@ fn if_food_ahead(rc: &mut RunContext, func: &FunctionNode) -> GpType {
         return exec_node(rc, &func.branch[1]);
     }
 
-    if rc.grid[new_y as usize][new_y as usize] == 1 {
+    if let Food = rc.grid[new_y as usize][new_x as usize] {
         return exec_node(rc, &func.branch[0]);
     }
 
@@ -317,17 +318,17 @@ fn move_ant(rc: &mut RunContext) -> GpType {
         return GpType::Continue;
     }
     // check for food to eat
-    else if rc.grid[rc.ant_y as usize][rc.ant_y as usize] == 1 {
-        rc.grid[rc.ant_y as usize][rc.ant_y as usize] = 2; // mark as eaten
+    else if let Food = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
+        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = FoodEaten;
 
         rc.eat_count += 1;
         if rc.eat_count == rc.n_pellets {
             return terminate(rc);
         }
     }
-    // check for never been here before
-    else if rc.grid[rc.ant_y as usize][rc.ant_y as usize] == 0 {
-        rc.grid[rc.ant_y as usize][rc.ant_y as usize] = 3;    // mark as been here
+    // check for never been here before and no food
+    else if let Clear = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
+        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = NoFoodFound;
     }
         
     // don't do anything but continue

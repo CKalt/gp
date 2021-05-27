@@ -115,7 +115,6 @@ fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
     }
 }
 
-/////////////////////// STUBS /////////////////////////////
 fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool) -> () {
     if CONTROL.show_all_trees {
         println!("Generation {}", gen);
@@ -180,27 +179,26 @@ fn new_tree_qualifies(_tree: &Tree) -> bool {
     true
 }
 
-/////////////////////// NOT STUBS /////////////////////////////
-
 fn create_initial_population() -> TreeSet {
     // Following Koza's recipe, he calls "ramped half-and-half",
     // we will evenly produce population segments starting with 2
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
     let mut trees = TreeSet::new();
-    let seg = trees.tree_vec.len() as f64 / (CONTROL.Di as f64 - 1.0f64);
+    let seg = CONTROL.M as f64 / (CONTROL.Di as f64 - 1.0f64);
     let mut bdr = 0.0f64;
 
     for d in 2..=CONTROL.Di {
         bdr += seg;
-        while trees.tree_vec.len() < bdr as usize {
+        while trees.tree_vec.len() < bdr as usize &&
+              trees.tree_vec.len() < CONTROL.M {
             let new_tree = create_unique_tree(&trees, d);
             push_tree(&mut trees, new_tree);
         }
     }
 
     // fill out to end in case there are "left-overs" due to rounding
-    while trees.tree_vec.len() < trees.tree_vec.len() {
+    while trees.tree_vec.len() < CONTROL.M {
         let new_tree = create_unique_tree(&trees, CONTROL.Di);
         push_tree(&mut trees, new_tree);
     }
