@@ -44,9 +44,9 @@ pub static RUN_CONTROL: RunControl = RunControl{
 
 // MAX_X & MAX_Y are zero based max_y (may be equal but cannot exceed)
 #[cfg(gpopt_trail="los_altos")]         // LOS ALTOS
-pub const RUN_CONTROL_MAX_X: i16 = 66;
+pub const RUN_CONTROL_MAX_X: i16 = 43;
 #[cfg(gpopt_trail="los_altos")]         // LOS ALTOS
-pub const RUN_CONTROL_MAX_Y: i16 = 43;
+pub const RUN_CONTROL_MAX_Y: i16 = 66;
 
 #[cfg(gpopt_trail="los_altos")]         // LOS ALTOS
 fn trail_factory() -> Vec<FoodCoord> {

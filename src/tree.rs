@@ -419,6 +419,7 @@ pub enum GenerateMethod {
 type TreeNodeIndex = u32;
 #[allow(dead_code)]
 pub struct TreeSet {
+    pub rc:             RunContext,
     pub winning_index:  Option<usize>,
     pub avg_raw_f:          f64,
     pub tree_vec:       Vec<Tree>,
@@ -428,8 +429,9 @@ pub struct TreeSet {
                         // usage.
 }
 impl TreeSet {
-    pub fn new() -> TreeSet {
+    pub fn new(rc: &mut RunContext) -> TreeSet {
         TreeSet {
+            rc: rc,
             winning_index:  None,
             avg_raw_f:      0.0,
             tree_vec:       Vec::new(), // TODO: for better performance change to array (must find good init method)
