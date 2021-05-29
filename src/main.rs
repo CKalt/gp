@@ -115,20 +115,21 @@ fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
     }
 }
 
-fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool) -> () {
+fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool,
+        n_pellets: &u16) -> () {
     if CONTROL.show_all_trees {
         println!("Generation {}", gen);
         trees.print();
     }
     if CONTROL.show_all_tree_results {
-        tree_result_header(None);
+        tree_result_header(None, n_pellets);
         for (i,t) in trees.tree_vec.iter().enumerate() {
             report_tree_result(t, Some(i), None, -1.0);
         }
     }
     if CONTROL.show_best_tree_results {
         if *header_need {
-            tree_result_header(Some(gen));
+            tree_result_header(Some(gen), n_pellets);
             *header_need = false;
         }
         let i = trees.tree_vec.len()-1;
@@ -138,11 +139,6 @@ fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool) -> () {
     if CONTROL.run_tests {
         run_tests(trees);
     }
-}
-
-fn select_tree(trees: &TreeSet) -> &Tree {
-    assert!(trees.tree_vec.len() > 0);
-    &trees.tree_vec[0]
 }
 
 // rnd_internal_point - randomly decides whether to do crossover at an
@@ -211,13 +207,16 @@ fn use_reproduction(index: usize ) -> bool {
 }
 
 fn run() -> Option<Tree> {
+    if CONTROL.show_controls {
+        println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
+    }
+
     let mut trees = create_initial_population();
     trees.count_nodes();
-
     let mut gen = 0u16;
     let mut header_need: bool = true;
     while gen <= CONTROL.G && trees.winning_index == None {
-        exec_trees(&mut trees);
+        let n_pellets = exec_trees(&mut trees);
         if trees.winning_index != None {
             break;
         }
@@ -225,7 +224,7 @@ fn run() -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-        report_results(gen, &mut trees, &mut header_need);
+        report_results(gen, &mut trees, &mut header_need, &n_pellets);
 
         if gen >= CONTROL.G {
             break;
@@ -235,7 +234,7 @@ fn run() -> Option<Tree> {
         for i in (0..CONTROL.M).step_by(2) {
             if use_reproduction(i) {
                 // do reproduction
-                let mut t = select_tree(&trees).clone();
+                let mut t = trees.select_tree().clone();
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
@@ -244,8 +243,8 @@ fn run() -> Option<Tree> {
                 // do crossover
                 let (mut nt1, mut nt2);
                 loop {
-                    let t1 = select_tree(&trees);
-                    let t2 = select_tree(&trees);
+                    let t1 = trees.select_tree();
+                    let t2 = trees.select_tree();
                     nt1 = t1.clone();
                     nt2 = t2.clone();
                     perform_crossover(&mut nt1, &mut nt2);

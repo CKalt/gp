@@ -493,6 +493,83 @@ impl TreeSet {
     }
 }
 
+#[cfg(gpopt_select_method="fpb")]
+pub trait SelectMethod {
+    fn select_ind_bin_r(&self, r: f64, lo: usize, hi: usize) -> usize;
+    fn select_ind_bin(&self, r: f64) -> usize;
+    fn select_tree(&self) -> &Tree;
+}
+
+#[cfg(gpopt_select_method="fpb")]
+impl SelectMethod for TreeSet {
+    fn select_ind_bin_r(&self, r: f64, lo: usize, hi: usize) -> usize {
+        let i = lo + (hi-lo)/2;
+        let base = 
+            if i > 0 { self.tree_vec[i-1].fitness.nfr } else { 0.0 };
+
+        if base <= r && r <= self.tree_vec[i].fitness.nfr {
+            return i;
+        }
+
+        if hi == lo {
+            panic!("select_ind fault");
+        }
+
+        if r < base {
+            return self.select_ind_bin_r(r, lo, i-1);
+        }
+        else {
+            return self.select_ind_bin_r(r, i+1, hi);
+        }
+    }
+    ///
+    /// uses binary search to locate fitness proportional
+    /// individual.  (This requires that `self.tree_vec` is sorted by
+    /// normalized fitness measure (`fitness.nfr`)
+    ///
+    fn select_ind_bin(&self, r: f64) -> usize {
+        let n = self.tree_vec.len();
+        assert_ne!(n, 0);
+
+        let i = n/2 - 1;
+        let base = 
+            if i > 0 { self.tree_vec[i-1].fitness.nfr } else { 0.0 };
+
+        if base <= r && r <= self.tree_vec[i].fitness.nfr {
+            return i;
+        }
+
+        if r < base {
+            return self.select_ind_bin_r(r, 0, i-1);
+        }
+        else {
+            return self.select_ind_bin_r(r, i+1, n-1);
+        }
+    }
+    fn select_tree(&self) -> &Tree {
+        let i = self.select_ind_bin(rnd_greedy_dbl());
+        return &self.tree_vec[i];
+    }
+}
+
+fn rnd_greedy_dbl() -> f64 {
+    let mut rng = rand::thread_rng();
+    let r = rng.gen::<f64>();
+
+    if CONTROL.GRc < 0.0001 {
+        return r;
+    }
+
+    if rng.gen_range(0..=9) > 1 {
+        // select from top set
+        return 1.0f64 - (CONTROL.GRc * r);
+    }
+    else {
+        // select from lower set
+        return (1.0f64 - CONTROL.GRc) * r;
+    }
+}
+
 pub struct Fitness {
     // Base values
     pub nfr: f64,

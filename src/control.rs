@@ -1,3 +1,8 @@
+#[cfg(not(gpopt_trail="los_altos"))]
+const CONTROL_M: usize = 1000;            /// SANTE FE (M)
+#[cfg(gpopt_trail="los_altos")]
+const CONTROL_M: usize = 2000;            /// LOS ALTOS (M)
+
 pub type TreeDepth = u16;
 
 #[allow(non_snake_case)]
@@ -29,7 +34,7 @@ pub struct Control {
 
 #[warn(non_snake_case)]
 pub const CONTROL: Control = Control {
-    M:                  1000,       // Number of individuals in each generation
+    M:                  CONTROL_M,  // Number of individuals in each generation
     G:                  51,         // Number of generations to run
     Di:                 6,          // Maximum depth of S Expressions for an initial tree
     Dc:                 17,         // Maximum depth of S Expressions for a created tree
