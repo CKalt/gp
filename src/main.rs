@@ -61,12 +61,15 @@ fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
 }
 
 fn gen_tree_full_method(depth: u16) -> Tree {
-    let mut root = FunctionNode::new_rnd();
+    let mut rng = rand::thread_rng();
+
+    let mut root = FunctionNode::new_rnd(&mut rng);
     gen_tree_full_method_r(&mut root, 2, depth);
     Tree::new(root)
 }
 
 fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) {
+    let mut rng = rand::thread_rng();
     if level >= depth {
         for i in 0..func_node.fnc.arity {
             let rnd_tref = Terminal::get_rnd_ref(); // Always a Terminal Node
@@ -76,7 +79,7 @@ fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) 
     else {
         let c_depth = level+1;
         for i in 0..func_node.fnc.arity {
-            let rnd_fn = FunctionNode::new_rnd(); // Always a Funciton Node
+            let rnd_fn = FunctionNode::new_rnd(&mut rng); // Always a Funciton Node
             let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
 
             match *node {
@@ -89,7 +92,8 @@ fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) 
 }
 
 fn gen_tree_grow_method(depth: u16) -> Tree {
-    let mut root = FunctionNode::new_rnd();
+    let mut rng = rand::thread_rng();
+    let mut root = FunctionNode::new_rnd(&mut rng);
     gen_tree_grow_method_r(&mut root, 2, depth);
 
     Tree::new(root)
