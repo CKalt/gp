@@ -17,12 +17,11 @@ fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
     trees.tree_vec.push(tree);
 }
 
-fn gen_tree(generate_method : GenerateMethod, d: u16) -> Tree {
-    let mut rng = rand::thread_rng();
-
+fn gen_tree(rng: &mut rand::rngs::ThreadRng, generate_method : GenerateMethod,
+        d: u16) -> Tree {
     match generate_method {
-        GenerateMethod::Full => gen_tree_full_method(&mut rng, d),
-        GenerateMethod::Grow => gen_tree_grow_method(&mut rng, d),
+        GenerateMethod::Full => gen_tree_full_method(rng, d),
+        GenerateMethod::Grow => gen_tree_grow_method(rng, d),
     }
 }
 
@@ -39,7 +38,8 @@ fn tree_match_exists(trees: &TreeSet, target_tree: &Tree) -> bool {
     return false;
 }
 
-fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
+fn create_unique_tree(rng: &mut rand::rngs::ThreadRng, trees: &TreeSet,
+        mut d: u16) -> Tree {
     let mut i = 1u16;
     let gen_method = 
         if (trees.tree_vec.len() % 2) == 0 {
@@ -49,7 +49,7 @@ fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
             GenerateMethod::Grow
         };
 
-    let mut t = gen_tree(gen_method, d);
+    let mut t = gen_tree(rng, gen_method, d);
 
     while tree_match_exists(trees, &t) {
         i += 1;
@@ -57,34 +57,34 @@ fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
             d += 1;
             i = 1;
         }
-        t = gen_tree(gen_method, d);
+        t = gen_tree(rng, gen_method, d);
     }
     return t;
 }
 
 fn gen_tree_full_method(rng: &mut rand::rngs::ThreadRng, depth: u16) -> Tree {
     let mut root = FunctionNode::new_rnd(rng);
-    gen_tree_full_method_r(&mut root, 2, depth);
+    gen_tree_full_method_r(rng, &mut root, 2, depth);
     Tree::new(root)
 }
 
-fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) {
-    let mut rng = rand::thread_rng();
+fn gen_tree_full_method_r(rng: &mut rand::rngs::ThreadRng,
+        func_node: &mut FunctionNode, level: u16, depth: u16) {
     if level >= depth {
         for i in 0..func_node.fnc.arity {
-            let rnd_tref = Terminal::get_rnd_ref(&mut rng); // Always a Terminal Node
+            let rnd_tref = Terminal::get_rnd_ref(rng); // Always a Terminal Node
             func_node.set_arg(i, TNode(rnd_tref));
         }
     }
     else {
         let c_depth = level+1;
         for i in 0..func_node.fnc.arity {
-            let rnd_fn = FunctionNode::new_rnd(&mut rng); // Always a Funciton Node
+            let rnd_fn = FunctionNode::new_rnd(rng); // Always a Funciton Node
             let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
 
             match *node {
                 FNode(ref mut fn_ref) =>
-                    gen_tree_full_method_r(fn_ref, c_depth, depth),
+                    gen_tree_full_method_r(rng, fn_ref, c_depth, depth),
                 _ => panic!("expected FunctionNode"),
             }
         }
@@ -118,7 +118,8 @@ fn gen_tree_grow_method_r(rng: &mut rand::rngs::ThreadRng,
     }
 }
 
-fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool,
+fn report_results(rng: &mut rand::rngs::ThreadRng, gen: u16,
+            trees: &mut TreeSet,header_need: &mut bool,
         n_pellets: &u16) -> () {
     if CONTROL.show_all_trees {
         println!("Generation {}", gen);
@@ -140,35 +141,35 @@ fn report_results(gen: u16, trees: &mut TreeSet, header_need: &mut bool,
         report_tree_result(best_tree, Some(i), Some(gen), trees.avg_raw_f);
     }
     if CONTROL.run_tests {
-        run_tests(trees);
+        run_tests(rng, trees);
     }
 }
 
 // rnd_internal_point - randomly decides whether to do crossover at an
 // internal point (function) or terminal based on control Pip value.
-fn rnd_internal_point() -> bool {
-    let mut rng = rand::thread_rng();
+fn rnd_internal_point(rng: &mut rand::rngs::ThreadRng) -> bool {
     let num: f64 = rng.gen_range(0.0..1.0);
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
 }
 
-fn perform_crossover(t1: &mut Tree, t2: &mut Tree) {
+fn perform_crossover(rng: &mut rand::rngs::ThreadRng,
+        t1: &mut Tree, t2: &mut Tree) {
     assert_ne!(t1.num_terminal_nodes, None);
     assert_ne!(t2.num_terminal_nodes, None);
 
     let swap_target1 : &mut Node =
-        if t1.num_function_nodes.unwrap() > 0 && rnd_internal_point() {
-            t1.get_rnd_function_node_ref()
+        if t1.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
+            t1.get_rnd_function_node_ref(rng)
         } else {
-            t1.get_rnd_terminal_node_ref()
+            t1.get_rnd_terminal_node_ref(rng)
         };
 
     let swap_target2 : &mut Node =
-        if t2.num_function_nodes.unwrap() > 0 && rnd_internal_point() {
-            t2.get_rnd_function_node_ref()
+        if t2.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
+            t2.get_rnd_function_node_ref(rng)
         } else {
-            t2.get_rnd_terminal_node_ref()
+            t2.get_rnd_terminal_node_ref(rng)
         };
 
     mem::swap(swap_target1, swap_target2);
@@ -178,7 +179,7 @@ fn new_tree_qualifies(_tree: &Tree) -> bool {
     true
 }
 
-fn create_initial_population() -> TreeSet {
+fn create_initial_population(rng: &mut rand::rngs::ThreadRng) -> TreeSet {
     // Following Koza's recipe, he calls "ramped half-and-half",
     // we will evenly produce population segments starting with 2
     // up to the maxium depth (CONTROL.Di) and alternate
@@ -191,14 +192,14 @@ fn create_initial_population() -> TreeSet {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize &&
               trees.tree_vec.len() < CONTROL.M {
-            let new_tree = create_unique_tree(&trees, d);
+            let new_tree = create_unique_tree(rng, &trees, d);
             push_tree(&mut trees, new_tree);
         }
     }
 
     // fill out to end in case there are "left-overs" due to rounding
     while trees.tree_vec.len() < CONTROL.M {
-        let new_tree = create_unique_tree(&trees, CONTROL.Di);
+        let new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
         push_tree(&mut trees, new_tree);
     }
     trees
@@ -214,7 +215,8 @@ fn run() -> Option<Tree> {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
 
-    let mut trees = create_initial_population();
+    let mut rng = rand::thread_rng();
+    let mut trees = create_initial_population(&mut rng);
     trees.count_nodes();
     let mut gen = 0u16;
     let mut header_need: bool = true;
@@ -227,7 +229,7 @@ fn run() -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-        report_results(gen, &mut trees, &mut header_need, &n_pellets);
+        report_results(&mut rng, gen, &mut trees, &mut header_need, &n_pellets);
 
         if gen >= CONTROL.G {
             break;
@@ -237,7 +239,7 @@ fn run() -> Option<Tree> {
         for i in (0..CONTROL.M).step_by(2) {
             if use_reproduction(i) {
                 // do reproduction
-                let mut t = trees.select_tree().clone();
+                let mut t = trees.select_tree(&mut rng).clone();
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
@@ -246,11 +248,11 @@ fn run() -> Option<Tree> {
                 // do crossover
                 let (mut nt1, mut nt2);
                 loop {
-                    let t1 = trees.select_tree();
-                    let t2 = trees.select_tree();
+                    let t1 = trees.select_tree(&mut rng);
+                    let t2 = trees.select_tree(&mut rng);
                     nt1 = t1.clone();
                     nt2 = t2.clone();
-                    perform_crossover(&mut nt1, &mut nt2);
+                    perform_crossover(&mut rng, &mut nt1, &mut nt2);
 
                     if new_tree_qualifies(&nt1) && new_tree_qualifies(&nt2) {
                         break;
@@ -280,19 +282,19 @@ fn run() -> Option<Tree> {
     }
 }
 
-fn run_tests(trees: &mut TreeSet) {
+fn run_tests(rng: &mut rand::rngs::ThreadRng, trees: &mut TreeSet) {
     trees.count_nodes();
     println!("Testing getRndFunctionIndex and getRndTerminalIndex");
     for i in 1..=10 {
         println!("=============\n| Trial {:3} |\n=============", i);
-        let t = trees.get_rnd_tree();
+        let t = trees.get_rnd_tree(rng);
         t.print();
 
-        let (fi, fnode) = t.get_rnd_function_node_ref_i();
+        let (fi, fnode) = t.get_rnd_function_node_ref_i(rng);
         println!("\n--------\nRnd fi={} Subtree -->\n", fi);
         fnode.print();
 
-        let tnode = t.get_rnd_terminal_node_ref();
+        let tnode = t.get_rnd_terminal_node_ref(rng);
         tnode.print();
         println!("\n--------");
     }
