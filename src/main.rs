@@ -18,9 +18,11 @@ fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
 }
 
 fn gen_tree(generate_method : GenerateMethod, d: u16) -> Tree {
+    let mut rng = rand::thread_rng();
+
     match generate_method {
-        GenerateMethod::Full => gen_tree_full_method(d),
-        GenerateMethod::Grow => gen_tree_grow_method(d),
+        GenerateMethod::Full => gen_tree_full_method(&mut rng, d),
+        GenerateMethod::Grow => gen_tree_grow_method(&mut rng, d),
     }
 }
 
@@ -60,10 +62,8 @@ fn create_unique_tree(trees: &TreeSet, mut d: u16) -> Tree {
     return t;
 }
 
-fn gen_tree_full_method(depth: u16) -> Tree {
-    let mut rng = rand::thread_rng();
-
-    let mut root = FunctionNode::new_rnd(&mut rng);
+fn gen_tree_full_method(rng: &mut rand::rngs::ThreadRng, depth: u16) -> Tree {
+    let mut root = FunctionNode::new_rnd(rng);
     gen_tree_full_method_r(&mut root, 2, depth);
     Tree::new(root)
 }
@@ -72,7 +72,7 @@ fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) 
     let mut rng = rand::thread_rng();
     if level >= depth {
         for i in 0..func_node.fnc.arity {
-            let rnd_tref = Terminal::get_rnd_ref(); // Always a Terminal Node
+            let rnd_tref = Terminal::get_rnd_ref(&mut rng); // Always a Terminal Node
             func_node.set_arg(i, TNode(rnd_tref));
         }
     }
@@ -91,29 +91,28 @@ fn gen_tree_full_method_r(func_node: &mut FunctionNode, level: u16, depth: u16) 
     }
 }
 
-fn gen_tree_grow_method(depth: u16) -> Tree {
-    let mut rng = rand::thread_rng();
-    let mut root = FunctionNode::new_rnd(&mut rng);
-    gen_tree_grow_method_r(&mut root, 2, depth);
+fn gen_tree_grow_method(rng: &mut rand::rngs::ThreadRng, depth: u16) -> Tree {
+    let mut root = FunctionNode::new_rnd(rng);
+    gen_tree_grow_method_r(rng, &mut root, 2, depth);
 
     Tree::new(root)
 }
     
-fn gen_tree_grow_method_r(func_node: &mut FunctionNode, level: u16,
-    depth: u16) {
+fn gen_tree_grow_method_r(rng: &mut rand::rngs::ThreadRng, 
+        func_node: &mut FunctionNode, level: u16, depth: u16) {
     if level >= depth {
         for i in 0..func_node.fnc.arity {
-            let rnd_tref = Terminal::get_rnd_ref(); // Always a Terminal Node
+            let rnd_tref = Terminal::get_rnd_ref(rng); // Always a Terminal Node
             func_node.set_arg(i, TNode(rnd_tref));
         }
     }
     else {
         let c_depth = level+1;
         for i in 0..func_node.fnc.arity {
-            let rnd_ft_node = Node::new_rnd(); // Either a Function or Terminal Node
+            let rnd_ft_node = Node::new_rnd(rng); // Either a Function or Terminal Node
             let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
             if let FNode(ref mut fn_ref) = node {
-                gen_tree_grow_method_r(fn_ref, c_depth, depth);
+                gen_tree_grow_method_r(rng, fn_ref, c_depth, depth);
             }
         }
     }

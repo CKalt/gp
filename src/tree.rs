@@ -18,8 +18,7 @@ pub enum Node {
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
 }
 impl Node {
-    pub fn new_rnd() -> Node {
-        let mut rng = rand::thread_rng();
+    pub fn new_rnd(rng: &mut rand::rngs::ThreadRng) -> Node {
         let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
         let r = rng.gen_range(0..num_ft);
         if r < CONTROL.num_terminals {
@@ -279,8 +278,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn get_rnd_ref() -> & 'static Terminal {
-        let mut rng = rand::thread_rng();
+    pub fn get_rnd_ref(rng: &mut rand::rngs::ThreadRng) -> & 'static Terminal {
         let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
         &TERMINAL[t_id as usize]
     }
