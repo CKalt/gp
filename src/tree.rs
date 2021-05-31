@@ -152,8 +152,7 @@ impl Node {
     /// It sets up the recursive call to find_terminal_node_ref_r.
     fn find_terminal_node_ref(tree: &mut Tree, ti: TreeNodeIndex) -> &mut Node {
         match tree.root {
-            TNode(_) => panic!(
-              "Invalid recursive attempt find a node for a single node root."),
+            TNode(_) => &mut tree.root,  // tree is just a node
             FNode(_) => {
                 let mut cur_ti: TreeNodeIndex = 0;
                 tree.root.find_terminal_node_ref_r(ti, &mut cur_ti).unwrap()
