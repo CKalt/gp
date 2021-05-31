@@ -145,14 +145,15 @@ impl RunContext {
             for x in 0..=RUN_CONTROL_MAX_X as usize {
                 print!("{}",
                     match self.grid[y][x] {
-                        Clear => ".",
-                        Food => "X",
-                        FoodEaten => "@",
-                        NoFoodFound => "O",
+                        Clear => ". ",
+                        Food => "X ",
+                        FoodEaten => "@ ",
+                        NoFoodFound => "O ",
                     });
             }
-            println!("-----------------------------------\n");
+            println!();
         }
+        println!("-----------------------------------\n");
     }
 }
 

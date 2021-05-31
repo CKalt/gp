@@ -75,6 +75,7 @@ impl Node {
             FNode(func_node) => {
                 println!("");
                 Node::print_tab(depth * 2);
+                print!("({}", func_node.fnc.name);
                 for node in &func_node.branch {
                     node.print_r(depth+1);
                 }
