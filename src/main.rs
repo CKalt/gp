@@ -236,13 +236,15 @@ fn run() -> Option<Tree> {
         }
 
         let mut trees2 = TreeSet::new();
-        for i in (0..CONTROL.M).step_by(2) {
+        let mut i: usize = 0;
+        while i < CONTROL.M {
             if use_reproduction(i) {
                 // do reproduction
                 let mut t = trees.select_tree(&mut rng).clone();
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
+                i += 1;  // inc for 1 new tree
             }
             else {
                 // do crossover
@@ -262,7 +264,8 @@ fn run() -> Option<Tree> {
                 nt1.count_nodes();
                 push_tree(&mut trees2, nt1);
 
-                if i+1 < CONTROL.M {
+                i += 2;     // inc for new 2 trees
+                if i < CONTROL.M {
                     nt2.clear_node_counts();
                     nt2.count_nodes();
                     push_tree(&mut trees2, nt2);

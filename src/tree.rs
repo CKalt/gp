@@ -69,6 +69,7 @@ impl Node {
     pub fn print(&self) {
         self.print_r(0)
     }
+    /// Print node recursively decending tree.
     fn print_r(&self, depth: TreeDepth) {
         match self {
             TNode(tn_ref) => print!(" {}", tn_ref.name),
@@ -89,7 +90,7 @@ impl Node {
                         }
                     }
                 }
-                println!(")")
+                print!(")")
             }
         }
     }
