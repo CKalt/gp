@@ -1,2 +1,7 @@
+# gpopt_rng := Thread | Seedable
 [build]
-rustflags = '--cfg gpopt_trail="los_altos" --cfg gpopt_select_method="fpb"'
+rustflags = """
+    --cfg gpopt_trail="los_altos"
+    --cfg gpopt_select_method="fpb"
+    --cfg gpopt_rng="Seedable"
+"""

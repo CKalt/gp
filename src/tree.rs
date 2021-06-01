@@ -3,6 +3,7 @@ use crate::gprun::*;
 use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
+use crate::gprng::GpRng;
 use Node::*;
 
 pub enum GpType {
@@ -18,7 +19,7 @@ pub enum Node {
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
 }
 impl Node {
-    pub fn new_rnd(rng: &mut rand::rngs::ThreadRng) -> Node {
+    pub fn new_rnd(rng: &mut GpRng) -> Node {
         let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
         let r = rng.gen_range(0..num_ft);
         if r < CONTROL.num_terminals {
@@ -279,7 +280,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-    pub fn get_rnd_ref(rng: &mut rand::rngs::ThreadRng) -> & 'static Terminal {
+    pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
         let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
         &TERMINAL[t_id as usize]
     }
@@ -382,7 +383,7 @@ impl FunctionNode {
     }
 
     /// create a new FunctionNode choosing which one at random.
-    pub fn new_rnd(rng: &mut rand::rngs::ThreadRng) -> FunctionNode {
+    pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions);
         FunctionNode::new(rand_fid)
     }
@@ -435,7 +436,7 @@ impl TreeSet {
         }
     }
 
-    pub fn get_rnd_tree(&mut self, rng: &mut rand::rngs::ThreadRng)
+    pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
         let rnd_index: usize = rng.gen_range(0..self.tree_vec.len());
         &mut self.tree_vec[rnd_index]
@@ -495,7 +496,7 @@ impl TreeSet {
 pub trait SelectMethod {
     fn select_ind_bin_r(&self, r: f64, lo: usize, hi: usize) -> usize;
     fn select_ind_bin(&self, r: f64) -> usize;
-    fn select_tree(&self, rng: &mut rand::rngs::ThreadRng) -> &Tree;
+    fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
 
 #[cfg(gpopt_select_method="fpb")]
@@ -544,13 +545,13 @@ impl SelectMethod for TreeSet {
             return self.select_ind_bin_r(r, i+1, n-1);
         }
     }
-    fn select_tree(&self, rng: &mut rand::rngs::ThreadRng) -> &Tree {
+    fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let i = self.select_ind_bin(rnd_greedy_dbl(rng));
         return &self.tree_vec[i];
     }
 }
 
-fn rnd_greedy_dbl(rng: &mut rand::rngs::ThreadRng) -> f64 {
+fn rnd_greedy_dbl(rng: &mut GpRng) -> f64 {
     let r = rng.gen::<f64>();
 
     if CONTROL.GRc < 0.0001 {
@@ -672,17 +673,17 @@ impl Tree {
         println!("");
     }
     pub fn get_rnd_function_node_ref_i(&mut self,
-            rng: &mut rand::rngs::ThreadRng)
+            rng: &mut GpRng)
         -> (TreeNodeIndex, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
         (fi, Node::find_function_node_ref(self, fi))
     }
     pub fn get_rnd_function_node_ref(&mut self,
-            rng: &mut rand::rngs::ThreadRng) -> &mut Node {
+            rng: &mut GpRng) -> &mut Node {
         let fi = self.get_rnd_function_index(rng);
         Node::find_function_node_ref(self, fi)
     }
-    fn get_rnd_function_index(&self, rng: &mut rand::rngs::ThreadRng)
+    fn get_rnd_function_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_fnodes = self
             .num_function_nodes
@@ -691,11 +692,11 @@ impl Tree {
         rng.gen_range(0..num_fnodes)
     }
     pub fn get_rnd_terminal_node_ref(&mut self,
-            rng: &mut rand::rngs::ThreadRng) -> &mut Node {
+            rng: &mut GpRng) -> &mut Node {
         let ti = self.get_rnd_terminal_index(rng);
         Node::find_terminal_node_ref(self, ti)
     }
-    fn get_rnd_terminal_index(&self, rng: &mut rand::rngs::ThreadRng)
+    fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_tnodes = self
             .num_terminal_nodes
