@@ -141,6 +141,7 @@ impl RunContext {
     }
     fn print_grid(&self, label: &str) {
         println!("{}", label);
+        println!("---------------------------------------------------------------------------------------");
         for y in 0..=RUN_CONTROL_MAX_Y as usize {
             for x in 0..=RUN_CONTROL_MAX_X as usize {
                 print!("{}",
@@ -153,7 +154,8 @@ impl RunContext {
             }
             println!();
         }
-        println!("-----------------------------------\n");
+        println!("---------------------------------------------------------------------------------------");
+
     }
 }
 
