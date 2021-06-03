@@ -2,6 +2,7 @@ mod gprun;
 mod tree;
 mod control;
 mod gprng;
+mod util;
 
 use gprun::*;
 use tree::*;
@@ -12,6 +13,13 @@ use rand::Rng;
 use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
+use util::*;
+
+#[cfg(gpopt_choice_logging="if")]
+fn choice_log(tp: u8, choice_value: &str) {
+    let msg = format!("{},{}", tp, choice_value);
+    append_line_to_file("choice.log", &msg);
+}
 
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
     let index = trees.tree_vec.len();
@@ -150,6 +158,15 @@ fn report_results(rng: &mut GpRng, gen: u16,
 
 // rnd_internal_point - randomly decides whether to do crossover at an
 // internal point (function) or terminal based on control Pip value.
+#[cfg(gpopt_choice_logging="if")]
+fn rnd_internal_point(rng: &mut GpRng) -> bool {
+    let num: f64 = rng.gen_range(0.0..1.0);
+    let result = num < CONTROL.Pip;
+    choice_log(1, if result { "1" } else { "0" });
+
+    result
+}
+#[cfg(gpopt_choice_logging="else")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
     let num: f64 = rng.gen_range(0.0..1.0);
 
@@ -307,6 +324,8 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 
 fn main() {
     init_run();
+    remove_file_if_exists("choice.log");
+
     let mut total_runs = 0i32;
     let mut rng = GpRngFactory::new();
     let mut winner = loop { // go until we have a winner
