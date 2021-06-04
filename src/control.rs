@@ -11,12 +11,12 @@ pub struct Control {
     pub G:   u16,               // Number of generations to run
     pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
     pub Dc:  TreeDepth,         // Maximum depth of S Expressions for a created tree
-    pub Pc:  f64,               // Probability of cross over
-    pub Pr:  f64,               // Probability of reproduction
-    pub Pip:  f64,              // Probability of cross over internal point
+    pub Pc:  f32,               // Probability of cross over
+    pub Pr:  f32,               // Probability of reproduction
+    pub Pip:  f32,              // Probability of cross over internal point
     pub num_functions:  u8,
     pub num_terminals:  u8,
-    pub GRc:  f64,              // Greedy C Value (Function of M)
+    pub GRc:  f32,              // Greedy C Value (Function of M)
                             // n   M     C   GRc 
                             // 0  <1000  -    -
                             // 0   1000  1   .32

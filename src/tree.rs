@@ -314,17 +314,17 @@ impl Terminal {
 static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
     Terminal {
         tid:  0u8,
-        name: "Move",
+        name: "move",
         code: move_ant,
     },
     Terminal {
         tid:  1u8,
-        name: "Left",
+        name: "left",
         code: left,
     },
     Terminal {
         tid:  2u8,
-        name: "Right",
+        name: "right",
         code: right,
     },
 ];
@@ -364,9 +364,10 @@ fn left(rc: &mut RunContext) -> GpType {
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
+
     let t = rc.ant_xd;
-    rc.ant_xd = -1 * rc.ant_yd;
-    rc.ant_yd = t;
+    rc.ant_xd = rc.ant_yd;
+    rc.ant_yd = -1 * t;
 
     return GpType::Continue;
 }
@@ -452,7 +453,7 @@ type TreeNodeIndex = u32;
 #[allow(dead_code)]
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
-    pub avg_raw_f:          f64,
+    pub avg_raw_f:          f32,
     pub tree_vec:       Vec<Tree>,
     tag_array:          [bool; CONTROL.M], // used for temporary individual state
                         // marking during tournament selection to insure
@@ -498,20 +499,32 @@ impl TreeSet {
     }
 
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
-        let mut sum_a = 0.0f64;
-        let mut sum_raw = 0.0f64;
+        let mut sum_a = 0.0f32;
+        let mut sum_raw = 0.0f32;
 
         for t in self.tree_vec.iter() {
             sum_a += t.fitness.a;
             sum_raw += t.fitness.raw;
         }
 
-        self.avg_raw_f = sum_raw / (self.tree_vec.len() as f64);
+        self.avg_raw_f = sum_raw / (self.tree_vec.len() as f32);
 
         for t in self.tree_vec.iter_mut() {
             t.fitness.n = t.fitness.a / sum_a;
+
+#[cfg(gpopt_trace="on")]
+            println!("tcid={}, hits={}, t.fitness.n={} a/sum_a={}/{} ", t.tcid, t.hits, t.fitness.n, t.fitness.a, sum_a);
+
+#[cfg(gpopt_trace="on")]
+            if t.tcid == 2 {
+                t.print();
+                exec_single_tree(t);
+            }
         }
 
+#[cfg(gpopt_trace="on")]
+         panic!("pause");
+  
         self
     }
 
@@ -523,7 +536,7 @@ impl TreeSet {
     }
 
     fn assign_nf_rankings(&mut self) -> &mut TreeSet {
-        let mut nfr = 0.0f64;
+        let mut nfr = 0.0f32;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
             nfr += t.fitness.n;
             t.fitness.nfr = nfr;
@@ -535,14 +548,14 @@ impl TreeSet {
 
 #[cfg(gpopt_select_method="fpb")]
 pub trait SelectMethod {
-    fn select_ind_bin_r(&self, r: f64, lo: usize, hi: usize) -> usize;
-    fn select_ind_bin(&self, r: f64) -> usize;
+    fn select_ind_bin_r(&self, r: f32, lo: usize, hi: usize) -> usize;
+    fn select_ind_bin(&self, r: f32) -> usize;
     fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
-    fn select_ind_bin_r(&self, r: f64, lo: usize, hi: usize) -> usize {
+    fn select_ind_bin_r(&self, r: f32, lo: usize, hi: usize) -> usize {
         let i = lo + (hi-lo)/2;
         let base = 
             if i > 0 { self.tree_vec[i-1].fitness.nfr } else { 0.0 };
@@ -567,7 +580,7 @@ impl SelectMethod for TreeSet {
     /// individual.  (This requires that `self.tree_vec` is sorted by
     /// normalized fitness measure (`fitness.nfr`)
     ///
-    fn select_ind_bin(&self, r: f64) -> usize {
+    fn select_ind_bin(&self, r: f32) -> usize {
         let n = self.tree_vec.len();
         assert_ne!(n, 0);
 
@@ -599,8 +612,8 @@ impl SelectMethod for TreeSet {
     }
 }
 
-fn rnd_greedy_dbl(rng: &mut GpRng) -> f64 {
-    let r = rng.gen::<f64>();  // Note optional choice logging for this function
+fn rnd_greedy_dbl(rng: &mut GpRng) -> f32 {
+    let r = rng.gen::<f32>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
@@ -611,20 +624,20 @@ fn rnd_greedy_dbl(rng: &mut GpRng) -> f64 {
 
     if rng.gen_range(0..=9) > 1 {
         // select from top set
-        return 1.0f64 - (CONTROL.GRc * r);
+        return 1.0f32 - (CONTROL.GRc * r);
     }
     else {
         // select from lower set
-        return (1.0f64 - CONTROL.GRc) * r;
+        return (1.0f32 - CONTROL.GRc) * r;
     }
 }
 
 pub struct Fitness {
     // Base values
-    pub nfr: f64,
-    pub n:   f64,
-    pub a:   f64,
-    pub raw: f64,           // note that if run Fitness uses integer type
+    pub nfr: f32,
+    pub n:   f32,
+    pub a:   f32,
+    pub raw: f32,           // note that if run Fitness uses integer type
                         // and then this just contains a converted copy
 
     // Ren Values
@@ -711,7 +724,7 @@ impl Tree {
 
         // average over generation
         f.s = rc.n_pellets - rc.eat_count;
-        f.a = 1.0f64 / (1.0f64 + (f.s as f64));
+        f.a = 1.0f32 / (1.0f32 + (f.s as f32));
 
         return f.s == 0;
     }
@@ -766,7 +779,7 @@ impl Tree {
             .num_terminal_nodes
             .expect("Tree does not have count of terminal nodes. ");
 
-        let result = rng.gen_range(0..num_tnodes)
+        let result = rng.gen_range(0..num_tnodes);
         choice_log(8, &result.to_string());
         result
     }

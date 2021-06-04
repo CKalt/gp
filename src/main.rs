@@ -21,7 +21,7 @@ fn choice_log(tp: u8, choice_value: &str) {
     append_line_to_file("choice.log", &msg);
 }
 
-fn push_tree(trees: &mut TreeSet, mut tree: Tree) -> () {
+fn push_tree(trees: &mut TreeSet, mut tree: Tree) {
     let index = trees.tree_vec.len();
     assert!(index < CONTROL.M);
     tree.tcid = index;
@@ -160,7 +160,7 @@ fn report_results(rng: &mut GpRng, gen: u16,
 // internal point (function) or terminal based on control Pip value.
 #[cfg(gpopt_choice_logging="if")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
-    let num: f64 = rng.gen_range(0.0..1.0);
+    let num: f32 = rng.gen_range(0.0..1.0);
     let result = num < CONTROL.Pip;
     choice_log(1, if result { "1" } else { "0" });
 
@@ -168,7 +168,7 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
 }
 #[cfg(gpopt_choice_logging="else")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
-    let num: f64 = rng.gen_range(0.0..1.0);
+    let num: f32 = rng.gen_range(0.0..1.0);
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
 }
@@ -205,15 +205,17 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
     let mut trees = TreeSet::new();
-    let seg = CONTROL.M as f64 / (CONTROL.Di as f64 - 1.0f64);
-    let mut bdr = 0.0f64;
+    let seg = CONTROL.M as f32 / (CONTROL.Di as f32 - 1.0f32);
+    let mut bdr = 0.0f32;
 
     for d in 2..=CONTROL.Di {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize &&
               trees.tree_vec.len() < CONTROL.M {
             let new_tree = create_unique_tree(rng, &trees, d);
+
             push_tree(&mut trees, new_tree);
+trees.tree_vec[trees.tree_vec.len()-1].print();
         }
     }
 
@@ -221,12 +223,13 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     while trees.tree_vec.len() < CONTROL.M {
         let new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
         push_tree(&mut trees, new_tree);
+trees.tree_vec[trees.tree_vec.len()-1].print();
     }
     trees
 }
 
 fn use_reproduction(index: usize ) -> bool {
-    let result = (index as f64 / CONTROL.M as f64) < CONTROL.Pr;
+    let result = (index as f32 / CONTROL.M as f32) < CONTROL.Pr;
     result
 }
 

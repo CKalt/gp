@@ -159,9 +159,7 @@ impl RunContext {
     }
 }
 
-pub fn init_run() {
-    println!("init_run not implemented");
-}
+pub fn init_run() { }
 
 pub fn exec_trees(mut trees: &mut TreeSet) -> u16 {
     let mut rc = RunContext::new();
@@ -196,7 +194,7 @@ pub fn exec_single_tree(tree : &mut Tree) {
     rc.print_grid("After Run");
 }
 
-pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: f64) {
+pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: f32) {
     assert_eq!(i, t.tfid);
     let f = &t.fitness;
     let tfid = if let Some(num) = t.tfid { num } else { 0 };
