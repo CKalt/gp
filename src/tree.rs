@@ -512,19 +512,23 @@ impl TreeSet {
         for t in self.tree_vec.iter_mut() {
             t.fitness.n = t.fitness.a / sum_a;
 
-#[cfg(gpopt_trace="on")]
-            println!("tcid={}, hits={}, t.fitness.n={} a/sum_a={}/{} ", t.tcid, t.hits, t.fitness.n, t.fitness.a, sum_a);
+            #[cfg(gpopt_trace="on")]
+            {
+                println!("tcid={}, hits={}, t.fitness.n={} a/sum_a={}/{} ", t.tcid,
+                    t.hits, t.fitness.n, t.fitness.a, sum_a);
 
-#[cfg(gpopt_trace="on")]
-            if t.tcid == 2 {
-                t.print();
-                exec_single_tree(t);
+                if t.tcid == 2 {
+                    t.print();
+                    exec_single_tree(t);
+                }
             }
+
         }
 
-#[cfg(gpopt_trace="on")]
-         panic!("pause");
-  
+//        #[cfg(gpopt_trace="on")]
+//        panic!("pause");
+
+        #[allow(unreachable_code)]
         self
     }
 

@@ -3,3 +3,8 @@ ant
 build.log
 play
 .idea
+choice.log
+foo
+gp.out
+src/choice.log
+src/gp.out

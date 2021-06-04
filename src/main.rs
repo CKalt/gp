@@ -215,7 +215,9 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
             let new_tree = create_unique_tree(rng, &trees, d);
 
             push_tree(&mut trees, new_tree);
-trees.tree_vec[trees.tree_vec.len()-1].print();
+
+            #[cfg(gpopt_trace="on")]
+            trees.tree_vec[trees.tree_vec.len()-1].print();
         }
     }
 
@@ -223,7 +225,9 @@ trees.tree_vec[trees.tree_vec.len()-1].print();
     while trees.tree_vec.len() < CONTROL.M {
         let new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
         push_tree(&mut trees, new_tree);
-trees.tree_vec[trees.tree_vec.len()-1].print();
+            
+        #[cfg(gpopt_trace="on")]
+        trees.tree_vec[trees.tree_vec.len()-1].print();
     }
     trees
 }
