@@ -509,24 +509,23 @@ impl TreeSet {
 
         self.avg_raw_f = sum_raw / (self.tree_vec.len() as f32);
 
-        for t in self.tree_vec.iter_mut() {
+        for (i,t) in self.tree_vec.iter_mut().enumerate() {
             t.fitness.n = t.fitness.a / sum_a;
 
             #[cfg(gpopt_trace="on")]
             {
-                println!("tcid={}, hits={}, t.fitness.n={} a/sum_a={}/{} ", t.tcid,
-                    t.hits, t.fitness.n, t.fitness.a, sum_a);
+                println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={} a={} sum_a={}",
+                    i, t.tcid, t.hits, t.fitness.n, t.fitness.a, sum_a);
 
-                if t.tcid == 2 {
-                    t.print();
-                    exec_single_tree(t);
-                }
+//                if t.tcid == 2 {
+//                    t.print();
+//                    exec_single_tree(t);
+//                }
             }
-
         }
 
-//        #[cfg(gpopt_trace="on")]
-//        panic!("pause");
+        #[cfg(gpopt_trace="on")]
+        panic!("pause");
 
         #[allow(unreachable_code)]
         self
