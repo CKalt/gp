@@ -129,11 +129,10 @@ fn gen_tree_grow_method_r(rng: &mut GpRng,
     }
 }
 
-fn report_results(rng: &mut GpRng, gen: u16,
-            trees: &mut TreeSet,header_need: &mut bool,
+fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         n_pellets: &u16) -> () {
     if CONTROL.show_all_trees {
-        println!("Generation {}", gen);
+        println!("Generation {}", trees.gen);
         trees.print();
     }
     if CONTROL.show_all_tree_results {
@@ -144,12 +143,12 @@ fn report_results(rng: &mut GpRng, gen: u16,
     }
     if CONTROL.show_best_tree_results {
         if *header_need {
-            tree_result_header(Some(gen), n_pellets);
+            tree_result_header(Some(trees.gen), n_pellets);
             *header_need = false;
         }
         let i = trees.tree_vec.len()-1;
         let best_tree = &trees.tree_vec[i];
-        report_tree_result(best_tree, Some(i), Some(gen), trees.avg_raw_f);
+        report_tree_result(best_tree, Some(i), Some(trees.gen), trees.avg_raw_f);
     }
     if CONTROL.run_tests {
         run_tests(rng, trees);
@@ -204,7 +203,7 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     // we will evenly produce population segments starting with 2
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
-    let mut trees = TreeSet::new();
+    let mut trees = TreeSet::new(0);
     let seg = CONTROL.M as GpFloat / (CONTROL.Di as GpFloat - 1.0);
     let mut bdr = 0.0;
 
@@ -244,9 +243,9 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
 
     let mut trees = create_initial_population(rng);
     trees.count_nodes();
-    let mut gen = 0u16;
+    trees.gen = 0u16;
     let mut header_need: bool = true;
-    while gen <= CONTROL.G && trees.winning_index == None {
+    while trees.gen <= CONTROL.G && trees.winning_index == None {
         let n_pellets = exec_trees(&mut trees);
         if trees.winning_index != None {
             break;
@@ -255,13 +254,21 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-        report_results(rng, gen, &mut trees, &mut header_need, &n_pellets);
+        #[cfg(gpopt_trace="on")]
+        if trees.gen == 1 {
+            panic!("pause");
+        }
+        else {
+            println!("at pause point gen={} skipping until gen=1 here.", trees.gen);
+        }
 
-        if gen >= CONTROL.G {
+        report_results(rng, &mut trees, &mut header_need, &n_pellets);
+
+        if trees.gen >= CONTROL.G {
             break;
         }
 
-        let mut trees2 = TreeSet::new();
+        let mut trees2 = TreeSet::new(trees.gen);
         let mut i: usize = 0;
         while i < CONTROL.M {
             if use_reproduction(i) {
@@ -299,7 +306,7 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
             }
         }
         trees = trees2;
-        gen += 1;
+        trees.gen += 1;
     }
 
     match trees.winning_index {

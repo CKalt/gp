@@ -459,14 +459,16 @@ pub struct TreeSet {
                         // marking during tournament selection to insure
                         // unique individuals compete by avoiding duplicate
                         // usage.
+    pub gen: u16,       // current generation for treeset
 }
 impl TreeSet {
-    pub fn new() -> TreeSet {
+    pub fn new(gen: u16) -> TreeSet {
         TreeSet {
             winning_index:  None,
             avg_raw_f:      0.0,
             tree_vec:       Vec::new(), // TODO: for better performance change to array (must find good init method)
-            tag_array:      [false; CONTROL.M], // This is easy to init
+            tag_array:      [false; CONTROL.M], // This is easy to init,
+            gen:            gen
         }
     }
 
@@ -525,9 +527,6 @@ impl TreeSet {
 //                }
             }
         }
-
-        #[cfg(gpopt_trace="on")]
-        panic!("pause");
 
         #[allow(unreachable_code)]
         self
