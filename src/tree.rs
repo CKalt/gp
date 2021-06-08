@@ -510,7 +510,7 @@ impl TreeSet {
         }
 
         self.avg_raw_f = Fitness::int_to_float(sum_raw / (self.tree_vec.len() as GpInt));
-
+            
         let flt_sum_a = Fitness::int_to_float(sum_a);
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
             let dbl_n = t.fitness.a() / flt_sum_a;

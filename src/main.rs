@@ -251,6 +251,9 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
             break;
         }
 
+        #[cfg(gpopt_trace="on")]
+        println!("TP0:trace log for gen={}", trees.gen);
+
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
