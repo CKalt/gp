@@ -1,3 +1,5 @@
+use crate::tree::GpFloat;
+
 #[cfg(not(gpopt_trail="los_altos"))]
 const CONTROL_M: usize = 1000;            /// SANTE FE (M)
 #[cfg(gpopt_trail="los_altos")]
@@ -11,12 +13,12 @@ pub struct Control {
     pub G:   u16,               // Number of generations to run
     pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
     pub Dc:  TreeDepth,         // Maximum depth of S Expressions for a created tree
-    pub Pc:  f32,               // Probability of cross over
-    pub Pr:  f32,               // Probability of reproduction
-    pub Pip:  f32,              // Probability of cross over internal point
+    pub Pc:  GpFloat,               // Probability of cross over
+    pub Pr:  GpFloat,               // Probability of reproduction
+    pub Pip:  GpFloat,              // Probability of cross over internal point
     pub num_functions:  u8,
     pub num_terminals:  u8,
-    pub GRc:  f32,              // Greedy C Value (Function of M)
+    pub GRc:  GpFloat,              // Greedy C Value (Function of M)
                             // n   M     C   GRc 
                             // 0  <1000  -    -
                             // 0   1000  1   .32

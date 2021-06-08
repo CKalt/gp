@@ -1,6 +1,7 @@
 use crate::tree::Tree;
 use crate::tree::TreeSet;
 use crate::tree::exec_node;
+use crate::tree::GpFloat;
 
 /// RunControl defines parameters controlling the running of individuals.
 pub struct RunControl {
@@ -194,16 +195,16 @@ pub fn exec_single_tree(tree : &mut Tree) {
     rc.print_grid("After Run");
 }
 
-pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: f32) {
+pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: GpFloat) {
     assert_eq!(i, t.tfid);
     let f = &t.fitness;
     let tfid = if let Some(num) = t.tfid { num } else { 0 };
     if let Some(gen) = opt_gen {
         println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                 gen, tfid, t.tcid, t.hits, f.r, f.s, f.a, f.n, f.nfr, avg_raw_f);
+                 gen, tfid, t.tcid, t.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
     } else {
         println!("{:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                tfid, t.tcid, t.hits, f.r, f.s, f.a, f.n, f.nfr, avg_raw_f);
+                tfid, t.tcid, t.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
     }
 }
 

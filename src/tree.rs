@@ -453,7 +453,7 @@ type TreeNodeIndex = u32;
 #[allow(dead_code)]
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
-    pub avg_raw_f:          f32,
+    pub avg_raw_f:      GpFloat,
     pub tree_vec:       Vec<Tree>,
     tag_array:          [bool; CONTROL.M], // used for temporary individual state
                         // marking during tournament selection to insure
@@ -499,23 +499,25 @@ impl TreeSet {
     }
 
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
-        let mut sum_a = 0.0f32;
-        let mut sum_raw = 0.0f32;
+        let mut sum_a: GpInt = 0;
+        let mut sum_raw: GpInt = 0;
 
         for t in self.tree_vec.iter() {
-            sum_a += t.fitness.a;
-            sum_raw += t.fitness.raw;
+            sum_a += t.fitness.lng_a;
+            sum_raw += t.fitness.lng_raw;
         }
 
-        self.avg_raw_f = sum_raw / (self.tree_vec.len() as f32);
+        self.avg_raw_f = Fitness::int_to_float(sum_raw / (self.tree_vec.len() as GpInt));
 
+        let flt_sum_a = Fitness::int_to_float(sum_a);
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
-            t.fitness.n = t.fitness.a / sum_a;
+            let dbl_n = t.fitness.a() / flt_sum_a;
+            t.fitness.lng_n = Fitness::float_to_int(dbl_n);
 
             #[cfg(gpopt_trace="on")]
             {
                 println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={} a={} sum_a={}",
-                    i, t.tcid, t.hits, t.fitness.n, t.fitness.a, sum_a);
+                    i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
 
 //                if t.tcid == 2 {
 //                    t.print();
@@ -533,16 +535,16 @@ impl TreeSet {
 
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
         self.tree_vec
-            .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
+            .sort_by(|a, b| a.fitness.lng_n.partial_cmp(&b.fitness.lng_n).unwrap());
             
         self.assign_nf_rankings()
     }
 
     fn assign_nf_rankings(&mut self) -> &mut TreeSet {
-        let mut nfr = 0.0f32;
+        let mut nfr: GpInt = 0;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
-            nfr += t.fitness.n;
-            t.fitness.nfr = nfr;
+            nfr += t.fitness.lng_n;
+            t.fitness.lng_nfr = nfr;
             t.tfid = Some(i);
         }
         self
@@ -551,19 +553,19 @@ impl TreeSet {
 
 #[cfg(gpopt_select_method="fpb")]
 pub trait SelectMethod {
-    fn select_ind_bin_r(&self, r: f32, lo: usize, hi: usize) -> usize;
-    fn select_ind_bin(&self, r: f32) -> usize;
+    fn select_ind_bin_r(&self, r: GpInt, lo: usize, hi: usize) -> usize;
+    fn select_ind_bin(&self, r: GpInt) -> usize;
     fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
-    fn select_ind_bin_r(&self, r: f32, lo: usize, hi: usize) -> usize {
+    fn select_ind_bin_r(&self, r: GpInt, lo: usize, hi: usize) -> usize {
         let i = lo + (hi-lo)/2;
-        let base = 
-            if i > 0 { self.tree_vec[i-1].fitness.nfr } else { 0.0 };
+        let base: GpInt = 
+            if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
 
-        if base <= r && r <= self.tree_vec[i].fitness.nfr {
+        if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
             return i;
         }
 
@@ -583,15 +585,15 @@ impl SelectMethod for TreeSet {
     /// individual.  (This requires that `self.tree_vec` is sorted by
     /// normalized fitness measure (`fitness.nfr`)
     ///
-    fn select_ind_bin(&self, r: f32) -> usize {
+    fn select_ind_bin(&self, r: GpInt) -> usize {
         let n = self.tree_vec.len();
         assert_ne!(n, 0);
 
         let i = n/2 - 1;
-        let base = 
-            if i > 0 { self.tree_vec[i-1].fitness.nfr } else { 0.0 };
+        let base: GpInt = 
+            if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
 
-        if base <= r && r <= self.tree_vec[i].fitness.nfr {
+        if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
             return i;
         }
 
@@ -604,43 +606,45 @@ impl SelectMethod for TreeSet {
     }
 #[cfg(gpopt_choice_logging="if")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
-        let i = self.select_ind_bin(rnd_greedy_dbl(rng));
+        let i = self.select_ind_bin(rnd_greedy_val(rng));
         choice_log(6, &i.to_string());
         return &self.tree_vec[i];
     }
 #[cfg(gpopt_choice_logging="else")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
-        let i = self.select_ind_bin(rnd_greedy_dbl(rng));
+        let i = self.select_ind_bin(rnd_greedy_val(rng));
         return &self.tree_vec[i];
     }
 }
 
-fn rnd_greedy_dbl(rng: &mut GpRng) -> f32 {
-    let r = rng.gen::<f32>();  // Note optional choice logging for this function
+fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
+    let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
 
-    if CONTROL.GRc < 0.0001 {
-        return r;
-    }
-
-    if rng.gen_range(0..=9) > 1 {
-        // select from top set
-        return 1.0f32 - (CONTROL.GRc * r);
-    }
-    else {
-        // select from lower set
-        return (1.0f32 - CONTROL.GRc) * r;
-    }
+    let dbl_val: GpFloat = 
+        if CONTROL.GRc < 0.0001 {
+            r
+        } else if rng.gen_range(0..=9) > 1 {
+            // select from top set
+            1.0 - (CONTROL.GRc * r)
+        } else {
+            // select from lower set
+            (1.0 - CONTROL.GRc) * r
+        };
+    Fitness::float_to_int(dbl_val)
 }
 
+type GpInt = i64;
+pub type GpFloat = f64;
+const DL_SHIFT: GpFloat = 1000000000.0;
 pub struct Fitness {
-    // Base values
-    pub nfr: f32,
-    pub n:   f32,
-    pub a:   f32,
-    pub raw: f32,           // note that if run Fitness uses integer type
+    // Base values - real values are stored after multiplying by DL_SHIFT
+    pub lng_nfr: GpInt,
+    pub lng_n:   GpInt,
+    pub lng_a:   GpInt,
+    pub lng_raw: GpInt,   // note that if run Fitness uses integer type
                         // and then this just contains a converted copy
 
     // Ren Values
@@ -650,13 +654,33 @@ pub struct Fitness {
 impl Fitness {
     fn new() -> Fitness {
         Fitness {
-            nfr: 0.0,
-            n:   0.0,
-            a:   0.0,
-            raw: 0.0,
+            lng_nfr: 0,
+            lng_n:   0,
+            lng_a:   0,
+            lng_raw: 0,
             r: 0,
             s: 0,
         }
+    }
+    #[inline(always)]
+    pub fn int_to_float(val: GpInt) -> GpFloat {
+        (val as GpFloat) / DL_SHIFT
+    }
+    #[inline(always)]
+    pub fn float_to_int(val: GpFloat) -> GpInt {
+        (DL_SHIFT * val) as GpInt
+    }
+    #[inline(always)]
+    pub fn nfr(&self) -> GpFloat {
+        Self::int_to_float(self.lng_nfr)
+    }
+    #[inline(always)]
+    pub fn n(&self) -> GpFloat {
+        Self::int_to_float(self.lng_n)
+    }
+    #[inline(always)]
+    pub fn a(&self) -> GpFloat {
+        Self::int_to_float(self.lng_a)
     }
 }
 
@@ -720,14 +744,14 @@ impl Tree {
         self.hits = f.r as u32;
 
         // init fitness "base" values
-        f.n = -1.0;
-        f.a = -1.0;
-        f.nfr = -1.0;
-        f.raw = f.r.into();
+        f.lng_n = -1;
+        f.lng_a = -1;
+        f.lng_nfr = -1;
+        f.lng_raw = f.r.into();
 
         // average over generation
         f.s = rc.n_pellets - rc.eat_count;
-        f.a = 1.0f32 / (1.0f32 + (f.s as f32));
+        f.lng_a = Fitness::float_to_int(1.0 / (1.0 + (f.s as GpFloat)));
 
         return f.s == 0;
     }

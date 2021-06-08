@@ -160,7 +160,7 @@ fn report_results(rng: &mut GpRng, gen: u16,
 // internal point (function) or terminal based on control Pip value.
 #[cfg(gpopt_choice_logging="if")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
-    let num: f32 = rng.gen_range(0.0..1.0);
+    let num: GpFloat = rng.gen_range(0.0..1.0);
     let result = num < CONTROL.Pip;
     choice_log(1, if result { "1" } else { "0" });
 
@@ -168,7 +168,7 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
 }
 #[cfg(gpopt_choice_logging="else")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
-    let num: f32 = rng.gen_range(0.0..1.0);
+    let num: GpFloat = rng.gen_range(0.0..1.0);
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
 }
@@ -205,8 +205,8 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     // up to the maxium depth (CONTROL.Di) and alternate
     // between Full Method and Grow Method for S Expressions.
     let mut trees = TreeSet::new();
-    let seg = CONTROL.M as f32 / (CONTROL.Di as f32 - 1.0f32);
-    let mut bdr = 0.0f32;
+    let seg = CONTROL.M as GpFloat / (CONTROL.Di as GpFloat - 1.0);
+    let mut bdr = 0.0;
 
     for d in 2..=CONTROL.Di {
         bdr += seg;
@@ -233,7 +233,7 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
 }
 
 fn use_reproduction(index: usize ) -> bool {
-    let result = (index as f32 / CONTROL.M as f32) < CONTROL.Pr;
+    let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
     result
 }
 
