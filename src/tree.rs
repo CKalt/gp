@@ -518,7 +518,7 @@ impl TreeSet {
 
             #[cfg(gpopt_trace="on")]
             {
-                println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={} a={} sum_a={}",
+                println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
                     i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
 
 //                if t.tcid == 2 {

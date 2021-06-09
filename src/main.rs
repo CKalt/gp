@@ -257,13 +257,13 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-        #[cfg(gpopt_trace="on")]
-        if trees.gen == 1 {
-            panic!("pause");
-        }
-        else {
-            println!("at pause point gen={} skipping until gen=1 here.", trees.gen);
-        }
+//        #[cfg(gpopt_trace="on")]
+//        if trees.gen == 1 {
+//            panic!("pause");
+//        }
+//        else {
+//            println!("at pause point gen={} skipping until gen=1 here.", trees.gen);
+//        }
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
@@ -272,15 +272,13 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
         }
 
         let mut trees2 = TreeSet::new(trees.gen);
-        let mut i: usize = 0;
-        while i < CONTROL.M {
-            if use_reproduction(i) {
+        while trees2.tree_vec.len() < CONTROL.M {
+            if use_reproduction(trees2.tree_vec.len()) {
                 // do reproduction
                 let mut t = trees.select_tree(rng).clone();
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
-                i += 1;  // inc for 1 new tree
             }
             else {
                 // do crossover
@@ -300,14 +298,14 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
                 nt1.count_nodes();
                 push_tree(&mut trees2, nt1);
 
-                i += 2;     // inc for new 2 trees
-                if i < CONTROL.M {
+                if trees2.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
                     nt2.count_nodes();
                     push_tree(&mut trees2, nt2);
                 }
             }
         }
+        assert_eq!(trees2.tree_vec.len(), CONTROL.M);
         trees = trees2;
         trees.gen += 1;
     }
