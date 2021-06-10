@@ -509,14 +509,15 @@ impl TreeSet {
             sum_raw += t.fitness.lng_raw;
         }
 
-        self.avg_raw_f = Fitness::int_to_float(sum_raw / (self.tree_vec.len() as GpInt));
-            
+        let int_avg_raw_f: GpInt = sum_raw / (self.tree_vec.len() as GpInt);
+        self.avg_raw_f = Fitness::int_to_float(int_avg_raw_f);
         let flt_sum_a = Fitness::int_to_float(sum_a);
+            
+        #[cfg(gpopt_trace="on")]
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
             let dbl_n = t.fitness.a() / flt_sum_a;
             t.fitness.lng_n = Fitness::float_to_int(dbl_n);
 
-            #[cfg(gpopt_trace="on")]
             {
                 println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
                     i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
@@ -527,6 +528,11 @@ impl TreeSet {
 //                }
             }
         }
+        #[cfg(gpopt_trace="off")]
+        for t in self.tree_vec.iter_mut() {
+            let dbl_n = t.fitness.a() / flt_sum_a;
+            t.fitness.lng_n = Fitness::float_to_int(dbl_n);
+        }
 
         #[allow(unreachable_code)]
         self
@@ -536,10 +542,10 @@ impl TreeSet {
         self.tree_vec
             .sort_by(|a, b| a.fitness.lng_n.partial_cmp(&b.fitness.lng_n).unwrap());
             
-        self.assign_nf_rankings()
+        self.assign_nfr_rankings()
     }
 
-    fn assign_nf_rankings(&mut self) -> &mut TreeSet {
+    fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
         let mut nfr: GpInt = 0;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
             nfr += t.fitness.lng_n;
@@ -666,8 +672,9 @@ impl Fitness {
         (val as GpFloat) / DL_SHIFT
     }
     #[inline(always)]
-    pub fn float_to_int(val: GpFloat) -> GpInt {
-        (DL_SHIFT * val) as GpInt
+    pub fn float_to_int(fval: GpFloat) -> GpInt {
+        let rfval: GpFloat = fval + 0.5; // rounded fval
+        (DL_SHIFT * rfval) as GpInt
     }
     #[inline(always)]
     pub fn nfr(&self) -> GpFloat {
