@@ -13,12 +13,27 @@ use rand::Rng;
 use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
+    
+#[cfg(gpopt_choice_logging="if")]
 use util::*;
 
 #[cfg(gpopt_choice_logging="if")]
+const CHOICE_LOG_FNAME: &str = "choice.log";
+
+#[cfg(gpopt_choice_logging="if")]
+const CHOICE_LOG_CNT_FNAME: &str = "choice.counter";
+
+#[cfg(gpopt_choice_logging="if")]
+fn init_choice_log() {
+    remove_file_if_exists(CHOICE_LOG_FNAME);
+    reset_file_counter(CHOICE_LOG_CNT_FNAME);
+}
+
+#[cfg(gpopt_choice_logging="if")]
 fn choice_log(tp: u8, choice_value: &str) {
-    let msg = format!("{},{}", tp, choice_value);
-    append_line_to_file("choice.log", &msg);
+    let counter = inc_file_counter(CHOICE_LOG_CNT_FNAME);
+    let msg = format!("{},{},{}", counter, tp, choice_value);
+    append_line_to_file(CHOICE_LOG_FNAME, &msg);
 }
 
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) {
@@ -267,6 +282,10 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
+if trees.gen == 8 {
+    panic!("pause gen 8");
+}
+
         if trees.gen >= CONTROL.G {
             break;
         }
@@ -339,7 +358,8 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 
 fn main() {
     init_run();
-    remove_file_if_exists("choice.log");
+    #[cfg(gpopt_choice_logging="if")]
+    init_choice_log();
 
     let mut total_runs = 0i32;
     let mut rng = GpRngFactory::new();
