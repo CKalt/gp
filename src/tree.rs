@@ -673,8 +673,8 @@ impl Fitness {
     }
     #[inline(always)]
     pub fn float_to_int(fval: GpFloat) -> GpInt {
-        let rfval: GpFloat = fval + 0.5; // rounded fval
-        (DL_SHIFT * rfval) as GpInt
+        let rfval: GpFloat = (DL_SHIFT * fval) + 0.5; // rounded fval
+        rfval as GpInt
     }
     #[inline(always)]
     pub fn nfr(&self) -> GpFloat {
@@ -753,11 +753,12 @@ impl Tree {
         f.lng_n = -1;
         f.lng_a = -1;
         f.lng_nfr = -1;
-        f.lng_raw = f.r.into();
+        f.lng_raw = f.r as GpInt * DL_SHIFT as GpInt;
 
         // average over generation
         f.s = rc.n_pellets - rc.eat_count;
-        f.lng_a = Fitness::float_to_int(1.0 / (1.0 + (f.s as GpFloat)));
+        let a = 1.0 / (1.0 + (f.s as GpFloat));
+        f.lng_a = Fitness::float_to_int(a);
 
         return f.s == 0;
     }
