@@ -769,9 +769,13 @@ impl Tree {
         {
             let count = get_log_count();
 
-            println!("-log={}------tree ({:?}/{})----------------",
+            println!("-log={:10}------tree ({:?}/{})----------------",
                 count, self.tfid, self.tcid);
         }
+        #[cfg(gpopt_trace="off")]
+        println!("-------------tree ({:?}/{})----------------",
+            self.tfid, self.tcid);
+
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.num_function_nodes,
             self.num_terminal_nodes);
         self.root.print();
