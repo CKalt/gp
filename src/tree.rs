@@ -4,8 +4,9 @@ use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
+
 #[cfg(gpopt_choice_logging="if")]
-use crate::choice_log;
+use crate::choice_logging::*;
 use Node::*;
 
 pub enum GpType {
@@ -762,14 +763,21 @@ impl Tree {
 
         return f.s == 0;
     }
+            
     pub fn print(&self) {
-        println!("-------------tree ({:?}/{})----------------",
-            self.tfid, self.tcid);
+        #[cfg(gpopt_trace="on")]
+        {
+            let count = get_log_count();
+
+            println!("-log={}------tree ({:?}/{})----------------",
+                count, self.tfid, self.tcid);
+        }
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.num_function_nodes,
             self.num_terminal_nodes);
         self.root.print();
         println!("");
     }
+
     pub fn get_rnd_function_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex, &mut Node) {
