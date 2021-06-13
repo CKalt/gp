@@ -46,13 +46,6 @@ pub fn read_i32_from_file(fname: &str) -> i32 {
     count
 }
 
-pub fn inc_file_counter(fname: &str) -> i32 {
-    let count = read_i32_from_file(fname);
-    let new_count = count+1;
-    write_i32_to_file(fname, new_count);
-    new_count
-}
-
 pub fn reset_file_counter(fname: &str) {
     remove_file_if_exists(fname);
     write_i32_to_file(fname, 0);

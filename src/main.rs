@@ -13,7 +13,16 @@ use rand::Rng;
 use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
+
+#[cfg(gpopt_choice_logging="if")]
+use std::convert::TryInto;
+
+#[cfg(gpopt_choice_logging="if")]
+use std::sync::atomic::{AtomicUsize, Ordering};
     
+#[cfg(gpopt_choice_logging="if")]
+static LOG_COUNT: AtomicUsize = AtomicUsize::new(0);
+
 #[cfg(gpopt_choice_logging="if")]
 use util::*;
 
@@ -21,17 +30,22 @@ use util::*;
 const CHOICE_LOG_FNAME: &str = "choice.log";
 
 #[cfg(gpopt_choice_logging="if")]
-const CHOICE_LOG_CNT_FNAME: &str = "choice.counter";
-
-#[cfg(gpopt_choice_logging="if")]
 fn init_choice_log() {
     remove_file_if_exists(CHOICE_LOG_FNAME);
-    reset_file_counter(CHOICE_LOG_CNT_FNAME);
 }
 
 #[cfg(gpopt_choice_logging="if")]
+pub fn inc_log_counter() -> i32 {
+    let old_count = LOG_COUNT.fetch_add(1, Ordering::SeqCst);
+
+    // convert from usize, return if able, panic otherwise.
+    (old_count+1).try_into().unwrap()
+}
+
+
+#[cfg(gpopt_choice_logging="if")]
 fn choice_log(tp: u8, choice_value: &str) {
-    let counter = inc_file_counter(CHOICE_LOG_CNT_FNAME);
+    let counter = inc_log_counter();
     let msg = format!("{},{},{}", counter, tp, choice_value);
     append_line_to_file(CHOICE_LOG_FNAME, &msg);
 }
