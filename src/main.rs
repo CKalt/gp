@@ -208,7 +208,8 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize &&
               trees.tree_vec.len() < CONTROL.M {
-            let new_tree = create_unique_tree(rng, &trees, d);
+            let mut new_tree = create_unique_tree(rng, &trees, d);
+            new_tree.count_nodes();
 
             push_tree(&mut trees, new_tree);
 
@@ -219,7 +220,8 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
 
     // fill out to end in case there are "left-overs" due to rounding
     while trees.tree_vec.len() < CONTROL.M {
-        let new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
+        let mut new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
+        new_tree.count_nodes();
         push_tree(&mut trees, new_tree);
             
         #[cfg(gpopt_trace="on")]
