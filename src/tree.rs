@@ -302,6 +302,8 @@ impl Terminal {
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
         let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
         choice_log(3, &t_id.to_string());
+let debug_count = get_log_count();
+println!("TPE001: count={}, rndTnode(r=={})", debug_count, t_id);
         &TERMINAL[t_id as usize]
     }
 #[cfg(gpopt_choice_logging="else")]
@@ -415,6 +417,10 @@ impl FunctionNode {
     pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions);
         choice_log(4, &rand_fid.to_string());
+
+let debug_count = get_log_count();
+println!("TPE002: count={}, newRndFNode(r=={})", debug_count, rand_fid);
+
         FunctionNode::new(rand_fid)
     }
 #[cfg(gpopt_choice_logging="else")]
@@ -769,7 +775,7 @@ impl Tree {
         {
             let count = get_log_count();
 
-            println!("-log={:10}------tree ({:?}/{})----------------",
+            println!("-log={:<10}------tree ({:?}/{})----------------",
                 count, self.tfid, self.tcid);
         }
         #[cfg(gpopt_trace="off")]

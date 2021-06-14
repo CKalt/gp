@@ -3,11 +3,13 @@ mod tree;
 mod control;
 mod gprng;
 mod util;
+#[cfg(gpopt_choice_logging="if")]
 mod choice_logging;
 
 use gprun::*;
 use tree::*;
 use control::*;
+#[cfg(gpopt_choice_logging="if")]
 use choice_logging::*;
 use Node::*;
 
@@ -262,8 +264,8 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
-if trees.gen == 8 {
-    panic!("pause gen 8");
+if trees.gen == 12 {
+    panic!("pause gen 12");
 }
 
         if trees.gen >= CONTROL.G {
@@ -278,6 +280,9 @@ if trees.gen == 8 {
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
+
+                #[cfg(gpopt_trace="on")]
+                trees2.tree_vec[trees2.tree_vec.len()-1].print();
             }
             else {
                 // do crossover
@@ -295,12 +300,19 @@ if trees.gen == 8 {
                 }
                 nt1.clear_node_counts();
                 nt1.count_nodes();
+
                 push_tree(&mut trees2, nt1);
+
+                #[cfg(gpopt_trace="on")]
+                trees2.tree_vec[trees2.tree_vec.len()-1].print();
 
                 if trees2.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
                     nt2.count_nodes();
                     push_tree(&mut trees2, nt2);
+
+                    #[cfg(gpopt_trace="on")]
+                    trees2.tree_vec[trees2.tree_vec.len()-1].print();
                 }
             }
         }
