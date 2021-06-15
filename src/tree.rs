@@ -619,7 +619,35 @@ impl SelectMethod for TreeSet {
 #[cfg(gpopt_choice_logging="if")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let i = self.select_ind_bin(rnd_greedy_val(rng));
-        choice_log(6, &i.to_string());
+        //choice_log(6, &i.to_string());
+
+let debug_count = choice_log(6, &i.to_string());
+if debug_count == 116644 {
+    let debug_tree = &self.tree_vec[i];
+    println!("TPF001: i={}", i);
+//            countTreeNodes(debug_tree)
+    debug_tree.print();
+}
+if debug_count == 116645 {
+    let debug_tree = &self.tree_vec[i];
+    println!("TPF002: i={}", i);
+//            countTreeNodes(debug_tree)
+    debug_tree.print();
+}
+if debug_count == 118881 {
+    let debug_tree = &self.tree_vec[i];
+    println!("TPF003: i={}", i);
+//            countTreeNodes(debug_tree)
+    debug_tree.print();
+}
+
+
+
+
+
+
+
+
         return &self.tree_vec[i];
     }
 #[cfg(gpopt_choice_logging="else")]
@@ -680,8 +708,10 @@ impl Fitness {
     }
     #[inline(always)]
     pub fn float_to_int(fval: GpFloat) -> GpInt {
-        let rfval: GpFloat = (DL_SHIFT * fval) + 0.5; // rounded fval
-        rfval as GpInt
+        let fval: GpFloat = DL_SHIFT * fval;
+        let r_fval = if fval > 0.0 { fval + 0.5 } else { fval - 0.5 };
+
+        r_fval as GpInt
     }
     #[inline(always)]
     pub fn nfr(&self) -> GpFloat {
@@ -743,8 +773,8 @@ impl Tree {
     /// I.e. Expects that nodes have not already been counted as represented by
     /// num_terminal_nodes and num_function_nodes values of None.
     pub fn count_nodes(&mut self) {
-        assert_eq!(self.num_terminal_nodes, None);
-        assert_eq!(self.num_function_nodes, None);
+//        assert_eq!(self.num_terminal_nodes, None);
+//        assert_eq!(self.num_function_nodes, None);
         let mut counts = (0u32, 0u32); // (num_terms, num_funcs)
         self.root.count_nodes(&mut counts);
         self.num_terminal_nodes = Some(counts.0);

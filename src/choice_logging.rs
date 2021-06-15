@@ -22,8 +22,9 @@ pub fn get_log_count() ->i32 {
     LOG_COUNT.load(Ordering::Relaxed) as i32
 }
 
-pub fn choice_log(tp: u8, choice_value: &str) {
+pub fn choice_log(tp: u8, choice_value: &str) -> i32 {
     let counter = inc_log_counter();
     let msg = format!("{},{},{}", counter, tp, choice_value);
     append_line_to_file(CHOICE_LOG_FNAME, &msg);
+    counter
 }
