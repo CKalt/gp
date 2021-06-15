@@ -230,13 +230,18 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     trees
 }
 
+//fn use_reproduction(index: usize ) -> bool {
+//    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
+//    let int_index_ratio = Fitness::float_to_int(
+//        float_index_ratio
+//    );
+//    let int_control_ratio = Fitness::float_to_int(CONTROL.Pr);
+//    let result = int_index_ratio < int_control_ratio;
+//    result
+//}
+
 fn use_reproduction(index: usize ) -> bool {
-    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
-    let int_index_ratio = Fitness::float_to_int(
-        float_index_ratio
-    );
-    let int_control_ratio = Fitness::float_to_int(CONTROL.Pr);
-    let result = int_index_ratio < int_control_ratio;
+    let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
     result
 }
 
