@@ -191,10 +191,6 @@ fn perform_crossover(rng: &mut GpRng,
     mem::swap(swap_target1, swap_target2);
 }
 
-fn new_tree_qualifies(_tree: &Tree) -> bool {
-    true
-}
-
 fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     // Following Koza's recipe, he calls "ramped half-and-half",
     // we will evenly produce population segments starting with 2
@@ -283,10 +279,6 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
-if trees.gen == 12 {
-    panic!("pause gen 12");
-}
-
         if trees.gen >= CONTROL.G {
             break;
         }
@@ -312,7 +304,7 @@ if trees.gen == 12 {
                     nt1 = t1.clone();
                     nt2 = t2.clone();
                     perform_crossover(rng, &mut nt1, &mut nt2);
-                    if new_tree_qualifies(&nt1) && new_tree_qualifies(&nt2) {
+                    if nt1.qualifies() && nt2.qualifies() {
                         break;
                     }
                 }

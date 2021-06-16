@@ -207,6 +207,23 @@ impl Node {
                 }
         }
     }
+    fn depth_gt(&self, d: TreeDepth, so_far: TreeDepth) -> bool {
+        if so_far > d {
+            return true;
+        }
+
+        match self {
+            TNode(_) => false,
+            FNode(func_node) => {
+                for node in func_node.branch.iter() {
+                    if node.depth_gt(d, so_far + 1) {
+                        return true;
+                    }
+                }
+                false
+            }
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -302,8 +319,6 @@ impl Terminal {
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
         let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
         choice_log(3, &t_id.to_string());
-let debug_count = get_log_count();
-println!("TPE001: count={}, rndTnode(r=={})", debug_count, t_id);
         &TERMINAL[t_id as usize]
     }
 #[cfg(gpopt_choice_logging="else")]
@@ -417,9 +432,6 @@ impl FunctionNode {
     pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions);
         choice_log(4, &rand_fid.to_string());
-
-let debug_count = get_log_count();
-println!("TPE002: count={}, newRndFNode(r=={})", debug_count, rand_fid);
 
         FunctionNode::new(rand_fid)
     }
@@ -619,35 +631,7 @@ impl SelectMethod for TreeSet {
 #[cfg(gpopt_choice_logging="if")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let i = self.select_ind_bin(rnd_greedy_val(rng));
-        //choice_log(6, &i.to_string());
-
-let debug_count = choice_log(6, &i.to_string());
-if debug_count == 116644 {
-    let debug_tree = &self.tree_vec[i];
-    println!("TPF001: i={}", i);
-//            countTreeNodes(debug_tree)
-    debug_tree.print();
-}
-if debug_count == 116645 {
-    let debug_tree = &self.tree_vec[i];
-    println!("TPF002: i={}", i);
-//            countTreeNodes(debug_tree)
-    debug_tree.print();
-}
-if debug_count == 118881 {
-    let debug_tree = &self.tree_vec[i];
-    println!("TPF003: i={}", i);
-//            countTreeNodes(debug_tree)
-    debug_tree.print();
-}
-
-
-
-
-
-
-
-
+        choice_log(6, &i.to_string());
         return &self.tree_vec[i];
     }
 #[cfg(gpopt_choice_logging="else")]
@@ -873,6 +857,12 @@ impl Tree {
             .expect("Tree does not have count of terminal nodes. ");
 
         rng.gen_range(0..num_tnodes)
+    }
+    fn depth_gt(&self, d: TreeDepth) -> bool {
+        self.root.depth_gt(d, 1)
+    }
+    pub fn qualifies(&self) -> bool {
+        !self.depth_gt(CONTROL.Dc)
     }
 }
 
