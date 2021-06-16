@@ -240,6 +240,13 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
 //    result
 //}
 
+#[cfg(gpopt_choice_logging="if")]
+fn use_reproduction(index: usize ) -> bool {
+    let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
+    choice_log(9, if result { "1" } else { "0" });
+    result
+}
+#[cfg(gpopt_choice_logging="else")]
 fn use_reproduction(index: usize ) -> bool {
     let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
     result
@@ -286,16 +293,7 @@ if trees.gen == 12 {
 
         let mut trees2 = TreeSet::new(trees.gen);
         while trees2.tree_vec.len() < CONTROL.M {
-
-let debug_count = get_log_count();
-if debug_count == 118880 {
-    println!("TPZ001: at diff point 118880");
-}
-println!("TPG001: log={}", debug_count);
-
             if use_reproduction(trees2.tree_vec.len()) {
-let debug_count = get_log_count();
-println!("TPG002: log={}", debug_count);
                 // do reproduction
                 let mut t = trees.select_tree(rng).clone();
                 t.clear_node_counts();
@@ -306,8 +304,6 @@ println!("TPG002: log={}", debug_count);
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
             }
             else {
-let debug_count = get_log_count();
-println!("TPG003: log={}", debug_count);
                 // do crossover
                 let (mut nt1, mut nt2);
                 loop {
@@ -316,7 +312,6 @@ println!("TPG003: log={}", debug_count);
                     nt1 = t1.clone();
                     nt2 = t2.clone();
                     perform_crossover(rng, &mut nt1, &mut nt2);
-
                     if new_tree_qualifies(&nt1) && new_tree_qualifies(&nt2) {
                         break;
                     }
