@@ -365,15 +365,23 @@ fn main() {
 
     let mut total_runs = 0i32;
     let mut rng = GpRngFactory::new();
-    let mut winner = loop { // go until we have a winner
+    let opt_winner = loop { // go until we have a winner
         total_runs += 1;
         println!("Run #{}", total_runs);
         if let Some(winner) = run(&mut rng) {
-            break winner;
+            break Some(winner);
+        }
+        else if total_runs == CONTROL.R && CONTROL.R != 0 {
+            break None;
         }
     };
         
-    println!("total_runs={}", total_runs);
-    winner.print();
-    exec_single_tree(&mut winner);
+    if let Some(mut winner) = opt_winner {
+        println!("total_runs={}", total_runs);
+        winner.print();
+        exec_single_tree(&mut winner);
+    } else {
+        println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
+            CONTROL.R);
+    }
 }
