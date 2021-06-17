@@ -1,6 +1,6 @@
 use crate::tree::GpFloat;
 
-#[cfg(not(gpopt_trail="los_altos"))]
+#[cfg(gpopt_trail="santa_fe")]
 const CONTROL_M: usize = 1000;            /// SANTE FE (M)
 #[cfg(gpopt_trail="los_altos")]
 const CONTROL_M: usize = 2000;            /// LOS ALTOS (M)

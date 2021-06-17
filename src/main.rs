@@ -3,13 +3,13 @@ mod tree;
 mod control;
 mod gprng;
 mod util;
-#[cfg(gpopt_choice_logging="if")]
+#[cfg(gpopt_choice_logging="write")]
 mod choice_logging;
 
 use gprun::*;
 use tree::*;
 use control::*;
-#[cfg(gpopt_choice_logging="if")]
+#[cfg(gpopt_choice_logging="write")]
 use choice_logging::*;
 use Node::*;
 
@@ -154,7 +154,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
 
 // rnd_internal_point - randomly decides whether to do crossover at an
 // internal point (function) or terminal based on control Pip value.
-#[cfg(gpopt_choice_logging="if")]
+#[cfg(gpopt_choice_logging="write")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
     let num: GpFloat = rng.gen_range(0.0..1.0);
     let result = num < CONTROL.Pip;
@@ -162,7 +162,7 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
 
     result
 }
-#[cfg(gpopt_choice_logging="else")]
+#[cfg(gpopt_choice_logging="off")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
     let num: GpFloat = rng.gen_range(0.0..1.0);
 
@@ -236,13 +236,13 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
 //    result
 //}
 
-#[cfg(gpopt_choice_logging="if")]
+#[cfg(gpopt_choice_logging="write")]
 fn use_reproduction(index: usize ) -> bool {
     let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
     choice_log(9, if result { "1" } else { "0" });
     result
 }
-#[cfg(gpopt_choice_logging="else")]
+#[cfg(gpopt_choice_logging="off")]
 fn use_reproduction(index: usize ) -> bool {
     let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
     result
@@ -360,7 +360,7 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 
 fn main() {
     init_run();
-    #[cfg(gpopt_choice_logging="if")]
+    #[cfg(gpopt_choice_logging="write")]
     init_choice_log();
 
     let mut run_number = 0i32;

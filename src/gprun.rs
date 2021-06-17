@@ -13,12 +13,12 @@ pub struct RunControl {
 //////////////////////
 
 // MAX_X & MAX_Y are zero based max_y (may be equal but cannot exceed)
-#[cfg(not(gpopt_trail="los_altos"))]     // SANTA FE
+#[cfg(gpopt_trail="santa_fe")]     // SANTA FE
 pub const RUN_CONTROL_MAX_X: i16 = 31;
-#[cfg(not(gpopt_trail="los_altos"))]
+#[cfg(gpopt_trail="santa_fe")]
 pub const RUN_CONTROL_MAX_Y: i16 = 31;   // SANTA FE
 
-#[cfg(not(gpopt_trail="los_altos"))]     // SANTA FE
+#[cfg(gpopt_trail="santa_fe")]     // SANTA FE
 fn trail_factory() -> Vec<FoodCoord> {
     vec![ // set of FoodCoord (x,y) tuples
     (1,0), (2,0), (3,0), (3,1), (3,2), (3,3), (3,4), (3,5), (4,5), (5,5), 
@@ -34,7 +34,7 @@ fn trail_factory() -> Vec<FoodCoord> {
     (27,19), (26,22), (23,23)
     ]
 }
-#[cfg(not(gpopt_trail="los_altos"))]     // SANTA FE
+#[cfg(gpopt_trail="santa_fe")]     // SANTA FE
 pub static RUN_CONTROL: RunControl = RunControl{
     max_clock: 600,
 };

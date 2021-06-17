@@ -1,4 +1,4 @@
-#![cfg(gpopt_choice_logging="if")]
+#![cfg(gpopt_choice_logging="write")]
 use std::convert::TryInto;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use crate::util::*;
