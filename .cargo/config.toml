@@ -1,7 +1,13 @@
+# gpopt_select_method := fpb
+# gpopt_trail := los_altos | santa_fe
 # gpopt_rng := Thread | Seedable
+# gpopt_choice_logging := if | else
+# gpopt_trace := on | off
 [build]
 rustflags = """
     --cfg gpopt_trail="los_altos"
     --cfg gpopt_select_method="fpb"
     --cfg gpopt_rng="Seedable"
+    --cfg gpopt_trace="on"
+    --cfg gpopt_choice_logging="if"
 """
