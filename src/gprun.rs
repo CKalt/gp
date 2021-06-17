@@ -161,7 +161,7 @@ impl RunContext {
 
 pub fn init_run() { }
 
-pub fn exec_trees(mut trees: &mut TreeSet) -> u16 {
+pub fn exec_trees(mut trees: &mut TreeSet, run_number: i32) -> u16 {
     let mut rc = RunContext::new();
 
     for (i, tree) in trees.tree_vec.iter_mut().enumerate() {
@@ -172,7 +172,8 @@ pub fn exec_trees(mut trees: &mut TreeSet) -> u16 {
 
         if tree.compute_fitness(&rc) {
             report_tree_result(tree, tree.tfid, None, -1.0);
-            rc.print_grid("Have Winner!");
+            rc.print_grid(&format!("Have Winner! - Run# {} Gen# {}", run_number,
+                trees.gen));
             trees.winning_index = Some(i);
             break;
         }

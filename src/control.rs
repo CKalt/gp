@@ -47,7 +47,7 @@ pub const CONTROL: Control = Control {
     num_functions:       3,
     num_terminals:       3,
     GRc:                0.0,
-    R:                  14,
+    R:                  0,
     no_fitness_cases:   0,
     show_all_trees:     false,
     show_all_tree_results: false,

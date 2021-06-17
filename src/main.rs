@@ -248,7 +248,7 @@ fn use_reproduction(index: usize ) -> bool {
     result
 }
 
-fn run(rng: &mut GpRng) -> Option<Tree> {
+fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
@@ -258,7 +258,7 @@ fn run(rng: &mut GpRng) -> Option<Tree> {
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-        let n_pellets = exec_trees(&mut trees);
+        let n_pellets = exec_trees(&mut trees, run_number);
         if trees.winning_index != None {
             break;
         }
@@ -363,21 +363,21 @@ fn main() {
     #[cfg(gpopt_choice_logging="if")]
     init_choice_log();
 
-    let mut total_runs = 0i32;
+    let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
     let opt_winner = loop { // go until we have a winner
-        total_runs += 1;
-        println!("Run #{}", total_runs);
-        if let Some(winner) = run(&mut rng) {
+        run_number += 1;
+        println!("Run #{}", run_number);
+        if let Some(winner) = run(&mut rng, run_number) {
             break Some(winner);
         }
-        else if total_runs == CONTROL.R && CONTROL.R != 0 {
+        else if run_number == CONTROL.R && CONTROL.R != 0 {
             break None;
         }
     };
         
     if let Some(mut winner) = opt_winner {
-        println!("total_runs={}", total_runs);
+        println!("run_number={}", run_number);
         winner.print();
         exec_single_tree(&mut winner);
     } else {
