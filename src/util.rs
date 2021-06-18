@@ -33,9 +33,8 @@ pub fn write_i32_to_file(fname: &str, num: i32) {
     }
 }
 
-pub fn read_i32_from_file(fname: &str) -> i32 {
-    let f = File::open(fname).unwrap();
-    let mut file = BufReader::new(&f);
+pub fn read_i32_from_open_file(f: &File) -> i32 {
+    let mut file = BufReader::new(f);
     let mut line = String::new();
     let len = file.read_line(&mut line).unwrap();
     if len < 1 {
@@ -44,6 +43,27 @@ pub fn read_i32_from_file(fname: &str) -> i32 {
     line.truncate(line.len() - 1);
     let count = line.parse::<i32>().unwrap();
     count
+}
+
+pub fn open_file_buf_rdr(fname: &str) -> BufReader<File> {
+    let f = File::open(fname).unwrap();
+    BufReader::new(f)
+}
+
+pub fn read_i32_from_file_buf_rdr(buf_reader: &mut BufReader<File>) -> i32 {
+    let mut line = String::new();
+    let len = buf_reader.read_line(&mut line).unwrap();
+    if len < 1 {
+        panic!("empty string from buf_reader.");
+    }
+    line.truncate(line.len() - 1);
+    let count = line.parse::<i32>().unwrap();
+    count
+}
+
+pub fn read_i32_from_file_using_fname(fname: &str) -> i32 {
+    let f = File::open(fname).unwrap();
+    read_i32_from_open_file(&f)
 }
 
 pub fn reset_file_counter(fname: &str) {
