@@ -18,9 +18,6 @@ use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
 
-use util::read_i32_from_file_buf_rdr;
-use util::open_file_buf_rdr;
-
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) {
     let index = trees.tree_vec.len();
     assert!(index < CONTROL.M);
@@ -362,26 +359,6 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 }
 
 fn main() {
-    let debugme=true;
-if debugme {
-    let mut debug_buf_reader = open_file_buf_rdr("rng.log");
-    for i in 1..=10 {
-        let debug_r = read_i32_from_file_buf_rdr(&mut debug_buf_reader);
-        println!("{}:{}", i, debug_r);
-    }
-    panic!("debug done");
-}
-
-
-
-
-
-
-
-
-
-
-
     init_run();
     #[cfg(gpopt_choice_logging="write")]
     init_choice_log();

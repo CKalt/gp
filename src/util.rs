@@ -45,12 +45,12 @@ pub fn read_i32_from_open_file(f: &File) -> i32 {
     count
 }
 
-pub fn open_file_buf_rdr(fname: &str) -> BufReader<File> {
+pub fn open_fbuf_rdr(fname: &str) -> BufReader<File> {
     let f = File::open(fname).unwrap();
     BufReader::new(f)
 }
 
-pub fn read_i32_from_file_buf_rdr(buf_reader: &mut BufReader<File>) -> i32 {
+pub fn read_i32_from_fbuf_rdr(buf_reader: &mut BufReader<File>) -> i32 {
     let mut line = String::new();
     let len = buf_reader.read_line(&mut line).unwrap();
     if len < 1 {
