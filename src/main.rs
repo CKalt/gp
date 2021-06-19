@@ -69,6 +69,13 @@ fn create_unique_tree(rng: &mut GpRng, trees: &TreeSet,
         }
         t = gen_tree(rng, gen_method, d);
     }
+
+let debug = true;
+if debug {
+    t.print();
+    panic!("pause");
+}
+
     return t;
 }
 
