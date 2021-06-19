@@ -1,7 +1,8 @@
 #[cfg(gpopt_rng="FileStream")]
-use util::read_i32_from_file_buf_rdr;
+use crate::util::read_i32_from_fbuf_rdr;
+
 #[cfg(gpopt_rng="FileStream")]
-use util::open_file_buf_rdr;
+use crate::util::open_fbuf_rdr;
 
 #[cfg(gpopt_rng="Seedable")]
 use rand::{SeedableRng};
@@ -16,27 +17,36 @@ pub type GpRng = rand::rngs::StdRng;
 pub type GpRng = FileStreamRng ;
 
 #[cfg(gpopt_rng="FileStream")]
+use std::io::BufReader;
+
+#[cfg(gpopt_rng="FileStream")]
+use std::ops::Range;
+
+#[cfg(gpopt_rng="FileStream")]
+use std::fs::File;
+
+#[cfg(gpopt_rng="FileStream")]
 pub struct FileStreamRng {
     fbuf_rdr: BufReader<File>,
 }
 
 #[cfg(gpopt_rng="FileStream")]
 impl FileStreamRng {
-    fn new() -> FileStreamRng {
+    pub fn new() -> FileStreamRng {
         FileStreamRng {
             fbuf_rdr: open_fbuf_rdr("rng.log"),
         }
     }
-    fn gen_range(&mut self, r: Range<i32>) -> i32 {
-        let result = rnd(r.end as i16, self.fbuf_rdr);
+    pub fn gen_range(&mut self, r: Range<i32>) -> i32 {
+        let result = rnd(r.end as i16, &mut self.fbuf_rdr) as i32;
         if (result < r.start) || (result >= r.end) {
             panic!("value ({}) from input stream out of range [{}..{}]",
                 result, r.start, r.end);
         }
         result
     }
-    fn gen<f32>(&mut self) -> f32 {
-        rnd_dbl(self.fbuf_rdr)
+    pub fn gen_float(&mut self) -> f64 {
+        rnd_dbl(&mut self.fbuf_rdr)
     }
 }
 
@@ -55,13 +65,10 @@ impl GpRngFactory {
     }
 
     #[cfg(gpopt_rng="FileStream")]
-    pub fn new() -> BufReader<File> {
+    pub fn new() -> FileStreamRng {
         FileStreamRng::new()
     }
 }
-
-#[cfg(gpopt_rng="FileStream")]
-use math::round;
 
 #[cfg(gpopt_rng="FileStream")]
 const RAND_MAX: i32 = 2147483647;    // defined in gcc <stdlib.h>
@@ -70,31 +77,13 @@ const RAND_MAX: i32 = 2147483647;    // defined in gcc <stdlib.h>
 fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     let r = read_i32_from_fbuf_rdr(rng_rdr);
     let d = (r as f64) / (RAND_MAX as f64);
-    floor((d * (max as f64)) + 0.5f64, 0) as i16
+    let result = (d * (max as f64)) + 0.5f64;
+    result.floor() as i16
 }
 
 // rnd - return random double value between 0.0 and 1.0
 #[cfg(gpopt_rng="FileStream")]
 fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     (read_i32_from_fbuf_rdr(rng_rdr) as f64)/(RAND_MAX as f64)
-}
-
-#[cfg(gpopt_rng="FileStream")]
-fn rnd_greedy_dbl_as_ll() -> GpInt {
-    let r = rnd_dbl();
-    let result: f64;
-
-    if CONTROL.GRc < 0.0001 {
-        result = r;
-    } else if rnd(9) > 1 {
-        // select from top set
-        result = 1.0f64 - (CONTROL.GRc * r);
-    } else {
-        // select from lower set
-        result = (1.0f64 - CONTROL.GRc)*r;
-    }
-    ll_result = float_to_int(result);
-
-    return ll_result;
 }
 

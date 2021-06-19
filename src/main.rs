@@ -13,7 +13,9 @@ use control::*;
 use choice_logging::*;
 use Node::*;
 
+#[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
+
 use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
@@ -156,7 +158,12 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
 // internal point (function) or terminal based on control Pip value.
 #[cfg(gpopt_choice_logging="write")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
+    #[cfg(gpopt_rng="FileStream")]
+    let num: GpFloat = rng.gen_float();
+
+    #[cfg(not(gpopt_rng="FileStream"))]
     let num: GpFloat = rng.gen_range(0.0..1.0);
+
     let result = num < CONTROL.Pip;
     choice_log(1, if result { "1" } else { "0" });
 
@@ -164,6 +171,10 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
 }
 #[cfg(gpopt_choice_logging="off")]
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
+    #[cfg(gpopt_rng="FileStream")]
+    let num: GpFloat = rng.gen_float();
+
+    #[cfg(not(gpopt_rng="FileStream"))]
     let num: GpFloat = rng.gen_range(0.0..1.0);
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.

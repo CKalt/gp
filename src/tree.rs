@@ -1,9 +1,11 @@
-use rand::Rng;
 use crate::gprun::*;
 use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
+
+#[cfg(not(gpopt_rng="FileStream"))]
+use rand::Rng;
 
 #[cfg(gpopt_choice_logging="write")]
 use crate::choice_logging::*;
@@ -26,7 +28,7 @@ impl Node {
     /// (Formerly called newRndFTNode() in gp.c)
     pub fn new_rnd(rng: &mut GpRng) -> Node {
         let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
-        let r = rng.gen_range(0..num_ft);
+        let r = rng.gen_range(0i32..(num_ft as i32)) as u8;
         choice_log(2, &r.to_string());
         if r < CONTROL.num_terminals {
             TNode(&TERMINAL[r as usize])
@@ -74,7 +76,7 @@ impl Node {
             _ => false,
         }
     }
-    fn count_nodes(&self, counts: &mut (u32, u32)) {
+    fn count_nodes(&self, counts: &mut (i32, i32)) {
         match self {
             TNode(_) => counts.0 += 1,
             FNode(ref fn_ref) => {
@@ -317,7 +319,7 @@ pub struct Terminal {
 impl Terminal {
 #[cfg(gpopt_choice_logging="write")]
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
-        let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
+        let t_id: u8 = rng.gen_range(0i32..CONTROL.num_terminals as i32) as u8;
         choice_log(3, &t_id.to_string());
         &TERMINAL[t_id as usize]
     }
@@ -430,7 +432,7 @@ impl FunctionNode {
     /// (formerly called newRndFNode() in gp.c)
 #[cfg(gpopt_choice_logging="write")]
     pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
-        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions);
+        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions as i32) as u8;
         choice_log(4, &rand_fid.to_string());
 
         FunctionNode::new(rand_fid)
@@ -468,7 +470,7 @@ pub enum GenerateMethod {
     Grow
 }
 
-type TreeNodeIndex = u32;
+type TreeNodeIndex = i32;
 #[allow(dead_code)]
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
@@ -494,7 +496,7 @@ impl TreeSet {
 #[cfg(gpopt_choice_logging="write")]
     pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
-        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len());
+        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len() as i32) as usize;
         choice_log(5, &rnd_index.to_string());
         &mut self.tree_vec[rnd_index]
     }
@@ -642,15 +644,19 @@ impl SelectMethod for TreeSet {
 }
 
 fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
+#[cfg(not(gpopt_rng="FileStream"))]
     let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
 
+#[cfg(gpopt_rng="FileStream")]
+    let r = rng.gen_float();
+
     let dbl_val: GpFloat = 
         if CONTROL.GRc < 0.0001 {
             r
-        } else if rng.gen_range(0..=9) > 1 {
+        } else if rng.gen_range(0..10) > 1 {
             // select from top set
             1.0 - (CONTROL.GRc * r)
         } else {
@@ -660,7 +666,7 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
     Fitness::float_to_int(dbl_val)
 }
 
-type GpInt = i64;
+pub type GpInt = i64;
 pub type GpFloat = f64;
 const DL_SHIFT: GpFloat = 1000000000.0;
 pub struct Fitness {
@@ -759,7 +765,7 @@ impl Tree {
     pub fn count_nodes(&mut self) {
 //        assert_eq!(self.num_terminal_nodes, None);
 //        assert_eq!(self.num_function_nodes, None);
-        let mut counts = (0u32, 0u32); // (num_terms, num_funcs)
+        let mut counts = (0i32, 0i32); // (num_terms, num_funcs)
         self.root.count_nodes(&mut counts);
         self.num_terminal_nodes = Some(counts.0);
         self.num_function_nodes = Some(counts.1);
@@ -820,7 +826,7 @@ impl Tree {
             .num_function_nodes
             .expect("Tree does not have count of function nodes. ");
 
-        let result = rng.gen_range(0..num_fnodes);
+        let result = rng.gen_range(0..num_fnodes as i32) as TreeNodeIndex;
         choice_log(7, &result.to_string());
         result
     }
@@ -845,7 +851,7 @@ impl Tree {
             .num_terminal_nodes
             .expect("Tree does not have count of terminal nodes. ");
 
-        let result = rng.gen_range(0..num_tnodes);
+        let result = rng.gen_range(0..num_tnodes) as TreeNodeIndex;
         choice_log(8, &result.to_string());
         result
     }
