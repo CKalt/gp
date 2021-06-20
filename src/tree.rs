@@ -612,6 +612,9 @@ impl SelectMethod for TreeSet {
     /// normalized fitness measure (`fitness.nfr`)
     ///
     fn select_ind_bin(&self, r: GpInt) -> usize {
+        #[cfg(gpopt_trace="on")]
+        println!("TP005:select_ind_bin entry");
+
         let n = self.tree_vec.len();
         assert_ne!(n, 0);
 
@@ -619,17 +622,22 @@ impl SelectMethod for TreeSet {
         let base: GpInt = 
             if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
 
+        let mut result: usize;
         if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
-            return i;
-        }
-
-        if r < base {
-            return self.select_ind_bin_r(r, 0, i-1);
+            result = i;
+        } else if r < base {
+            result = self.select_ind_bin_r(r, 0, i-1);
         }
         else {
-            return self.select_ind_bin_r(r, i+1, n-1);
+            result = self.select_ind_bin_r(r, i+1, n-1);
         }
+
+        #[cfg(gpopt_trace="on")]
+        println!("TP006:select_ind_bin exit result = {}", result);
+
+        result
     }
+
 #[cfg(gpopt_choice_logging="write")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let i = self.select_ind_bin(rnd_greedy_val(rng));

@@ -311,6 +311,9 @@ if trees.gen == 1 {
         while trees2.tree_vec.len() < CONTROL.M {
             if use_reproduction(trees2.tree_vec.len()) {
                 // do reproduction
+                #[cfg(gpopt_trace="on")]
+                println!("TP003.1:breeding reproduction branch");
+
                 let mut t = trees.select_tree(rng).clone();
                 t.clear_node_counts();
                 t.count_nodes();
@@ -321,6 +324,9 @@ if trees.gen == 1 {
             }
             else {
                 // do crossover
+                #[cfg(gpopt_trace="on")]
+                println!("TP003.1:breeding crossover branch");
+
                 let (mut nt1, mut nt2);
                 loop {
                     let t1 = trees.select_tree(rng);
