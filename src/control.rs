@@ -44,8 +44,8 @@ pub const CONTROL: Control = Control {
     Pc:                 0.90,       // Probability of cross over
     Pr:                 0.10,       // Probability of reproduction
     Pip:                0.90,       // Probability of cross over internal point
-    num_functions:       3,
-    num_terminals:       3,
+    num_functions:      3,
+    num_terminals:      3,
     GRc:                0.0,
     R:                  0,
     no_fitness_cases:   0,

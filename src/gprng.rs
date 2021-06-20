@@ -38,7 +38,7 @@ impl FileStreamRng {
         }
     }
     pub fn gen_range(&mut self, r: Range<i32>) -> i32 {
-        let result = rnd(r.end as i16, &mut self.fbuf_rdr) as i32;
+        let result = rnd(r.end as i16 - 1, &mut self.fbuf_rdr) as i32;
         if (result < r.start) || (result >= r.end) {
             panic!("value ({}) from input stream out of range [{}..{}]",
                 result, r.start, r.end);
@@ -77,13 +77,15 @@ const RAND_MAX: i32 = 2147483647;    // defined in gcc <stdlib.h>
 fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     let r = read_i32_from_fbuf_rdr(rng_rdr);
     let d = (r as f64) / (RAND_MAX as f64);
-    let result = (d * (max as f64)) + 0.5f64;
-    result.floor() as i16
+    let f= (d * (max as f64)) + 0.5f64;
+    let result = f.floor() as i16;
+    result
 }
 
 // rnd - return random double value between 0.0 and 1.0
 #[cfg(gpopt_rng="FileStream")]
 fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
-    (read_i32_from_fbuf_rdr(rng_rdr) as f64)/(RAND_MAX as f64)
+    let result = (read_i32_from_fbuf_rdr(rng_rdr) as f64)/(RAND_MAX as f64);
+    result
 }
 
