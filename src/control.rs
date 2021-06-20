@@ -50,7 +50,7 @@ pub const CONTROL: Control = Control {
     R:                  0,
     no_fitness_cases:   0,
     show_all_trees:     false,
-    show_all_tree_results: false,
+    show_all_tree_results: true,
     show_best_tree_results: true,
     show_controls: true,
     run_tests: false,

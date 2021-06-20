@@ -136,6 +136,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         trees.print();
     }
     if CONTROL.show_all_tree_results {
+        println!("gen {}", trees.gen);
         tree_result_header(None, n_pellets);
         for (i,t) in trees.tree_vec.iter().enumerate() {
             report_tree_result(t, Some(i), None, -1.0);
@@ -212,6 +213,8 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
     let seg = CONTROL.M as GpFloat / (CONTROL.Di as GpFloat - 1.0);
     let mut bdr = 0.0;
 
+    #[cfg(gpopt_trace="on")]
+    println!("TP001:create_init_pop start");
     for d in 2..=CONTROL.Di {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize &&
@@ -226,10 +229,6 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
         }
     }
 
-if true {
-    panic!("pause");
-}
-
     // fill out to end in case there are "left-overs" due to rounding
     while trees.tree_vec.len() < CONTROL.M {
         let mut new_tree = create_unique_tree(rng, &trees, CONTROL.Di);
@@ -239,6 +238,9 @@ if true {
         #[cfg(gpopt_trace="on")]
         trees.tree_vec[trees.tree_vec.len()-1].print();
     }
+    #[cfg(gpopt_trace="on")]
+    println!("TP002:create_init_pop done");
+
     trees
 }
 
@@ -295,11 +297,17 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
+
+if trees.gen == 1 {
+    panic!("pause");
+}
         if trees.gen >= CONTROL.G {
             break;
         }
 
         let mut trees2 = TreeSet::new(trees.gen);
+        #[cfg(gpopt_trace="on")]
+        println!("TP003:breed start");
         while trees2.tree_vec.len() < CONTROL.M {
             if use_reproduction(trees2.tree_vec.len()) {
                 // do reproduction
@@ -342,6 +350,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
                 }
             }
         }
+        println!("TP004:breed done");
         assert_eq!(trees2.tree_vec.len(), CONTROL.M);
         trees = trees2;
         trees.gen += 1;
