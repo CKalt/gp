@@ -70,12 +70,6 @@ fn create_unique_tree(rng: &mut GpRng, trees: &TreeSet,
         t = gen_tree(rng, gen_method, d);
     }
 
-let debug = true;
-if debug {
-    t.print();
-    panic!("pause");
-}
-
     return t;
 }
 
@@ -231,6 +225,10 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
             trees.tree_vec[trees.tree_vec.len()-1].print();
         }
     }
+
+if true {
+    panic!("pause");
+}
 
     // fill out to end in case there are "left-overs" due to rounding
     while trees.tree_vec.len() < CONTROL.M {
