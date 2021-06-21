@@ -298,9 +298,9 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
 
-if trees.gen == 1 {
-    panic!("pause");
-}
+//if trees.gen == 2 {
+//    panic!("pause");
+//}
         if trees.gen >= CONTROL.G {
             break;
         }

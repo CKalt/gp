@@ -3,6 +3,9 @@ use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
+    
+//#[cfg(gpopt_trace="on")]
+//use crate::gprng::TRACE_COUNT;
 
 #[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
@@ -613,13 +616,13 @@ impl SelectMethod for TreeSet {
     /// normalized fitness measure (`fitness.nfr`)
     ///
     fn select_ind_bin(&self, r: GpInt) -> usize {
-        #[cfg(gpopt_trace="on")]
-        {
-            println!("TP005:select_ind_bin entry. r={}", r);
-            for (i,t) in self.tree_vec.iter().enumerate() {
-                println!("TP005.1:i={},lng_nfr={}", i, t.fitness.lng_nfr);
-            }
-        }
+//        #[cfg(gpopt_trace="on")]
+//        unsafe {
+//            println!("TP005:(select_ind_bin) rlog={},r={}", TRACE_COUNT, r);
+//            for (i,t) in self.tree_vec.iter().enumerate() {
+//                println!("TP005.1:i={},lng_nfr={}", i, t.fitness.lng_nfr);
+//            }
+//        }
 
         let n = self.tree_vec.len();
         assert_ne!(n, 0);
@@ -667,8 +670,10 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
     #[cfg(gpopt_rng="FileStream")]
     let r = rng.gen_float();
 
-    #[cfg(gpopt_trace="on")]
-    println!("TP005.2:r={}", r);
+//    #[cfg(gpopt_trace="on")]
+//    unsafe {
+//        println!("TP005.2:(rnd_greedy_dbl) rlog={},r={}", TRACE_COUNT, r);
+//    }
 
     let dbl_val: GpFloat = 
         if CONTROL.GRc < 0.0001 {

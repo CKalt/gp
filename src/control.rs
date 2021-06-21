@@ -46,7 +46,7 @@ pub const CONTROL: Control = Control {
     Pip:                0.90,       // Probability of cross over internal point
     num_functions:      3,
     num_terminals:      3,
-    GRc:                0.0,
+    GRc:                0.16,
     R:                  0,
     no_fitness_cases:   0,
     show_all_trees:     false,

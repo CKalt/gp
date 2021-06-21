@@ -68,7 +68,7 @@ pub fn read_i32_pair_from_fbuf_rdr(buf_reader: &mut BufReader<File>) -> (i32,i32
     if len < 1 {
         panic!("empty string from buf_reader.");
     }
-    let parsed = scanf!(line, "{},{}", i32, i32);
+    let parsed = scanf!(line, "{},{}\n", i32, i32);
     if let Some((x,y)) = parsed {
         return (x,y);
     }
