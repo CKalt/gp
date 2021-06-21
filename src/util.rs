@@ -6,6 +6,7 @@ use std::io::Write;
 use std::io::BufReader;
 use std::io::BufRead;
 use std::path::Path;
+use sscanf::scanf;
 
 pub fn append_line_to_file(fname: &str, text: &str) {
     let mut file = OpenOptions::new()
@@ -59,6 +60,21 @@ pub fn read_i32_from_fbuf_rdr(buf_reader: &mut BufReader<File>) -> i32 {
     line.truncate(line.len() - 1);
     let count = line.parse::<i32>().unwrap();
     count
+}
+
+pub fn read_i32_pair_from_fbuf_rdr(buf_reader: &mut BufReader<File>) -> (i32,i32) {
+    let mut line = String::new();
+    let len = buf_reader.read_line(&mut line).unwrap();
+    if len < 1 {
+        panic!("empty string from buf_reader.");
+    }
+    let parsed = scanf!(line, "{},{}", i32, i32);
+    if let Some((x,y)) = parsed {
+        return (x,y);
+    }
+    else {
+        panic!("could not read i32 pair from fbuf_rdr.");
+    }
 }
 
 pub fn read_i32_from_file_using_fname(fname: &str) -> i32 {

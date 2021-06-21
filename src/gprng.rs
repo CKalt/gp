@@ -1,5 +1,5 @@
 #[cfg(gpopt_rng="FileStream")]
-use crate::util::read_i32_from_fbuf_rdr;
+use crate::util::read_i32_pair_from_fbuf_rdr;
 
 #[cfg(gpopt_rng="FileStream")]
 use crate::util::open_fbuf_rdr;
@@ -75,7 +75,14 @@ const RAND_MAX: i32 = 2147483647;    // defined in gcc <stdlib.h>
 
 #[cfg(gpopt_rng="FileStream")]
 fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
-    let r = read_i32_from_fbuf_rdr(rng_rdr);
+    #[cfg(gpopt_trace="on")]
+    let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
+    #[cfg(gpopt_trace="off")]
+    let (_,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
+
+    #[cfg(gpopt_trace="on")]
+    println!("TP006:c={},r={}", c, r);
+
     let d = (r as f64) / (RAND_MAX as f64);
     let f= (d * (max as f64)) + 0.5f64;
     let result = f.floor() as i16;
@@ -85,7 +92,16 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
 // rnd - return random double value between 0.0 and 1.0
 #[cfg(gpopt_rng="FileStream")]
 fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
-    let result = (read_i32_from_fbuf_rdr(rng_rdr) as f64)/(RAND_MAX as f64);
-    result
+    #[cfg(gpopt_trace="on")]
+    let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
+
+    #[cfg(gpopt_trace="off")]
+    let (_,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
+
+    #[cfg(gpopt_trace="on")]
+    println!("TP006:c={},r={}", c, r);
+
+    let r_float = (r as f64)/(RAND_MAX as f64);
+    r_float
 }
 

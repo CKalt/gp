@@ -447,13 +447,14 @@ impl FunctionNode {
     /// to internal branch vector.
     /// will panic if attempt is made to assign index out of 
     /// 0..N sequence.
-    pub fn set_arg(&mut self, index: u8, node: Node) -> &mut Node {
-        assert!(index < self.fnc.arity);
+    pub fn set_arg(&mut self, index_u8: u8, node: Node) -> &mut Node {
+        let index = index_u8 as usize;
+        assert!(index < self.fnc.arity.into());
 
-        if self.branch.len() > index.into() {
-            self.branch[index as usize] = node;
+        if self.branch.len() > index {
+            self.branch[index] = node;
         }
-        else if self.branch.len() == index.into() {
+        else if self.branch.len() == index {
             self.branch.push(node);
         }
         else {
@@ -613,7 +614,12 @@ impl SelectMethod for TreeSet {
     ///
     fn select_ind_bin(&self, r: GpInt) -> usize {
         #[cfg(gpopt_trace="on")]
-        println!("TP005:select_ind_bin entry");
+        {
+            println!("TP005:select_ind_bin entry. r={}", r);
+            for (i,t) in self.tree_vec.iter().enumerate() {
+                println!("TP005.1:i={},lng_nfr={}", i, t.fitness.lng_nfr);
+            }
+        }
 
         let n = self.tree_vec.len();
         assert_ne!(n, 0);
@@ -622,7 +628,7 @@ impl SelectMethod for TreeSet {
         let base: GpInt = 
             if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
 
-        let mut result: usize;
+        let result: usize;
         if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
             result = i;
         } else if r < base {
@@ -652,14 +658,17 @@ impl SelectMethod for TreeSet {
 }
 
 fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
-#[cfg(not(gpopt_rng="FileStream"))]
+    #[cfg(not(gpopt_rng="FileStream"))]
     let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
 
-#[cfg(gpopt_rng="FileStream")]
+    #[cfg(gpopt_rng="FileStream")]
     let r = rng.gen_float();
+
+    #[cfg(gpopt_trace="on")]
+    println!("TP005.2:r={}", r);
 
     let dbl_val: GpFloat = 
         if CONTROL.GRc < 0.0001 {
