@@ -20,6 +20,8 @@ use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
 
+use gprng::TRACE_COUNT;
+
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) {
     let index = trees.tree_vec.len();
     assert!(index < CONTROL.M);
@@ -310,8 +312,10 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         println!("TP003:breed start");
         while trees2.tree_vec.len() < CONTROL.M {
 
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA001");
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA001 rlog={}", TRACE_COUNT);
+    }
 }
             if use_reproduction(trees2.tree_vec.len()) {
 if run_number == 2 && trees.gen == 27 {

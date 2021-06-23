@@ -89,7 +89,7 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     result
 }
     
-#[cfg(gpopt_trace="on")]
+//#[cfg(gpopt_trace="on")]
 pub static mut TRACE_COUNT: i32 = 0;
 
 // rnd - return random double value between 0.0 and 1.0
@@ -98,13 +98,13 @@ fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     #[cfg(gpopt_trace="on")]
     let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
 
-    #[cfg(gpopt_trace="on")]
+    #[cfg(gpopt_trace="off")]
+    let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
+
+    //#[cfg(gpopt_trace="on")]
     unsafe {
         TRACE_COUNT = c;
     }
-
-    #[cfg(gpopt_trace="off")]
-    let (_,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
 
     #[cfg(gpopt_trace="on")]
     println!("TP006:c={},r={}", c, r);
