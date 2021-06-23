@@ -180,6 +180,13 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
 
     #[cfg(not(gpopt_rng="FileStream"))]
     let num: GpFloat = rng.gen_range(0.0..1.0);
+unsafe {
+    if TRACE_COUNT == 815823 {
+        let debug_value = num < CONTROL.Pip;
+        println!("TPA001.5: debug_value={}, num={}, CONTROL.Pip={}",
+            debug_value, num, CONTROL.Pip);
+    }
+}
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
 }
@@ -217,6 +224,7 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
 
     #[cfg(gpopt_trace="on")]
     println!("TP001:create_init_pop start");
+
     for d in 2..=CONTROL.Di {
         bdr += seg;
         while trees.tree_vec.len() < bdr as usize &&
@@ -225,6 +233,9 @@ fn create_initial_population(rng: &mut GpRng) -> TreeSet {
             new_tree.count_nodes();
 
             push_tree(&mut trees, new_tree);
+unsafe {
+    println!("TPA050:create_init_pop new tree: rlog={}", TRACE_COUNT);
+}
 
             #[cfg(gpopt_trace="on")]
             trees.tree_vec[trees.tree_vec.len()-1].print();
@@ -314,16 +325,18 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
 unsafe {
     if run_number == 2 && trees.gen == 27 {
-        println!("TPA001 rlog={}", TRACE_COUNT);
+        println!("TPA001: i={}, rlog={}", trees2.tree_vec.len(), TRACE_COUNT);
     }
 }
             if use_reproduction(trees2.tree_vec.len()) {
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA002");
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA002: use_reproduction branch: rlog={}", TRACE_COUNT);
+    }
 }
                 // do reproduction
                 #[cfg(gpopt_trace="on")]
-                println!("TP003.1:breeding reproduction branch");
+                println!("TP003:breeding reproduction branch");
 
                 let mut t = trees.select_tree(rng).clone();
                 t.clear_node_counts();
@@ -333,20 +346,24 @@ if run_number == 2 && trees.gen == 27 {
 
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA003");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA003: new tree pushed: rlog={}", TRACE_COUNT);
+        trees2.tree_vec[trees2.tree_vec.len()-1].print();
+    }
 }
 
             }
             else {
 
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA004");
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA004: crossover branch: rlog={}", TRACE_COUNT);
+    }
 }
                 // do crossover
                 #[cfg(gpopt_trace="on")]
-                println!("TP003.1:breeding crossover branch");
+                println!("TP006:breeding crossover branch: rlog={}", TRACE_COUNT);
 
                 let (mut nt1, mut nt2);
                 loop {
@@ -368,9 +385,11 @@ if run_number == 2 && trees.gen == 27 {
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
 
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA005");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA005: pushed t1: rlog={}", TRACE_COUNT);
+        trees2.tree_vec[trees2.tree_vec.len()-1].print();
+    }
 }
 
                 if trees2.tree_vec.len() < CONTROL.M {
@@ -381,9 +400,11 @@ if run_number == 2 && trees.gen == 27 {
                     #[cfg(gpopt_trace="on")]
                     trees2.tree_vec[trees2.tree_vec.len()-1].print();
 
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA006");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+unsafe {
+    if run_number == 2 && trees.gen == 27 {
+        println!("TPA006: pushed t2: rlog={}", TRACE_COUNT);
+        trees2.tree_vec[trees2.tree_vec.len()-1].print();
+    }
 }
 
                 }
