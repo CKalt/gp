@@ -309,7 +309,14 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         #[cfg(gpopt_trace="on")]
         println!("TP003:breed start");
         while trees2.tree_vec.len() < CONTROL.M {
+
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA001");
+}
             if use_reproduction(trees2.tree_vec.len()) {
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA002");
+}
                 // do reproduction
                 #[cfg(gpopt_trace="on")]
                 println!("TP003.1:breeding reproduction branch");
@@ -319,10 +326,20 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
                 t.count_nodes();
                 push_tree(&mut trees2, t);
 
+
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA003");
+    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+}
+
             }
             else {
+
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA004");
+}
                 // do crossover
                 #[cfg(gpopt_trace="on")]
                 println!("TP003.1:breeding crossover branch");
@@ -343,8 +360,14 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
                 push_tree(&mut trees2, nt1);
 
+
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
+
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA005");
+    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+}
 
                 if trees2.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
@@ -353,6 +376,12 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
                     #[cfg(gpopt_trace="on")]
                     trees2.tree_vec[trees2.tree_vec.len()-1].print();
+
+if run_number == 2 && trees.gen == 27 {
+    println!("TPA006");
+    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+}
+
                 }
             }
         }

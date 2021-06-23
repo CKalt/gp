@@ -44,7 +44,7 @@ impl Node {
 #[cfg(gpopt_choice_logging="off")]
     pub fn new_rnd(rng: &mut GpRng) -> Node {
         let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
-        let r = rng.gen_range(0..num_ft);
+        let r = rng.gen_range(0..num_ft as i32) as u8;
         if r < CONTROL.num_terminals {
             TNode(&TERMINAL[r as usize])
         }
@@ -329,7 +329,7 @@ impl Terminal {
 #[cfg(gpopt_choice_logging="off")]
     /// (Formerly called getRndTNode() in gp.c)
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
-        let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals);
+        let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals as i32) as u8;
         &TERMINAL[t_id as usize]
     }
 }
@@ -442,7 +442,7 @@ impl FunctionNode {
     }
 #[cfg(gpopt_choice_logging="off")]
     pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
-        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions);
+        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions as i32) as u8;
         FunctionNode::new(rand_fid)
     }
 
@@ -507,7 +507,7 @@ impl TreeSet {
 #[cfg(gpopt_choice_logging="off")]
     pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
-        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len());
+        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len() as i32) as usize;
         &mut self.tree_vec[rnd_index]
     }
 
@@ -590,60 +590,37 @@ pub trait SelectMethod {
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
-    fn select_ind_bin_r(&self, r: GpInt, lo: usize, hi: usize) -> usize {
-        let i = lo + (hi-lo)/2;
-        let base: GpInt = 
-            if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
+    fn select_ind_bin_r(&self, level: GpInt, lo: usize, hi: usize) -> usize {
+        let gap = ((hi - lo) / 2) as usize;
+        let guess = lo + gap + 1;
 
-        if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
-            return i;
+        if self.tree_vec[guess-1].fitness.lng_nfr < level &&
+                self.tree_vec[guess].fitness.lng_nfr >= level {
+            guess
         }
-
-        if hi == lo {
-            panic!("select_ind fault");
-        }
-
-        if r < base {
-            return self.select_ind_bin_r(r, lo, i-1);
+        else if self.tree_vec[guess].fitness.lng_nfr < level {
+            // new_lo = guess
+            self.select_ind_bin_r(level, guess, hi)
         }
         else {
-            return self.select_ind_bin_r(r, i+1, hi);
+            // new_hi = guess
+            self.select_ind_bin_r(level, lo, guess-1)
         }
     }
-    ///
-    /// uses binary search to locate fitness proportional
-    /// individual.  (This requires that `self.tree_vec` is sorted by
-    /// normalized fitness measure (`fitness.nfr`)
-    ///
-    fn select_ind_bin(&self, r: GpInt) -> usize {
-//        #[cfg(gpopt_trace="on")]
-//        unsafe {
-//            println!("TP005:(select_ind_bin) rlog={},r={}", TRACE_COUNT, r);
-//            for (i,t) in self.tree_vec.iter().enumerate() {
-//                println!("TP005.1:i={},lng_nfr={}", i, t.fitness.lng_nfr);
-//            }
-//        }
 
-        let n = self.tree_vec.len();
-        assert_ne!(n, 0);
-
-        let i = n/2 - 1;
-        let base: GpInt = 
-            if i > 0 { self.tree_vec[i-1].fitness.lng_nfr } else { 0 };
-
-        let result: usize;
-        if base <= r && r <= self.tree_vec[i].fitness.lng_nfr {
-            result = i;
-        } else if r < base {
-            result = self.select_ind_bin_r(r, 0, i-1);
-        }
-        else {
-            result = self.select_ind_bin_r(r, i+1, n-1);
-        }
-
-        #[cfg(gpopt_trace="on")]
-        println!("TP006:select_ind_bin exit result = {}", result);
-
+    fn select_ind_bin(&self, level: GpInt) -> usize {
+        assert_ne!(self.tree_vec.len(),0);
+        
+        let result = 
+            if self.tree_vec[0].fitness.lng_nfr >= level ||
+                    self.tree_vec.len() == 1 {
+                0
+            } else if level >
+                    self.tree_vec[self.tree_vec.len() - 2].fitness.lng_nfr {
+                self.tree_vec.len() - 1
+            } else {
+                self.select_ind_bin_r(level, 0, self.tree_vec.len() - 1)
+            };
         result
     }
 
