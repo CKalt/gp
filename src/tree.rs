@@ -7,8 +7,6 @@ use crate::gprng::GpRng;
 #[cfg(gpopt_trace="on")]
 use crate::gprng::TRACE_COUNT;
 
-use crate::gprng::TRACE_COUNT;
-
 #[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
 
