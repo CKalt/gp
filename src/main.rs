@@ -20,8 +20,6 @@ use gprng::GpRng;
 use gprng::GpRngFactory;
 use std::mem;
 
-use gprng::TRACE_COUNT;
-
 fn push_tree(trees: &mut TreeSet, mut tree: Tree) {
     let index = trees.tree_vec.len();
     assert!(index < CONTROL.M);
@@ -299,7 +297,6 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
         report_results(rng, &mut trees, &mut header_need, &n_pellets);
 
-
 //if trees.gen == 1 {
 //    println!("pause");
 //}
@@ -311,16 +308,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         #[cfg(gpopt_trace="on")]
         println!("TP003:breed start");
         while trees2.tree_vec.len() < CONTROL.M {
-
-unsafe {
-    if run_number == 2 && trees.gen == 27 {
-        println!("TPA001 rlog={}", TRACE_COUNT);
-    }
-}
             if use_reproduction(trees2.tree_vec.len()) {
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA002");
-}
                 // do reproduction
                 #[cfg(gpopt_trace="on")]
                 println!("TP003.1:breeding reproduction branch");
@@ -330,20 +318,10 @@ if run_number == 2 && trees.gen == 27 {
                 t.count_nodes();
                 push_tree(&mut trees2, t);
 
-
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA003");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
-}
-
             }
             else {
-
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA004");
-}
                 // do crossover
                 #[cfg(gpopt_trace="on")]
                 println!("TP003.1:breeding crossover branch");
@@ -364,14 +342,8 @@ if run_number == 2 && trees.gen == 27 {
 
                 push_tree(&mut trees2, nt1);
 
-
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
-
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA005");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
-}
 
                 if trees2.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
@@ -380,12 +352,6 @@ if run_number == 2 && trees.gen == 27 {
 
                     #[cfg(gpopt_trace="on")]
                     trees2.tree_vec[trees2.tree_vec.len()-1].print();
-
-if run_number == 2 && trees.gen == 27 {
-    println!("TPA006");
-    trees2.tree_vec[trees2.tree_vec.len()-1].print();
-}
-
                 }
             }
         }

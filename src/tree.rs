@@ -610,23 +610,6 @@ impl SelectMethod for TreeSet {
 
     fn select_ind_bin(&self, level: GpInt) -> usize {
         assert_ne!(self.tree_vec.len(),0);
-
-
-unsafe {
-    if TRACE_COUNT == 815820 {
-        for (debug_i, debug_t) in self.tree_vec.iter().enumerate() {
-            println!("TPA005.007: i={}, nfr={}", debug_i, debug_t.fitness.lng_nfr);
-        }
-    }
-}
-
-
-
-
-
-
-
-        
         let result = 
             if self.tree_vec[0].fitness.lng_nfr >= level ||
                     self.tree_vec.len() == 1 {
@@ -642,29 +625,15 @@ unsafe {
 
 #[cfg(gpopt_choice_logging="write")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
-        let i = self.select_ind_bin(rnd_greedy_val(rng));
+        let greedy_val = rnd_greedy_val(rng);
+        let i = self.select_ind_bin(greedy_val);
         choice_log(6, &i.to_string());
         return &self.tree_vec[i];
     }
 #[cfg(gpopt_choice_logging="off")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
-
-let debug_rnd_greedy_val = rnd_greedy_val(rng);
-unsafe {
-    if TRACE_COUNT == 815820 {
-        println!("TPA005.005: debug_rnd_greedy_val={}", debug_rnd_greedy_val);
-    }
-}
-
-        let i = self.select_ind_bin(debug_rnd_greedy_val);
-
-unsafe {
-    if TRACE_COUNT == 815820 {
-        println!("TPA005.01: select_tree i={}, rlog={}, nfr={}", i, TRACE_COUNT,
-                self.tree_vec[i].fitness.lng_nfr);
-    }
-}
-
+        let greedy_val = rnd_greedy_val(rng);
+        let i = self.select_ind_bin(greedy_val);
         return &self.tree_vec[i];
     }
 }
