@@ -78,15 +78,7 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     #[cfg(gpopt_trace="on")]
     let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
     #[cfg(gpopt_trace="off")]
-//    let (_,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
-
-    let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
-    unsafe {
-        TRACE_COUNT = c;
-        if c >= 815816 && c <= 815824 {
-            println!("TPA001.1:(rnd) rlog={}", c);
-        }
-    }
+    let (_,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
 
     #[cfg(gpopt_trace="on")]
     println!("TP006:c={},r={}", c, r);
@@ -112,12 +104,6 @@ fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     //#[cfg(gpopt_trace="on")]
     unsafe {
         TRACE_COUNT = c;
-        if c >= 815816 && c <= 815824 {
-            println!("TPA001.2:(rnd_dbl) rlog={}", c);
-            if c == 815823 {
-                println!("TPA001.3:(rnd_dbl) diff pt rlog={}", c);
-            }
-        }
     }
 
     #[cfg(gpopt_trace="on")]

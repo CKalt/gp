@@ -3,8 +3,6 @@ use crate::tree::TreeSet;
 use crate::tree::exec_node;
 use crate::tree::GpFloat;
 
-use crate::gprng::TRACE_COUNT;
-
 /// RunControl defines parameters controlling the running of individuals.
 pub struct RunControl {
     pub max_clock: u16, // sets limit for entire population run duration
@@ -201,9 +199,6 @@ pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg
     assert_eq!(i, t.tfid);
     let f = &t.fitness;
     let tfid = if let Some(num) = t.tfid { num } else { 0 };
-unsafe {
-    println!("TPA101: rlog={}", TRACE_COUNT);
-}
     if let Some(gen) = opt_gen {
         println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
                  gen, tfid, t.tcid, t.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
