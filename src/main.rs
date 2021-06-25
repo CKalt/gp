@@ -189,36 +189,35 @@ fn perform_crossover(rng: &mut GpRng,
     assert_ne!(t1.num_terminal_nodes, None);
     assert_ne!(t2.num_terminal_nodes, None);
 
+unsafe {
+    print!("TPA001: rlog={}", TRACE_COUNT);
+}
+println!("TPA001.1: t1: nt={:?},nf={:?}", t1.num_terminal_nodes, t1.num_function_nodes);
+println!("TPA001.2: t2: nt={:?},nf={:?}", t2.num_terminal_nodes, t2.num_function_nodes);
+
     let (ni1, swap_target1) =
         if t1.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
-unsafe {
-    print!("TPA001: rlog={}, fn=", TRACE_COUNT+1);
-}
+println!("TPA002: Internal pt\n");
             t1.get_rnd_function_node_ref_i(rng)
         } else {
-unsafe {
-    print!("TPA002: rlog={}, tn=", TRACE_COUNT+1);
-}
+println!("TPA003: External pt\n");
             t1.get_rnd_terminal_node_ref_i(rng)
         };
-println!("{}", ni1);
+unsafe {
+    println!("TPA004: rlog={}, ni1={}\n", TRACE_COUNT, ni1);
+}
 
     let (ni2, swap_target2) =
         if t2.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
-unsafe {
-    print!("TPA003: rlog={}, fn=", TRACE_COUNT+1);
-    if TRACE_COUNT+1 == 307384 {
-        println!("TP003.1");
-    }
-}
+println!("TPA005: Internal pt\n");
             t2.get_rnd_function_node_ref_i(rng)
         } else {
-unsafe {
-    print!("TPA004: rlog={}, tn=", TRACE_COUNT+1);
-}
+println!("TPA006: External pt\n");
             t2.get_rnd_terminal_node_ref_i(rng)
         };
-println!("{}", ni2);
+unsafe {
+    println!("TPA007: rlog={}, ni2={}\n", TRACE_COUNT, ni2);
+}
 
     mem::swap(swap_target1, swap_target2);
 }
@@ -363,7 +362,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
 if run_number == 2 && trees.gen == 26 {
     let debug_tcid = trees2.tree_vec[trees2.tree_vec.len()-1].tcid;
-    println!("TPtree tcid={}", debug_tcid);
+    println!("tptree1 tcid={}", debug_tcid);
     trees2.tree_vec[trees2.tree_vec.len()-1].print();
 }
 
@@ -377,7 +376,7 @@ if run_number == 2 && trees.gen == 26 {
 
 if run_number == 2 && trees.gen == 26 {
     let debug_tcid = trees2.tree_vec[trees2.tree_vec.len()-1].tcid;
-    println!("TPtree tcid={}", debug_tcid);
+    println!("tptree tcid={}", debug_tcid);
     trees2.tree_vec[trees2.tree_vec.len()-1].print();
 }
 
@@ -387,7 +386,7 @@ if run_number == 2 && trees.gen == 26 {
             }
         }
 if run_number == 2 && trees.gen == 26 {
-    println!("TPtree");
+    println!("tptree done");
 }
 
         #[cfg(gpopt_trace="on")]
