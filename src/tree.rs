@@ -814,6 +814,7 @@ impl Tree {
         let fi = self.get_rnd_function_index(rng);
         (fi, Node::find_function_node_ref(self, fi))
     }
+    #[allow(dead_code)]
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> &mut Node {
         let fi = self.get_rnd_function_index(rng);
@@ -843,6 +844,12 @@ impl Tree {
             rng: &mut GpRng) -> &mut Node {
         let ti = self.get_rnd_terminal_index(rng);
         Node::find_terminal_node_ref(self, ti)
+    }
+    pub fn get_rnd_terminal_node_ref_i(&mut self,
+            rng: &mut GpRng)
+        -> (TreeNodeIndex, &mut Node) {
+        let ti = self.get_rnd_terminal_index(rng);
+        (ti, Node::find_terminal_node_ref(self, ti))
     }
 #[cfg(gpopt_choice_logging="write")]
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
