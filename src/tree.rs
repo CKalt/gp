@@ -610,6 +610,7 @@ impl SelectMethod for TreeSet {
 
     fn select_ind_bin(&self, level: GpInt) -> usize {
         assert_ne!(self.tree_vec.len(),0);
+//println!("TPA000.43: level={}", level);
         let result = 
             if self.tree_vec[0].fitness.lng_nfr >= level ||
                     self.tree_vec.len() == 1 {
@@ -845,6 +846,7 @@ impl Tree {
         let ti = self.get_rnd_terminal_index(rng);
         Node::find_terminal_node_ref(self, ti)
     }
+    #[allow(dead_code)]
     pub fn get_rnd_terminal_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex, &mut Node) {

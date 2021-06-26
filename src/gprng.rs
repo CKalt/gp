@@ -117,6 +117,7 @@ fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     r_float
 }
 
+#[allow(dead_code)]
 #[cfg(gpopt_rng="FileStream")]
 pub fn get_trace_count() -> i32 {
     TRACE_COUNT.load(Ordering::SeqCst)
