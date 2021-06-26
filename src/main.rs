@@ -182,42 +182,37 @@ fn rnd_internal_point(rng: &mut GpRng) -> bool {
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
 }
 
-use crate::gprng::TRACE_COUNT;
+use crate::gprng::get_trace_count;
 
 fn perform_crossover(rng: &mut GpRng,
         t1: &mut Tree, t2: &mut Tree) {
     assert_ne!(t1.num_terminal_nodes, None);
     assert_ne!(t2.num_terminal_nodes, None);
 
-unsafe {
-    print!("TPA001: rlog={}", TRACE_COUNT);
-}
+println!("TPA001: rlog={}", get_trace_count());
 println!("TPA001.1: t1: nt={:?},nf={:?}", t1.num_terminal_nodes, t1.num_function_nodes);
 println!("TPA001.2: t2: nt={:?},nf={:?}", t2.num_terminal_nodes, t2.num_function_nodes);
 
     let (ni1, swap_target1) =
         if t1.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
-println!("TPA002: Internal pt\n");
+println!("TPA002: Internal pt");
             t1.get_rnd_function_node_ref_i(rng)
         } else {
-println!("TPA003: External pt\n");
+println!("TPA003: External pt");
             t1.get_rnd_terminal_node_ref_i(rng)
         };
-unsafe {
-    println!("TPA004: rlog={}, ni1={}\n", TRACE_COUNT, ni1);
-}
+println!("TPA004: rlog={}, ni1={}", get_trace_count(), ni1);
+
 
     let (ni2, swap_target2) =
         if t2.num_function_nodes.unwrap() > 0 && rnd_internal_point(rng) {
-println!("TPA005: Internal pt\n");
+println!("TPA005: Internal pt");
             t2.get_rnd_function_node_ref_i(rng)
         } else {
-println!("TPA006: External pt\n");
+println!("TPA006: External pt");
             t2.get_rnd_terminal_node_ref_i(rng)
         };
-unsafe {
-    println!("TPA007: rlog={}, ni2={}\n", TRACE_COUNT, ni2);
-}
+println!("TPA007: rlog={}, ni2={}", get_trace_count(), ni2);
 
     mem::swap(swap_target1, swap_target2);
 }
@@ -284,12 +279,17 @@ fn use_reproduction(index: usize ) -> bool {
     result
 }
 
+fn debug_gen(run_number: i32, gen: u16) -> bool {
+    run_number == 2 && (gen == 24 || gen ==26 || gen == 25)
+}
+
 fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
 
     let mut trees = create_initial_population(rng);
+
     trees.count_nodes();
     trees.gen = 0u16;
     let mut header_need: bool = true;
@@ -331,10 +331,25 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
                 #[cfg(gpopt_trace="on")]
                 println!("TP003.1:breeding reproduction branch");
 
-                let mut t = trees.select_tree(rng).clone();
+//                let mut t = trees.select_tree(rng).clone();
+                
+
+
+let debug_parent_t = trees.select_tree(rng);
+let mut t = debug_parent_t.clone();
+
+
+
+
                 t.clear_node_counts();
                 t.count_nodes();
                 push_tree(&mut trees2, t);
+
+if debug_gen(run_number, trees.gen) {
+    let debug_tcid = trees2.tree_vec[trees2.tree_vec.len()-1].tcid;
+    println!("tptree0 reproduction gen={}, parent_tcid={}, tcid={}", trees.gen, debug_parent_t.tcid, debug_tcid);
+    trees2.tree_vec[trees2.tree_vec.len()-1].print();
+}
 
                 #[cfg(gpopt_trace="on")]
                 trees2.tree_vec[trees2.tree_vec.len()-1].print();
@@ -347,9 +362,18 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
                 let (mut nt1, mut nt2);
                 loop {
                     let t1 = trees.select_tree(rng);
+
+if debug_gen(run_number, trees.gen) {
+    println!("TPA000.5: rlog={}, gen={}, parent t1.tcid={}", get_trace_count(), trees.gen, t1.tcid);
+}
                     let t2 = trees.select_tree(rng);
+
+if debug_gen(run_number, trees.gen) {
+    println!("TPA000.6: rlog={}, gen={}, parent t2.tcid={}", get_trace_count(), trees.gen, t2.tcid);
+}
                     nt1 = t1.clone();
                     nt2 = t2.clone();
+
                     perform_crossover(rng, &mut nt1, &mut nt2);
                     if nt1.qualifies() && nt2.qualifies() {
                         break;
@@ -360,9 +384,9 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 
                 push_tree(&mut trees2, nt1);
 
-if run_number == 2 && trees.gen == 26 {
+if debug_gen(run_number, trees.gen) {
     let debug_tcid = trees2.tree_vec[trees2.tree_vec.len()-1].tcid;
-    println!("tptree1 tcid={}", debug_tcid);
+    println!("tptree1 crossover gen={}, tcid={}", trees.gen, debug_tcid);
     trees2.tree_vec[trees2.tree_vec.len()-1].print();
 }
 
@@ -374,9 +398,9 @@ if run_number == 2 && trees.gen == 26 {
                     nt2.count_nodes();
                     push_tree(&mut trees2, nt2);
 
-if run_number == 2 && trees.gen == 26 {
+if debug_gen(run_number, trees.gen) {
     let debug_tcid = trees2.tree_vec[trees2.tree_vec.len()-1].tcid;
-    println!("tptree tcid={}", debug_tcid);
+    println!("tptree2 crossover gen={}, tcid={}", trees.gen, debug_tcid);
     trees2.tree_vec[trees2.tree_vec.len()-1].print();
 }
 
@@ -385,8 +409,9 @@ if run_number == 2 && trees.gen == 26 {
                 }
             }
         }
-if run_number == 2 && trees.gen == 26 {
-    println!("tptree done");
+
+if debug_gen(run_number, trees.gen) {
+    println!("tptree done gen={}", trees.gen);
 }
 
         #[cfg(gpopt_trace="on")]
