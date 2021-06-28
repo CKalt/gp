@@ -369,8 +369,8 @@ impl TreeSet {
     }
     #[cfg(gpopt_fitness_type="float")]
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
-        let mut sum_a: GpFloat = 0;
-        let mut sum_raw: GpFloat = 0;
+        let mut sum_a: GpFloat = 0.0;
+        let mut sum_raw: GpFloat = 0.0;
 
         for t in self.tree_vec.iter() {
             sum_a += t.fitness.a;
@@ -427,11 +427,20 @@ impl TreeSet {
 }
 
 #[cfg(gpopt_select_method="fpb")]
+#[cfg(gpopt_fitness_type="int")]
 pub trait SelectMethod {
     fn select_ind_bin_r(&self, r: GpInt, lo: usize, hi: usize) -> usize;
     fn select_ind_bin(&self, r: GpInt) -> usize;
     fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
+#[cfg(gpopt_select_method="fpb")]
+#[cfg(gpopt_fitness_type="float")]
+pub trait SelectMethod {
+    fn select_ind_bin_r(&self, r: GpFloat, lo: usize, hi: usize) -> usize;
+    fn select_ind_bin(&self, r: GpFloat) -> usize;
+    fn select_tree(&self, rng: &mut GpRng) -> &Tree;
+}
+
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
@@ -510,6 +519,7 @@ impl SelectMethod for TreeSet {
     }
 }
 
+#[cfg(gpopt_fitness_type="int")]
 fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
     #[cfg(not(gpopt_rng="FileStream"))]
     let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
@@ -537,9 +547,41 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
         };
     Fitness::float_to_int(dbl_val)
 }
+#[cfg(gpopt_fitness_type="float")]
+fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
+    #[cfg(not(gpopt_rng="FileStream"))]
+    let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
+                               // done in TreeSet::select_tree, which is
+                               // the only function that calls here. This allows
+                               // integer logging thereby removing floating point variences.
 
+    #[cfg(gpopt_rng="FileStream")]
+    let r = rng.gen_float();
+
+//    #[cfg(gpopt_trace="on")]
+//    unsafe {
+//        println!("TP005.2:(rnd_greedy_dbl) rlog={},r={}", TRACE_COUNT, r);
+//    }
+
+    let dbl_val: GpFloat = 
+        if CONTROL.GRc < 0.0001 {
+            r
+        } else if rng.gen_range(0..10) > 1 {
+            // select from top set
+            1.0 - (CONTROL.GRc * r)
+        } else {
+            // select from lower set
+            (1.0 - CONTROL.GRc) * r
+        };
+    dbl_val
+}
+
+
+#[cfg(gpopt_fitness_type="int")]
 pub type GpInt = i64;
 pub type GpFloat = f64;
+
+#[cfg(gpopt_fitness_type="int")]
 const DL_SHIFT: GpFloat = 1000000000.0;
         
 #[cfg(gpopt_fitness_type="int")]
