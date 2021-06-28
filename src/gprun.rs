@@ -3,6 +3,164 @@ use crate::tree::TreeSet;
 use crate::tree::exec_node;
 use crate::tree::GpFloat;
 
+use crate::tree::Function;
+use crate::tree::FunctionNode;
+use crate::tree::Terminal;
+use crate::control::CONTROL;
+
+pub enum GpType {
+    Continue,
+    Terminate,
+}
+
+// TERMINAL SPECIFICS
+pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
+    Terminal {
+        tid:  0u8,
+        name: "move",
+        code: move_ant,
+    },
+    Terminal {
+        tid:  1u8,
+        name: "left",
+        code: left,
+    },
+    Terminal {
+        tid:  2u8,
+        name: "right",
+        code: right,
+    },
+];
+
+fn move_ant(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    rc.ant_x += rc.ant_xd;
+    rc.ant_y += rc.ant_yd;
+
+    // check for out of bounds
+    if rc.ant_x < 0 || rc.ant_x > RUN_CONTROL_MAX_X ||
+      rc.ant_y < 0 || rc.ant_y > RUN_CONTROL_MAX_Y {
+        return GpType::Continue;
+    }
+    // check for food to eat
+    else if let Food = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
+        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = FoodEaten;
+
+        rc.eat_count += 1;
+        if rc.eat_count == rc.n_pellets {
+            return terminate(rc);
+        }
+    }
+    // check for never been here before and no food
+    else if let Clear = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
+        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = NoFoodFound;
+    }
+        
+    // don't do anything but continue
+    return GpType::Continue;
+}
+
+fn left(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    let t = rc.ant_xd;
+    rc.ant_xd = rc.ant_yd;
+    rc.ant_yd = -1 * t;
+
+    return GpType::Continue;
+}
+
+fn right(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+    let t = rc.ant_xd;
+    rc.ant_xd = -1 * rc.ant_yd;
+    rc.ant_yd = t;
+
+    return GpType::Continue;
+}
+
+pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
+    Function {
+        fid:  0u8,
+        name: "if_food_ahead",
+        arity: 2,
+        code: if_food_ahead,
+    },
+    Function {
+        fid:  1u8,
+        name: "prog_n2",
+        arity: 2,
+        code: prog_n2
+    },
+    Function {
+        fid:  2u8,
+        name: "prog_n3",
+        arity: 3,
+        code: prog_n3
+    },
+];
+
+fn if_food_ahead(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+// if food exists at next step execute branch 0 else branch 1
+// ignore any return values
+    let new_x = rc.ant_x + rc.ant_xd;
+    let new_y = rc.ant_y + rc.ant_yd;
+
+    if new_x < 0 || new_x > RUN_CONTROL_MAX_X ||
+       new_y < 0 || new_y > RUN_CONTROL_MAX_Y {
+        return exec_node(rc, &func.branch[1]);
+    }
+
+    if let Food = rc.grid[new_y as usize][new_x as usize] {
+        return exec_node(rc, &func.branch[0]);
+    }
+
+    exec_node(rc, &func.branch[1])
+}
+
+fn prog_n2(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+// unconditionally execute branch 0 & 1
+// ignore any return values
+    exec_node(rc, &func.branch[0]);
+    exec_node(rc, &func.branch[1])
+}
+
+fn prog_n3(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+// unconditionally execute branch 0, 1 & 2
+// ignore any return values
+    exec_node(rc, &func.branch[0]);
+    exec_node(rc, &func.branch[1]);
+    exec_node(rc, &func.branch[2])
+}
+
+#[allow(dead_code)]
+fn clock_reset(rc: &mut RunContext) {
+    rc.clock = 0;
+}
+
+fn clock_tic(rc: &mut RunContext) -> GpType {
+    if rc.clock < RUN_CONTROL.max_clock {
+        rc.clock += 1;
+        GpType::Continue
+    }
+    else {
+        GpType::Terminate
+    }
+}
+
+fn terminate(rc: &mut RunContext) -> GpType {
+    rc.clock = RUN_CONTROL.max_clock;
+    GpType::Terminate
+}
+
+
 /// RunControl defines parameters controlling the running of individuals.
 pub struct RunControl {
     pub max_clock: u16, // sets limit for entire population run duration

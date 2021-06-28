@@ -1,9 +1,11 @@
 # gpopt_select_method := fpb | tourn
 # gpopt_rng := Thread | Seedable | FileStream
 # gpopt_trace := on | off
+# gpopt_fitness_type := float | int
 [build]
 rustflags = """
     --cfg gpopt_select_method="fpb"
     --cfg gpopt_rng="Seedable"
     --cfg gpopt_trace="off"
+    --cfg gpopt_fitness_type="int"
 """

@@ -1,5 +1,4 @@
 use crate::gprun::*;
-use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
@@ -12,13 +11,8 @@ use rand::Rng;
 
 use Node::*;
 
-pub enum GpType {
-    Continue,
-    Terminate,
-}
-
 type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
-type TermNodeCode = fn (rc: &mut RunContext) -> GpType;
+pub type TermNodeCode = fn (rc: &mut RunContext) -> GpType;
 
 pub enum Node {
     TNode(& 'static Terminal), // Terminal nodes are borrowed references
@@ -214,94 +208,19 @@ impl Node {
     }
 }
 
-#[allow(dead_code)]
 pub struct Function {
-    fid:    u8,
-    name:   & 'static str,
+    #[allow(dead_code)]
+    pub fid:    u8,
+    pub name:   & 'static str,
     pub arity:  u8,
-    code:   FuncNodeCode,
-}
-
-static FUNCTION: [Function; CONTROL.num_functions as usize] = [
-    Function {
-        fid:  0u8,
-        name: "if_food_ahead",
-        arity: 2,
-        code: if_food_ahead,
-    },
-    Function {
-        fid:  1u8,
-        name: "prog_n2",
-        arity: 2,
-        code: prog_n2
-    },
-    Function {
-        fid:  2u8,
-        name: "prog_n3",
-        arity: 3,
-        code: prog_n3
-    },
-];
-
-#[allow(dead_code)]
-fn clock_reset(rc: &mut RunContext) {
-    rc.clock = 0;
-}
-
-fn clock_tic(rc: &mut RunContext) -> GpType {
-    if rc.clock < RUN_CONTROL.max_clock {
-        rc.clock += 1;
-        GpType::Continue
-    }
-    else {
-        GpType::Terminate
-    }
-}
-
-fn terminate(rc: &mut RunContext) -> GpType {
-    rc.clock = RUN_CONTROL.max_clock;
-    GpType::Terminate
-}
-
-fn if_food_ahead(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// if food exists at next step execute branch 0 else branch 1
-// ignore any return values
-    let new_x = rc.ant_x + rc.ant_xd;
-    let new_y = rc.ant_y + rc.ant_yd;
-
-    if new_x < 0 || new_x > RUN_CONTROL_MAX_X ||
-       new_y < 0 || new_y > RUN_CONTROL_MAX_Y {
-        return exec_node(rc, &func.branch[1]);
-    }
-
-    if let Food = rc.grid[new_y as usize][new_x as usize] {
-        return exec_node(rc, &func.branch[0]);
-    }
-
-    exec_node(rc, &func.branch[1])
-}
-
-fn prog_n2(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// unconditionally execute branch 0 & 1
-// ignore any return values
-    exec_node(rc, &func.branch[0]);
-    exec_node(rc, &func.branch[1])
-}
-
-fn prog_n3(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// unconditionally execute branch 0, 1 & 2
-// ignore any return values
-    exec_node(rc, &func.branch[0]);
-    exec_node(rc, &func.branch[1]);
-    exec_node(rc, &func.branch[2])
+    pub code:   FuncNodeCode,
 }
 
 pub struct Terminal {
-    tid:    u8,
-    name:   & 'static str,
-    code:   TermNodeCode,
+    pub tid:    u8,
+    pub name:   & 'static str,
+    pub code:   TermNodeCode,
 }
-
 impl Terminal {
     /// (Formerly called getRndTNode() in gp.c)
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
@@ -310,82 +229,10 @@ impl Terminal {
     }
 }
 
-static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
-    Terminal {
-        tid:  0u8,
-        name: "move",
-        code: move_ant,
-    },
-    Terminal {
-        tid:  1u8,
-        name: "left",
-        code: left,
-    },
-    Terminal {
-        tid:  2u8,
-        name: "right",
-        code: right,
-    },
-];
-
-fn move_ant(rc: &mut RunContext) -> GpType {
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
-
-    rc.ant_x += rc.ant_xd;
-    rc.ant_y += rc.ant_yd;
-
-    // check for out of bounds
-    if rc.ant_x < 0 || rc.ant_x > RUN_CONTROL_MAX_X ||
-      rc.ant_y < 0 || rc.ant_y > RUN_CONTROL_MAX_Y {
-        return GpType::Continue;
-    }
-    // check for food to eat
-    else if let Food = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
-        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = FoodEaten;
-
-        rc.eat_count += 1;
-        if rc.eat_count == rc.n_pellets {
-            return terminate(rc);
-        }
-    }
-    // check for never been here before and no food
-    else if let Clear = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
-        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = NoFoodFound;
-    }
-        
-    // don't do anything but continue
-    return GpType::Continue;
-}
-
-fn left(rc: &mut RunContext) -> GpType {
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
-
-    let t = rc.ant_xd;
-    rc.ant_xd = rc.ant_yd;
-    rc.ant_yd = -1 * t;
-
-    return GpType::Continue;
-}
-
-fn right(rc: &mut RunContext) -> GpType {
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
-    let t = rc.ant_xd;
-    rc.ant_xd = -1 * rc.ant_yd;
-    rc.ant_yd = t;
-
-    return GpType::Continue;
-}
-
 pub struct FunctionNode {
-    fid: u8,
+    pub fid: u8,
     pub fnc: & 'static Function,
-    branch: Vec<Node>, 
+    pub branch: Vec<Node>, 
 }
 impl FunctionNode {
     fn new(fid: u8) -> FunctionNode {
@@ -436,6 +283,7 @@ impl FunctionNode {
     }
 }
 
+
 #[derive(Copy, Clone)]
 pub enum GenerateMethod {
     Full,
@@ -485,6 +333,7 @@ impl TreeSet {
         }
     }
 
+    #[cfg(gpopt_fitness_type="int")]
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
         let mut sum_a: GpInt = 0;
         let mut sum_raw: GpInt = 0;
@@ -501,17 +350,14 @@ impl TreeSet {
         #[cfg(gpopt_trace="on")]
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
             let dbl_n = t.fitness.a() / flt_sum_a;
+
+            #[cfg(gpopt_fitness_type="int")]
             t.fitness.lng_n = Fitness::float_to_int(dbl_n);
+            #[cfg(gpopt_fitness_type="float")]
+            t.fitness.n = dbl_n;
+            println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
+                i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
 
-            {
-                println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
-                    i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
-
-//                if t.tcid == 2 {
-//                    t.print();
-//                    exec_single_tree(t);
-//                }
-            }
         }
         #[cfg(gpopt_trace="off")]
         for t in self.tree_vec.iter_mut() {
@@ -519,22 +365,61 @@ impl TreeSet {
             t.fitness.lng_n = Fitness::float_to_int(dbl_n);
         }
 
-        #[allow(unreachable_code)]
+        self
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
+        let mut sum_a: GpFloat = 0;
+        let mut sum_raw: GpFloat = 0;
+
+        for t in self.tree_vec.iter() {
+            sum_a += t.fitness.a;
+            sum_raw += t.fitness.raw;
+        }
+
+        self.avg_raw_f = sum_raw / (self.tree_vec.len() as GpFloat);
+
+        #[cfg(gpopt_trace="on")]
+        for (i,t) in self.tree_vec.iter_mut().enumerate() {
+            t.fitness.n = t.fitness.a() / sum_a;
+            println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
+                i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), sum_a);
+        }
+        #[cfg(gpopt_trace="off")]
+        for t in self.tree_vec.iter_mut() {
+            t.fitness.n = t.fitness.a() / sum_a;
+        }
+
         self
     }
 
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
+        #[cfg(gpopt_fitness_type="int")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.lng_n.partial_cmp(&b.fitness.lng_n).unwrap());
+        #[cfg(gpopt_fitness_type="float")]
+        self.tree_vec
+            .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
             
         self.assign_nfr_rankings()
     }
 
+    #[cfg(gpopt_fitness_type="int")]
     fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
         let mut nfr: GpInt = 0;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
             nfr += t.fitness.lng_n;
             t.fitness.lng_nfr = nfr;
+            t.tfid = Some(i);
+        }
+        self
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
+        let mut nfr: GpFloat = 0.0;
+        for (i, t) in self.tree_vec.iter_mut().enumerate() {
+            nfr += t.fitness.n;
+            t.fitness.nfr = nfr;
             t.tfid = Some(i);
         }
         self
@@ -550,6 +435,7 @@ pub trait SelectMethod {
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
+    #[cfg(gpopt_fitness_type="int")]
     fn select_ind_bin_r(&self, level: GpInt, lo: usize, hi: usize) -> usize {
         let gap = ((hi - lo) / 2) as usize;
         let guess = lo + gap + 1;
@@ -567,16 +453,49 @@ impl SelectMethod for TreeSet {
             self.select_ind_bin_r(level, lo, guess-1)
         }
     }
+    #[cfg(gpopt_fitness_type="float")]
+    fn select_ind_bin_r(&self, level: GpFloat, lo: usize, hi: usize) -> usize {
+        let gap = ((hi - lo) / 2) as usize;
+        let guess = lo + gap + 1;
 
+        if self.tree_vec[guess-1].fitness.nfr < level &&
+                self.tree_vec[guess].fitness.nfr >= level {
+            guess
+        }
+        else if self.tree_vec[guess].fitness.nfr < level {
+            // new_lo = guess
+            self.select_ind_bin_r(level, guess, hi)
+        }
+        else {
+            // new_hi = guess
+            self.select_ind_bin_r(level, lo, guess-1)
+        }
+    }
+
+    #[cfg(gpopt_fitness_type="int")]
     fn select_ind_bin(&self, level: GpInt) -> usize {
         assert_ne!(self.tree_vec.len(),0);
-//println!("TPA000.43: level={}", level);
         let result = 
             if self.tree_vec[0].fitness.lng_nfr >= level ||
                     self.tree_vec.len() == 1 {
                 0
             } else if level >
                     self.tree_vec[self.tree_vec.len() - 2].fitness.lng_nfr {
+                self.tree_vec.len() - 1
+            } else {
+                self.select_ind_bin_r(level, 0, self.tree_vec.len() - 1)
+            };
+        result
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    fn select_ind_bin(&self, level: GpFloat) -> usize {
+        assert_ne!(self.tree_vec.len(),0);
+        let result = 
+            if self.tree_vec[0].fitness.nfr >= level ||
+                    self.tree_vec.len() == 1 {
+                0
+            } else if level >
+                    self.tree_vec[self.tree_vec.len() - 2].fitness.nfr {
                 self.tree_vec.len() - 1
             } else {
                 self.select_ind_bin_r(level, 0, self.tree_vec.len() - 1)
@@ -622,6 +541,8 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
 pub type GpInt = i64;
 pub type GpFloat = f64;
 const DL_SHIFT: GpFloat = 1000000000.0;
+        
+#[cfg(gpopt_fitness_type="int")]
 pub struct Fitness {
     // Base values - real values are stored after multiplying by DL_SHIFT
     pub lng_nfr: GpInt,
@@ -634,6 +555,7 @@ pub struct Fitness {
     pub r: u16,
     pub s: u16,
 }
+#[cfg(gpopt_fitness_type="int")]
 impl Fitness {
     fn new() -> Fitness {
         Fitness {
@@ -641,6 +563,7 @@ impl Fitness {
             lng_n:   0,
             lng_a:   0,
             lng_raw: 0,
+
             r: 0,
             s: 0,
         }
@@ -667,6 +590,45 @@ impl Fitness {
     #[inline(always)]
     pub fn a(&self) -> GpFloat {
         Self::int_to_float(self.lng_a)
+    }
+}
+#[cfg(gpopt_fitness_type="float")]
+pub struct Fitness {
+    // Base values - real values are stored after multiplying by DL_SHIFT
+    pub nfr: GpFloat,
+    pub n:   GpFloat,
+    pub a:   GpFloat,
+    pub raw: GpFloat,   // note that if run Fitness uses integer type
+                        // and then this just contains a converted copy
+
+    // Ren Values
+    pub r: u16,
+    pub s: u16,
+}
+#[cfg(gpopt_fitness_type="float")]
+impl Fitness {
+    fn new() -> Fitness {
+        Fitness {
+            nfr: 0.0,
+            n:   0.0,
+            a:   0.0,
+            raw: 0.0,
+
+            r: 0,
+            s: 0,
+        }
+    }
+    #[inline(always)]
+    pub fn nfr(&self) -> GpFloat {
+        self.nfr
+    }
+    #[inline(always)]
+    pub fn n(&self) -> GpFloat {
+        self.n
+    }
+    #[inline(always)]
+    pub fn a(&self) -> GpFloat {
+        self.a
     }
 }
 
@@ -724,6 +686,7 @@ impl Tree {
         self.num_function_nodes = Some(counts.1);
     }
     /// computes fitness returns true if winner
+    #[cfg(gpopt_fitness_type="int")]
     pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
         let mut f = &mut self.fitness;
         f.r = rc.eat_count;
@@ -739,6 +702,24 @@ impl Tree {
         f.s = rc.n_pellets - rc.eat_count;
         let a = 1.0 / (1.0 + (f.s as GpFloat));
         f.lng_a = Fitness::float_to_int(a);
+
+        return f.s == 0;
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
+        let mut f = &mut self.fitness;
+        f.r = rc.eat_count;
+        self.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1.0;
+        f.a = -1.0;
+        f.nfr = -1.0;
+        f.raw = f.r as GpFloat;
+
+        // average over generation
+        f.s = rc.n_pellets - rc.eat_count;
+        f.a = 1.0 / (1.0 + f.s as GpFloat);
 
         return f.s == 0;
     }
