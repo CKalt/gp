@@ -95,7 +95,7 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     result
 }
     
-//#[cfg(gpopt_trace="on")]
+#[cfg(gpopt_trace="on")]
 static TRACE_COUNT: AtomicI32 = AtomicI32::new(0);
 
 // rnd - return random double value between 0.0 and 1.0

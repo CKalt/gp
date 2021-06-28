@@ -1,13 +1,9 @@
-# gpopt_trail := los_altos | santa_fe
-# gpopt_select_method := fpb
+# gpopt_select_method := fpb | tourn
 # gpopt_rng := Thread | Seedable | FileStream
 # gpopt_trace := on | off
-# gpopt_choice_logging := off | read | write
 [build]
 rustflags = """
-    --cfg gpopt_trail="los_altos"
     --cfg gpopt_select_method="fpb"
-    --cfg gpopt_rng="FileStream"
+    --cfg gpopt_rng="Seedable"
     --cfg gpopt_trace="off"
-    --cfg gpopt_choice_logging="write"
 """

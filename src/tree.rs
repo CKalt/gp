@@ -10,8 +10,6 @@ use crate::gprng::TRACE_COUNT;
 #[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
 
-#[cfg(gpopt_choice_logging="write")]
-use crate::choice_logging::*;
 use Node::*;
 
 pub enum GpType {
@@ -27,21 +25,6 @@ pub enum Node {
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
 }
 impl Node {
-#[cfg(gpopt_choice_logging="write")]
-    /// (Formerly called newRndFTNode() in gp.c)
-    pub fn new_rnd(rng: &mut GpRng) -> Node {
-        let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
-        let r = rng.gen_range(0i32..(num_ft as i32)) as u8;
-        choice_log(2, &r.to_string());
-        if r < CONTROL.num_terminals {
-            TNode(&TERMINAL[r as usize])
-        }
-        else {
-            let rand_fid = r - CONTROL.num_terminals;
-            FNode(FunctionNode::new(rand_fid))
-        }
-    }
-#[cfg(gpopt_choice_logging="off")]
     pub fn new_rnd(rng: &mut GpRng) -> Node {
         let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
         let r = rng.gen_range(0..num_ft as i32) as u8;
@@ -320,13 +303,6 @@ pub struct Terminal {
 }
 
 impl Terminal {
-#[cfg(gpopt_choice_logging="write")]
-    pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
-        let t_id: u8 = rng.gen_range(0i32..CONTROL.num_terminals as i32) as u8;
-        choice_log(3, &t_id.to_string());
-        &TERMINAL[t_id as usize]
-    }
-#[cfg(gpopt_choice_logging="off")]
     /// (Formerly called getRndTNode() in gp.c)
     pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
         let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals as i32) as u8;
@@ -433,14 +409,6 @@ impl FunctionNode {
 
     /// create a new FunctionNode choosing which one at random.
     /// (formerly called newRndFNode() in gp.c)
-#[cfg(gpopt_choice_logging="write")]
-    pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
-        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions as i32) as u8;
-        choice_log(4, &rand_fid.to_string());
-
-        FunctionNode::new(rand_fid)
-    }
-#[cfg(gpopt_choice_logging="off")]
     pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions as i32) as u8;
         FunctionNode::new(rand_fid)
@@ -497,14 +465,6 @@ impl TreeSet {
         }
     }
 
-#[cfg(gpopt_choice_logging="write")]
-    pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
-            -> &mut Tree {
-        let rnd_index: usize = rng.gen_range(0..self.tree_vec.len() as i32) as usize;
-        choice_log(5, &rnd_index.to_string());
-        &mut self.tree_vec[rnd_index]
-    }
-#[cfg(gpopt_choice_logging="off")]
     pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
         let rnd_index: usize = rng.gen_range(0..self.tree_vec.len() as i32) as usize;
@@ -624,14 +584,6 @@ impl SelectMethod for TreeSet {
         result
     }
 
-#[cfg(gpopt_choice_logging="write")]
-    fn select_tree(&self, rng: &mut GpRng) -> &Tree {
-        let greedy_val = rnd_greedy_val(rng);
-        let i = self.select_ind_bin(greedy_val);
-        choice_log(6, &i.to_string());
-        return &self.tree_vec[i];
-    }
-#[cfg(gpopt_choice_logging="off")]
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let greedy_val = rnd_greedy_val(rng);
         let i = self.select_ind_bin(greedy_val);
@@ -821,18 +773,6 @@ impl Tree {
         let fi = self.get_rnd_function_index(rng);
         Node::find_function_node_ref(self, fi)
     }
-#[cfg(gpopt_choice_logging="write")]
-    fn get_rnd_function_index(&self, rng: &mut GpRng)
-            -> TreeNodeIndex {
-        let num_fnodes = self
-            .num_function_nodes
-            .expect("Tree does not have count of function nodes. ");
-
-        let result = rng.gen_range(0..num_fnodes as i32) as TreeNodeIndex;
-        choice_log(7, &result.to_string());
-        result
-    }
-#[cfg(gpopt_choice_logging="off")]
     fn get_rnd_function_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_fnodes = self
@@ -853,18 +793,6 @@ impl Tree {
         let ti = self.get_rnd_terminal_index(rng);
         (ti, Node::find_terminal_node_ref(self, ti))
     }
-#[cfg(gpopt_choice_logging="write")]
-    fn get_rnd_terminal_index(&self, rng: &mut GpRng)
-            -> TreeNodeIndex {
-        let num_tnodes = self
-            .num_terminal_nodes
-            .expect("Tree does not have count of terminal nodes. ");
-
-        let result = rng.gen_range(0..num_tnodes) as TreeNodeIndex;
-        choice_log(8, &result.to_string());
-        result
-    }
-#[cfg(gpopt_choice_logging="off")]
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_tnodes = self
