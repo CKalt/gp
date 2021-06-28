@@ -3,9 +3,6 @@ use crate::gprun::GridCellState::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
-    
-#[cfg(gpopt_trace="on")]
-use crate::gprng::TRACE_COUNT;
 
 #[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
@@ -648,11 +645,6 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
 
     #[cfg(gpopt_rng="FileStream")]
     let r = rng.gen_float();
-
-//    #[cfg(gpopt_trace="on")]
-//    unsafe {
-//        println!("TP005.2:(rnd_greedy_dbl) rlog={},r={}", TRACE_COUNT, r);
-//    }
 
     let dbl_val: GpFloat = 
         if CONTROL.GRc < 0.0001 {
