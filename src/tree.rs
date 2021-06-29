@@ -283,7 +283,6 @@ impl FunctionNode {
     }
 }
 
-
 #[derive(Copy, Clone)]
 pub enum GenerateMethod {
     Full,
@@ -339,8 +338,8 @@ impl TreeSet {
         let mut sum_raw: GpInt = 0;
 
         for t in self.tree_vec.iter() {
-            sum_a += t.fitness.lng_a;
-            sum_raw += t.fitness.lng_raw;
+            sum_a += t.fitness.a;
+            sum_raw += t.fitness.raw;
         }
 
         let int_avg_raw_f: GpInt = sum_raw / (self.tree_vec.len() as GpInt);
@@ -351,10 +350,7 @@ impl TreeSet {
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
             let dbl_n = t.fitness.a() / flt_sum_a;
 
-            #[cfg(gpopt_fitness_type="int")]
-            t.fitness.lng_n = Fitness::float_to_int(dbl_n);
-            #[cfg(gpopt_fitness_type="float")]
-            t.fitness.n = dbl_n;
+            t.fitness.n = Fitness::float_to_int(dbl_n);
             println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
                 i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
 
@@ -362,7 +358,7 @@ impl TreeSet {
         #[cfg(gpopt_trace="off")]
         for t in self.tree_vec.iter_mut() {
             let dbl_n = t.fitness.a() / flt_sum_a;
-            t.fitness.lng_n = Fitness::float_to_int(dbl_n);
+            t.fitness.n = Fitness::float_to_int(dbl_n);
         }
 
         self
@@ -396,7 +392,7 @@ impl TreeSet {
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
         #[cfg(gpopt_fitness_type="int")]
         self.tree_vec
-            .sort_by(|a, b| a.fitness.lng_n.partial_cmp(&b.fitness.lng_n).unwrap());
+            .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
         #[cfg(gpopt_fitness_type="float")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
@@ -408,8 +404,8 @@ impl TreeSet {
     fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
         let mut nfr: GpInt = 0;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
-            nfr += t.fitness.lng_n;
-            t.fitness.lng_nfr = nfr;
+            nfr += t.fitness.n;
+            t.fitness.nfr = nfr;
             t.tfid = Some(i);
         }
         self
@@ -449,11 +445,11 @@ impl SelectMethod for TreeSet {
         let gap = ((hi - lo) / 2) as usize;
         let guess = lo + gap + 1;
 
-        if self.tree_vec[guess-1].fitness.lng_nfr < level &&
-                self.tree_vec[guess].fitness.lng_nfr >= level {
+        if self.tree_vec[guess-1].fitness.nfr < level &&
+                self.tree_vec[guess].fitness.nfr >= level {
             guess
         }
-        else if self.tree_vec[guess].fitness.lng_nfr < level {
+        else if self.tree_vec[guess].fitness.nfr < level {
             // new_lo = guess
             self.select_ind_bin_r(level, guess, hi)
         }
@@ -485,11 +481,11 @@ impl SelectMethod for TreeSet {
     fn select_ind_bin(&self, level: GpInt) -> usize {
         assert_ne!(self.tree_vec.len(),0);
         let result = 
-            if self.tree_vec[0].fitness.lng_nfr >= level ||
+            if self.tree_vec[0].fitness.nfr >= level ||
                     self.tree_vec.len() == 1 {
                 0
             } else if level >
-                    self.tree_vec[self.tree_vec.len() - 2].fitness.lng_nfr {
+                    self.tree_vec[self.tree_vec.len() - 2].fitness.nfr {
                 self.tree_vec.len() - 1
             } else {
                 self.select_ind_bin_r(level, 0, self.tree_vec.len() - 1)
@@ -582,29 +578,35 @@ pub type GpInt = i64;
 pub type GpFloat = f64;
 
 #[cfg(gpopt_fitness_type="int")]
+pub type GpFitness = GpInt;
+
+#[cfg(gpopt_fitness_type="float")]
+pub type GpFitness = GpFloat;
+
+#[cfg(gpopt_fitness_type="int")]
 const DL_SHIFT: GpFloat = 1000000000.0;
         
-#[cfg(gpopt_fitness_type="int")]
 pub struct Fitness {
     // Base values - real values are stored after multiplying by DL_SHIFT
-    pub lng_nfr: GpInt,
-    pub lng_n:   GpInt,
-    pub lng_a:   GpInt,
-    pub lng_raw: GpInt,   // note that if run Fitness uses integer type
+    pub nfr: GpFitness,
+    pub n:   GpFitness,
+    pub a:   GpFitness,
+    pub raw: GpFitness,   // note that if run Fitness uses integer type
                         // and then this just contains a converted copy
 
     // Ren Values
     pub r: u16,
     pub s: u16,
 }
+
 #[cfg(gpopt_fitness_type="int")]
 impl Fitness {
     fn new() -> Fitness {
         Fitness {
-            lng_nfr: 0,
-            lng_n:   0,
-            lng_a:   0,
-            lng_raw: 0,
+            nfr: 0,
+            n:   0,
+            a:   0,
+            raw: 0,
 
             r: 0,
             s: 0,
@@ -623,30 +625,18 @@ impl Fitness {
     }
     #[inline(always)]
     pub fn nfr(&self) -> GpFloat {
-        Self::int_to_float(self.lng_nfr)
+        Self::int_to_float(self.nfr)
     }
     #[inline(always)]
     pub fn n(&self) -> GpFloat {
-        Self::int_to_float(self.lng_n)
+        Self::int_to_float(self.n)
     }
     #[inline(always)]
     pub fn a(&self) -> GpFloat {
-        Self::int_to_float(self.lng_a)
+        Self::int_to_float(self.a)
     }
 }
-#[cfg(gpopt_fitness_type="float")]
-pub struct Fitness {
-    // Base values - real values are stored after multiplying by DL_SHIFT
-    pub nfr: GpFloat,
-    pub n:   GpFloat,
-    pub a:   GpFloat,
-    pub raw: GpFloat,   // note that if run Fitness uses integer type
-                        // and then this just contains a converted copy
 
-    // Ren Values
-    pub r: u16,
-    pub s: u16,
-}
 #[cfg(gpopt_fitness_type="float")]
 impl Fitness {
     fn new() -> Fitness {
@@ -735,15 +725,15 @@ impl Tree {
         self.hits = f.r as u32;
 
         // init fitness "base" values
-        f.lng_n = -1;
-        f.lng_a = -1;
-        f.lng_nfr = -1;
-        f.lng_raw = f.r as GpInt * DL_SHIFT as GpInt;
+        f.n = -1;
+        f.a = -1;
+        f.nfr = -1;
+        f.raw = f.r as GpInt * DL_SHIFT as GpInt;
 
         // average over generation
         f.s = rc.n_pellets - rc.eat_count;
         let a = 1.0 / (1.0 + (f.s as GpFloat));
-        f.lng_a = Fitness::float_to_int(a);
+        f.a = Fitness::float_to_int(a);
 
         return f.s == 0;
     }
