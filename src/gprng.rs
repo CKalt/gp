@@ -1,39 +1,39 @@
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use crate::util::read_i32_pair_from_fbuf_rdr;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use std::sync::atomic::{AtomicI32, Ordering};
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use crate::util::open_fbuf_rdr;
 
-#[cfg(gpopt_rng="Seedable")]
+#[cfg(gpopt_rng="seedable")]
 use rand::{SeedableRng};
 
-#[cfg(gpopt_rng="Thread")]
+#[cfg(gpopt_rng="thread")]
 pub type GpRng = rand::rngs::ThreadRng;
 
-#[cfg(gpopt_rng="Seedable")]
+#[cfg(gpopt_rng="seedable")]
 pub type GpRng = rand::rngs::StdRng;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 pub type GpRng = FileStreamRng ;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use std::io::BufReader;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use std::ops::Range;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 use std::fs::File;
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 pub struct FileStreamRng {
     fbuf_rdr: BufReader<File>,
 }
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 impl FileStreamRng {
     pub fn new() -> FileStreamRng {
         FileStreamRng {
@@ -56,12 +56,12 @@ impl FileStreamRng {
 pub struct GpRngFactory {
 }
 impl GpRngFactory {
-    #[cfg(gpopt_rng="Thread")]
+    #[cfg(gpopt_rng="thread")]
     pub fn new() -> rand::rngs::ThreadRng {
         rand::thread_rng()
     }
 
-    #[cfg(gpopt_rng="Seedable")]
+    #[cfg(gpopt_rng="seedable")]
     pub fn new() -> rand::rngs::StdRng {
         #[cfg(gpopt_fitness_type="int")]
         let seed: [u8; 32] = [151; 32];     // Winner during Run# 6 Gen# 24
@@ -72,16 +72,16 @@ impl GpRngFactory {
         SeedableRng::from_seed(seed)
     }
 
-    #[cfg(gpopt_rng="FileStream")]
+    #[cfg(gpopt_rng="file_stream")]
     pub fn new() -> FileStreamRng {
         FileStreamRng::new()
     }
 }
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 const RAND_MAX: i32 = 2147483647;    // defined in gcc <stdlib.h>
 
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     #[cfg(gpopt_trace="on")]
     let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
@@ -99,11 +99,11 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     result
 }
     
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 pub static TRACE_COUNT: AtomicI32 = AtomicI32::new(0);
 
 // rnd - return random double value between 0.0 and 1.0
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     #[cfg(gpopt_trace="on")]
     let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
@@ -121,7 +121,7 @@ fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
 }
 
 #[allow(dead_code)]
-#[cfg(gpopt_rng="FileStream")]
+#[cfg(gpopt_rng="file_stream")]
 pub fn get_trace_count() -> i32 {
     TRACE_COUNT.load(Ordering::SeqCst)
 }

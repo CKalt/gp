@@ -16,6 +16,7 @@ use crate::tree::DL_SHIFT;
 use crate::Fitness;
 
 pub enum GpType {
+    Init,
     Continue,
     Terminate,
 }
@@ -235,6 +236,7 @@ pub struct RunContext {
     pub eat_count: u16,
     pub clock: u16,
     pub hits: u16,
+    pub last_exec_result: GpType,
     food: Vec<FoodCoord>, // stores pattern for food trail transfered 
                           // to grid during init_grid.
 }
@@ -250,6 +252,7 @@ impl RunContext {
             eat_count: 0,
             clock: 0,
             hits: 0,
+            last_exec_result: GpType::Init,
 
             // Food for Koza's Los Altos Trail
             food: trail_factory()

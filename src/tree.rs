@@ -3,7 +3,7 @@ use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
 
-#[cfg(not(gpopt_rng="FileStream"))]
+#[cfg(not(gpopt_rng="file_stream"))]
 use rand::Rng;
 
 use Node::*;
@@ -423,8 +423,14 @@ impl TreeSet {
 
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
             rc.prepare_run();
+
+            #[cfg(gpopt_termination_criteria="clock")]
             while rc.clock < RUN_CONTROL.max_clock {
-                exec_node(&mut rc, &mut tree.root);
+                rc.last_exec_result = exec_node(&mut rc, &mut tree.root);
+            }
+            #[cfg(gpopt_termination_criteria="one_exec")]
+            {
+                rc.last_exec_result = exec_node(&mut rc, &mut tree.root);
             }
 
             if rc.compute_fitness(tree) {
@@ -534,13 +540,13 @@ impl SelectMethod for TreeSet {
 
 #[cfg(gpopt_fitness_type="int")]
 fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
-    #[cfg(not(gpopt_rng="FileStream"))]
+    #[cfg(not(gpopt_rng="file_stream"))]
     let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
 
-    #[cfg(gpopt_rng="FileStream")]
+    #[cfg(gpopt_rng="file_stream")]
     let r = rng.gen_float();
 
     let dbl_val: GpFloat = 
@@ -557,13 +563,13 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
 }
 #[cfg(gpopt_fitness_type="float")]
 fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
-    #[cfg(not(gpopt_rng="FileStream"))]
+    #[cfg(not(gpopt_rng="file_stream"))]
     let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                // done in TreeSet::select_tree, which is
                                // the only function that calls here. This allows
                                // integer logging thereby removing floating point variences.
 
-    #[cfg(gpopt_rng="FileStream")]
+    #[cfg(gpopt_rng="file_stream")]
     let r = rng.gen_float();
 
 //    #[cfg(gpopt_trace="on")]
