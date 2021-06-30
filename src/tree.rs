@@ -856,6 +856,20 @@ impl Tree {
                     tfid, self.tcid, self.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
         }
     }
+    pub fn print_result_header(opt_gen: Option<u16>, hits: &u16) {
+        println!("{}={}", RunContext::get_hits_label(), *hits);
+        if let Some(_) = opt_gen {
+            println!("{:>6} {:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8} {:>6}", 
+                "gen", "tfid", "tcid", "hits", "r", "s", "a", "n", "nfr", "avgRawF");
+            println!("{:>6} {:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8}", 
+                "----", "---", "---", "-----", "---", "---", "------", "------", "------");
+        } else {
+            println!("{:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8}", 
+                "tfid", "tcid", "hits", "r", "s", "a", "n", "nfr");
+            println!("{:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8}", 
+                "---", "---", "-----", "---", "---", "------", "------", "------");
+        }
+    }
 }
 
 pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {

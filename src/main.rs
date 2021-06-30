@@ -133,14 +133,14 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
     }
     if CONTROL.show_all_tree_results {
         println!("gen {}", trees.gen);
-        tree_result_header(None, hits);
+        Tree::print_result_header(None, hits);
         for t in trees.tree_vec.iter() {
             t.print_result(None, -1.0);
         }
     }
     if CONTROL.show_best_tree_results {
         if *header_need {
-            tree_result_header(Some(trees.gen), hits);
+            Tree::print_result_header(Some(trees.gen), hits);
             *header_need = false;
         }
         let i = trees.tree_vec.len()-1;
