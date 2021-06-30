@@ -1,6 +1,4 @@
-use crate::tree::Tree;
 use crate::tree::exec_node;
-use crate::tree::GpFloat;
 
 use crate::tree::Function;
 use crate::tree::FunctionNode;
@@ -290,19 +288,6 @@ impl RunContext {
 }
 
 pub fn init_run() { }
-
-pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: GpFloat) {
-    assert_eq!(i, t.tfid);
-    let f = &t.fitness;
-    let tfid = if let Some(num) = t.tfid { num } else { 0 };
-    if let Some(gen) = opt_gen {
-        println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                 gen, tfid, t.tcid, t.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
-    } else {
-        println!("{:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                tfid, t.tcid, t.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
-    }
-}
 
 pub fn tree_result_header(opt_gen: Option<u16>, hits: &u16) {
     println!("{}={}", RunContext::get_hits_label(), *hits);

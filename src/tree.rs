@@ -428,7 +428,7 @@ impl TreeSet {
             }
 
             if tree.compute_fitness(&rc) {
-                report_tree_result(tree, tree.tfid, None, -1.0);
+                tree.print_result(None, -1.0);
                 rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
                     self.gen));
                 self.winning_index = Some(i);
@@ -844,6 +844,17 @@ impl Tree {
             println!("Have Winner");
         }
         rc.print_run_illustration("After Run");
+    }
+    pub fn print_result(&self, opt_gen: Option<u16>, avg_raw_f: GpFloat) {
+        let f = &self.fitness;
+        let tfid = if let Some(num) = self.tfid { num } else { 0 };
+        if let Some(gen) = opt_gen {
+            println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
+                     gen, tfid, self.tcid, self.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
+        } else {
+            println!("{:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
+                    tfid, self.tcid, self.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
+        }
     }
 }
 
