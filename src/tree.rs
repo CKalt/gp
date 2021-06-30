@@ -418,7 +418,7 @@ impl TreeSet {
         self
     }
 
-    pub fn exec_trees(&mut self, run_number: i32) -> u16 {
+    pub fn exec(&mut self, run_number: i32) -> u16 {
         let mut rc = RunContext::new();
 
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
@@ -831,6 +831,19 @@ impl Tree {
     }
     pub fn qualifies(&self) -> bool {
         !self.depth_gt(CONTROL.Dc)
+    }
+    pub fn exec(&mut self) {
+        let mut rc = RunContext::new();
+        rc.prepare_run();
+        rc.print_run_illustration("Before Run");
+        while rc.clock < RUN_CONTROL.max_clock {
+            exec_node(&mut rc, &mut self.root);
+        }
+
+        if self.compute_fitness(&rc) {
+            println!("Have Winner");
+        }
+        rc.print_run_illustration("After Run");
     }
 }
 
