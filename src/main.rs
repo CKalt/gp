@@ -134,8 +134,8 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
     if CONTROL.show_all_tree_results {
         println!("gen {}", trees.gen);
         tree_result_header(None, hits);
-        for (i,t) in trees.tree_vec.iter().enumerate() {
-            report_tree_result(t, Some(i), None, -1.0);
+        for t in trees.tree_vec.iter() {
+            t.print_result(None, -1.0);
         }
     }
     if CONTROL.show_best_tree_results {
@@ -145,7 +145,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         }
         let i = trees.tree_vec.len()-1;
         let best_tree = &trees.tree_vec[i];
-        report_tree_result(best_tree, Some(i), Some(trees.gen), trees.avg_raw_f);
+        best_tree.print_result(Some(trees.gen), trees.avg_raw_f);
     }
     if CONTROL.run_tests {
         run_tests(rng, trees);
