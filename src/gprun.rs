@@ -53,6 +53,7 @@ pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
 ];
 
 fn terminal_l0(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -61,6 +62,7 @@ fn terminal_l0(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_w0(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -69,6 +71,7 @@ fn terminal_w0(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_h0(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -77,6 +80,7 @@ fn terminal_h0(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_l1(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -85,6 +89,7 @@ fn terminal_l1(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_w1(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -93,6 +98,7 @@ fn terminal_w1(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_h1(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -101,6 +107,7 @@ fn terminal_h1(rc: &mut RunContext) -> GpType {
 }
 
 fn terminal_d(rc: &mut RunContext) -> GpType {
+    #[cfg(gpopt_clock_termination="on")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
@@ -128,7 +135,7 @@ pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
         code: func_mult,
     },
     Function {
-        fid:  2u8,
+        fid:  3u8,
         name: "%",
         arity: 2,
         code: func_prot_div,
@@ -170,27 +177,12 @@ fn func_prot_div(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     eval_binary_op(val1, val2, |a,b| if b == 0.0 {1.0} else {a/b} )
 }
 
-
-fn prog_n2(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// unconditionally execute branch 0 & 1
-// ignore any return values
-    exec_node(rc, &func.branch[0]);
-    exec_node(rc, &func.branch[1])
-}
-
-fn prog_n3(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// unconditionally execute branch 0, 1 & 2
-// ignore any return values
-    exec_node(rc, &func.branch[0]);
-    exec_node(rc, &func.branch[1]);
-    exec_node(rc, &func.branch[2])
-}
-
-#[allow(dead_code)]
+#[cfg(gpopt_clock_termination="on")]
 fn clock_reset(rc: &mut RunContext) {
     rc.clock = 0;
 }
 
+#[cfg(gpopt_clock_termination="on")]
 fn clock_tic(rc: &mut RunContext) -> GpType {
     if rc.clock < RUN_CONTROL.max_clock {
         rc.clock += 1;
@@ -201,6 +193,7 @@ fn clock_tic(rc: &mut RunContext) -> GpType {
     }
 }
 
+#[cfg(gpopt_clock_termination="on")]
 fn terminate(rc: &mut RunContext) -> GpType {
     rc.clock = RUN_CONTROL.max_clock;
     GpType::Terminate
@@ -208,24 +201,18 @@ fn terminate(rc: &mut RunContext) -> GpType {
 
 /// RunControl defines parameters controlling the running of individuals.
 pub struct RunControl {
+    #[cfg(gpopt_clock_termination="on")]
     pub max_clock: u16, // sets limit for entire population run duration
 }
 
-pub static RUN_CONTROL: RunControl = RunControl{
+pub static RUN_CONTROL: RunControl = RunControl {
+#[cfg(gpopt_clock_termination="on")]
     max_clock: 3000,
 };
 
-////////////////////////////////////////////////////////////////////
-type FoodCoord = (usize, usize); // (x, y)
-#[derive(Copy, Clone)]
-pub enum GridCellState {
-    Clear,
-    Food,
-    FoodEaten,
-    NoFoodFound,
-}
-use GridCellState::*;
+pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
+// Fitness
 struct FitnessCase {
     l0: f32,
     w0: f32,
@@ -236,18 +223,19 @@ struct FitnessCase {
     d:  f32,
 }
 
-pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
-
+/// RunContext provides runtime control over a running individual. Each 
+/// node and terminal exec call recieves a reference to its RunContext
+/// where it can then access it's fitness case data and currency values.
 struct RunContext {
     fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
     cur_fc_index: usize,
+    hits: u16,
+    #[cfg(gpopt_clock_termination="on")]
     clock: u16,
-
 }
 impl RunContext {
     fn new() -> RunContext {
         let rc = RunContext {
-            clock: 0,
             cur_fc_index: 0,
             fitness_cases:
                 [
@@ -342,7 +330,9 @@ impl RunContext {
                         d:  45.0,
                     },
                 ],
-            };
+            #[cfg(gpopt_clock_termination="on")]
+            clock: 0,
+        };
 
         for (i, fc) in rc.iter() {
             if fc.d != (fc.w*fc.h*fc.l) - (fc.w*fc.h*c.l) {
@@ -373,7 +363,7 @@ pub fn exec_trees(mut trees: &mut TreeSet, run_number: i32) -> u16 {
             break;
         }
     }
-    rc.n_pellets
+    rc.hits
 }
 
 pub fn exec_single_tree(tree : &mut Tree) {

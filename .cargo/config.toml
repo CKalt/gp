@@ -2,10 +2,12 @@
 # gpopt_rng := Thread | Seedable | FileStream
 # gpopt_trace := on | off
 # gpopt_fitness_type := float | int
+# gpopt_clock_termination := off | on
 [build]
 rustflags = """
     --cfg gpopt_select_method="fpb"
     --cfg gpopt_rng="Seedable"
     --cfg gpopt_trace="off"
     --cfg gpopt_fitness_type="int"
+    --cfg gpopt_clock_termination="off"
 """
