@@ -1,6 +1,6 @@
 use crate::tree::GpFloat;
 
-const CONTROL_M: usize = 2000;            /// LOS ALTOS (M)
+const CONTROL_M: usize = 2000;
 
 pub type TreeDepth = u16;
 
@@ -41,8 +41,8 @@ pub const CONTROL: Control = Control {
     Pc:                 0.90,       // Probability of cross over
     Pr:                 0.10,       // Probability of reproduction
     Pip:                0.90,       // Probability of cross over internal point
-    num_functions:      3,
-    num_terminals:      3,
+    num_functions:      4,
+    num_terminals:      7,
     GRc:                0.16,
     R:                  0,
     no_fitness_cases:   0,

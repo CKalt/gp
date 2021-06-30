@@ -9,7 +9,7 @@ use crate::tree::Terminal;
 use crate::control::CONTROL;
 
 pub enum GpType {
-    Continue,
+    Value(f32),
     Terminate,
 }
 
@@ -17,113 +17,159 @@ pub enum GpType {
 pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
     Terminal {
         tid:  0u8,
-        name: "move",
-        code: move_ant,
+        name: "L0",
+        code: terminal_l0
     },
     Terminal {
         tid:  1u8,
-        name: "left",
-        code: left,
+        name: "W0",
+        code: terminal_w0,
     },
     Terminal {
         tid:  2u8,
-        name: "right",
-        code: right,
+        name: "H0",
+        code: terminal_h0,
+    },
+    Terminal {
+        tid:  3u8,
+        name: "L1",
+        code: terminal_l1
+    },
+    Terminal {
+        tid:  4u8,
+        name: "W1",
+        code: terminal_w1,
+    },
+    Terminal {
+        tid:  5u8,
+        name: "H1",
+        code: terminal_h1,
+    },
+    Terminal {
+        tid:  5u8,
+        name: "H1",
+        code: terminal_d,
     },
 ];
 
-fn move_ant(rc: &mut RunContext) -> GpType {
+fn terminal_l0(rc: &mut RunContext) -> GpType {
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    rc.ant_x += rc.ant_xd;
-    rc.ant_y += rc.ant_yd;
-
-    // check for out of bounds
-    if rc.ant_x < 0 || rc.ant_x > RUN_CONTROL_MAX_X ||
-      rc.ant_y < 0 || rc.ant_y > RUN_CONTROL_MAX_Y {
-        return GpType::Continue;
-    }
-    // check for food to eat
-    else if let Food = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
-        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = FoodEaten;
-
-        rc.eat_count += 1;
-        if rc.eat_count == rc.n_pellets {
-            return terminate(rc);
-        }
-    }
-    // check for never been here before and no food
-    else if let Clear = rc.grid[rc.ant_y as usize][rc.ant_x as usize] {
-        rc.grid[rc.ant_y as usize][rc.ant_x as usize] = NoFoodFound;
-    }
-        
-    // don't do anything but continue
-    return GpType::Continue;
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].l0);
 }
 
-fn left(rc: &mut RunContext) -> GpType {
+fn terminal_w0(rc: &mut RunContext) -> GpType {
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    let t = rc.ant_xd;
-    rc.ant_xd = rc.ant_yd;
-    rc.ant_yd = -1 * t;
-
-    return GpType::Continue;
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].w0);
 }
 
-fn right(rc: &mut RunContext) -> GpType {
+fn terminal_h0(rc: &mut RunContext) -> GpType {
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
-    let t = rc.ant_xd;
-    rc.ant_xd = -1 * rc.ant_yd;
-    rc.ant_yd = t;
 
-    return GpType::Continue;
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].h0);
+}
+
+fn terminal_l1(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].l1);
+}
+
+fn terminal_w1(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].w1);
+}
+
+fn terminal_h1(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].h1);
+}
+
+fn terminal_d(rc: &mut RunContext) -> GpType {
+    if let GpType::Terminate = clock_tic(rc) {
+        return GpType::Terminate
+    }
+
+    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].d);
 }
 
 pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
     Function {
         fid:  0u8,
-        name: "if_food_ahead",
+        name: "+",
         arity: 2,
-        code: if_food_ahead,
+        code: func_add,
     },
     Function {
         fid:  1u8,
-        name: "prog_n2",
+        name: "-",
         arity: 2,
-        code: prog_n2
+        code: func_sub,
     },
     Function {
         fid:  2u8,
-        name: "prog_n3",
-        arity: 3,
-        code: prog_n3
+        name: "*",
+        arity: 2,
+        code: func_mult,
+    },
+    Function {
+        fid:  2u8,
+        name: "%",
+        arity: 2,
+        code: func_prot_div,
     },
 ];
 
-fn if_food_ahead(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-// if food exists at next step execute branch 0 else branch 1
-// ignore any return values
-    let new_x = rc.ant_x + rc.ant_xd;
-    let new_y = rc.ant_y + rc.ant_yd;
-
-    if new_x < 0 || new_x > RUN_CONTROL_MAX_X ||
-       new_y < 0 || new_y > RUN_CONTROL_MAX_Y {
-        return exec_node(rc, &func.branch[1]);
+fn eval_binary_op(val1: GpType, val2: GpType, op: fn(i32,i32)->i32 ) -> GpType {
+    match val1 {
+        Terminate => val1,
+        Value(num1) =>
+            match val2 {
+                Terminate => val2,
+                Value(num2) => Value( op(num1, num2) )
+            }
     }
-
-    if let Food = rc.grid[new_y as usize][new_x as usize] {
-        return exec_node(rc, &func.branch[0]);
-    }
-
-    exec_node(rc, &func.branch[1])
 }
+
+fn func_add(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(rc, &func.branch[0]);
+    let val2 = exec_node(rc, &func.branch[1]);
+    eval_binary_op(val1, val2, |a,b| a+b)
+}
+
+fn func_sub(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(rc, &func.branch[0]);
+    let val2 = exec_node(rc, &func.branch[1]);
+    eval_binary_op(val1, val2, |a,b| a-b)
+}
+
+fn func_mult(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(rc, &func.branch[0]);
+    let val2 = exec_node(rc, &func.branch[1]);
+    eval_binary_op(val1, val2, |a,b| a*b)
+}
+
+fn func_prot_div(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(rc, &func.branch[0]);
+    let val2 = exec_node(rc, &func.branch[1]);
+    eval_binary_op(val1, val2, |a,b| if b == 0.0 {1.0} else {a/b} )
+}
+
 
 fn prog_n2(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 // unconditionally execute branch 0 & 1
@@ -160,47 +206,9 @@ fn terminate(rc: &mut RunContext) -> GpType {
     GpType::Terminate
 }
 
-
 /// RunControl defines parameters controlling the running of individuals.
 pub struct RunControl {
     pub max_clock: u16, // sets limit for entire population run duration
-}
-
-//////////////////////
-// SANTA_FE TRAIL   //
-//////////////////////
-
-// MAX_X & MAX_Y are zero based max_y (may be equal but cannot exceed)
-//////////////////////
-// LOS_ALTOS TRAIL  //
-//////////////////////
-
-// MAX_X & MAX_Y are zero based max_y (may be equal but cannot exceed)
-pub const RUN_CONTROL_MAX_X: i16 = 43;
-pub const RUN_CONTROL_MAX_Y: i16 = 66;
-
-fn trail_factory() -> Vec<FoodCoord> {
-    vec![ // set of FoodCoord (x,y) tuples
-    (1,0), (2,0), (3,0), (3,1), (3,2), (3,3), (3,4), (3,5), (4,5), 
-    (5,5), (6,5), (8,5), (9,5), (10,5), (11,5), (12,5), (12,6), (12,7), 
-    (12,8), (12,9), (12,11), (12,12), (12,13), (12,14), (12,17), (12,18), 
-    (12,19), (12,20), (12,21), (12,22), (12,23), (11,24), (10,24), (9,24), 
-    (8,24), (7,24), (4,24), (3,24), (1,25), (1,26), (1,27), (1,28), 
-    (1,29), (1,30), (1,31), (2,33), (3,33), (4,33), (5,33), (7,32), (7,31),
-    (8,30), (9,30), (10,30), (11,30), (12,30), (17,30), (18,30), (20,29),
-    (20,28), (20,27), (20,26), (20,25), (20,24), (20,21), (20,20), (20,19),
-    (20,18), (21,15), (24,14), (24,13), (24,10), (24,9), (24,8), (24,7),
-    (25,5), (26,5), (27,5), (28,5), (29,5), (30,5), (31,5), (32,5), (33,5), 
-    (34,5), (35,5), (36,5), (38,4), (38,3), (39,2), (40,2), (41,2), (43,3), 
-    (43,4), (43,6), (43,9), (43,12), (42,14), (41,14), (40,14), (37,15), 
-    (38,18), (41,19), (40,22), (37,23), (37,24), (37,25), (37,26), (37,27), 
-    (37,28), (37,29), (37,30), (37,31), (37,32), (37,33), (37,34), (35,34), 
-    (35,35), (35,36), (35,37), (35,38), (35,39), (35,40), (35,41), (35,42), 
-    (34,42), (33,42), (32,42), (31,42), (30,42), (30,44), (30,45), (30,46), 
-    (30,47), (30,48), (30,49), (28,50), (28,51), (28,52), (28,53), (28,54), 
-    (28,55), (28,56), (27,56), (26,56), (25,56), (24,56), (23,56), (22,58), 
-    (22,59), (22,60), (22,61), (22,62), (22,63), (22,64), (22,65), (22,66), 
-    ]
 }
 
 pub static RUN_CONTROL: RunControl = RunControl{
@@ -218,76 +226,135 @@ pub enum GridCellState {
 }
 use GridCellState::*;
 
-pub struct RunContext {
-    pub grid: [[GridCellState; RUN_CONTROL_MAX_X as usize + 1usize]; 
-                               RUN_CONTROL_MAX_Y as usize + 1usize],
-    pub ant_x: i16,
-    pub ant_y: i16,
-    pub ant_xd: i16,
-    pub ant_yd: i16,
-    pub eat_count: u16,
-    pub clock: u16,
-    pub n_pellets: u16,
-    food: Vec<FoodCoord>, // stores pattern for food trail transfered 
-                          // to grid during init_grid.
+struct FitnessCase {
+    l0: f32,
+    w0: f32,
+    h0: f32,
+    l1: f32,
+    w1: f32,
+    h1: f32,
+    d:  f32,
+}
+
+pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
+
+struct RunContext {
+    fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
+    cur_fc_index: usize,
+    clock: u16,
+
 }
 impl RunContext {
     fn new() -> RunContext {
-        RunContext {
-            grid: [[Clear; RUN_CONTROL_MAX_X as usize + 1usize];
-                           RUN_CONTROL_MAX_Y as usize + 1usize],
-            ant_x: 0,
-            ant_y: 0,
-            ant_xd: 1,
-            ant_yd: 0,
-            eat_count: 0,
+        let rc = RunContext {
             clock: 0,
-            n_pellets: 0,
+            cur_fc_index: 0,
+            fitness_cases:
+                [
+                    FitnessCase{
+                        l0:   3.0,
+                        w0:   4.0,
+                        h0:   7.0,
+                        l1:   2.0,
+                        w1:   5.0,
+                        h1:   3.0,
+                        d:   54.0,
+                    },
+                    FitnessCase{
+                        l0:   7.0,
+                        w0:  10.0,
+                        h0:   9.0,
+                        l1:  10.0,
+                        w1:   3.0,
+                        h1:   1.0,
+                        d:  600.0,
+                    },
+                    FitnessCase{
+                        l0: 10.0,
+                        w0: 9.0,
+                        h0: 4.0,
+                        l1: 8.0,
+                        w1: 1.0,
+                        h1: 6.0,
+                        d:  312.0,
+                    },
+                    FitnessCase{
+                        l0: 3.0,
+                        w0: 9.0,
+                        h0: 5.0,
+                        l1: 1.0,
+                        w1: 6.0,
+                        h1: 4.0,
+                        d:  111.0,
+                    },
+                    FitnessCase{
+                        l0: 4.0,
+                        w0: 3.0,
+                        h0: 2.0,
+                        l1: 7.0,
+                        w1: 6.0,
+                        h1: 1.0,
+                        d: -18.0,
+                    },
+                    FitnessCase{
+                        l0:   3.0,
+                        w0:   3.0,
+                        h0:   1.0,
+                        l1:   9.0,
+                        w1:   5.0,
+                        h1:   4.0,
+                        d: -171.0,
+                    },
+                    FitnessCase{
+                        l0:   5.0,
+                        w0:   9.0,
+                        h0:   9.0,
+                        l1:   1.0,
+                        w1:   7.0,
+                        h1:   6.0,
+                        d:  363.0,
+                    },
+                    FitnessCase{
+                        l0:   1.0,
+                        w0:   2.0,
+                        h0:   9.0,
+                        l1:   3.0,
+                        w1:   9.0,
+                        h1:   2.0,
+                        d:  -36.0,
+                    },
+                    FitnessCase{
+                        l0: 2.0,
+                        w0: 6.0,
+                        h0: 8.0,
+                        l1: 2.0,
+                        w1: 6.0,
+                        h1: 10.0,
+                        d: -24.0,
+                    },
+                    FitnessCase{
+                        l0:  8.0,
+                        w0:  1.0,
+                        h0:  0.0,
+                        l1:  7.0,
+                        w1:  5.0,
+                        h1:  1.0,
+                        d:  45.0,
+                    },
+                ],
+            };
 
-            // Food for Koza's Los Altos Trail
-            food: trail_factory()
-        }
-    }
-    fn init_grid(&mut self) {
-        // clear grid
-        self.grid = [[Clear; RUN_CONTROL_MAX_X as usize +1];
-                             RUN_CONTROL_MAX_Y as usize +1];
-
-        // sprinkle in the food!
-        for food in self.food.iter() {
-            self.grid[food.1][food.0] = Food;
-        }
-        self.n_pellets = self.food.len() as u16;
-    }
-    fn prepare_run(&mut self) {
-        self.init_grid();
-        self.ant_x = 0;
-        self.ant_y = 0;
-        self.ant_xd = 1;
-        self.ant_yd = 0;
-        self.eat_count = 0;
-        self.clock = 0;
-    }
-    fn print_grid(&self, label: &str) {
-        println!("{}", label);
-        println!("---------------------------------------------------------------------------------------");
-        for y in 0..=RUN_CONTROL_MAX_Y as usize {
-            for x in 0..=RUN_CONTROL_MAX_X as usize {
-                print!("{}",
-                    match self.grid[y][x] {
-                        Clear => ". ",
-                        Food => "X ",
-                        FoodEaten => "@ ",
-                        NoFoodFound => "O ",
-                    });
+        for (i, fc) in rc.iter() {
+            if fc.d != (fc.w*fc.h*fc.l) - (fc.w*fc.h*c.l) {
+                panic!("Fitness case #{} is invalid.", i);
             }
-            println!();
         }
-        println!("---------------------------------------------------------------------------------------");
+
+        rc
+    }
+    fn prepare_run(&mut self) { 
     }
 }
-
-pub fn init_run() { }
 
 pub fn exec_trees(mut trees: &mut TreeSet, run_number: i32) -> u16 {
     let mut rc = RunContext::new();
