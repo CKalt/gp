@@ -1,9 +1,19 @@
+use crate::tree::Tree;
 use crate::tree::exec_node;
-
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::control::CONTROL;
+
+use crate::tree::GpFloat;
+    
+#[cfg(gpopt_fitness_type="int")]
+use crate::tree::GpInt;
+#[cfg(gpopt_fitness_type="int")]
+use crate::tree::DL_SHIFT;
+
+#[cfg(gpopt_fitness_type="int")]
+use crate::Fitness;
 
 pub enum GpType {
     Continue,
@@ -265,6 +275,46 @@ impl RunContext {
         self.eat_count = 0;
         self.clock = 0;
     }
+
+    /// computes fitness returns true if winner
+    #[cfg(gpopt_fitness_type="int")]
+    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
+        let mut f = &mut tree.fitness;
+        f.r = self.eat_count;
+        tree.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1;
+        f.a = -1;
+        f.nfr = -1;
+        f.raw = f.r as GpInt * DL_SHIFT as GpInt;
+
+        // average over generation
+        f.s = self.hits - self.eat_count;
+        let a = 1.0 / (1.0 + (f.s as GpFloat));
+        f.a = Fitness::float_to_int(a);
+
+        return f.s == 0;
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
+        let mut f = &mut tree.fitness;
+        f.r = self.eat_count;
+        tree.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1.0;
+        f.a = -1.0;
+        f.nfr = -1.0;
+        f.raw = f.r as GpFloat;
+
+        // average over generation
+        f.s = self.hits - self.eat_count;
+        f.a = 1.0 / (1.0 + f.s as GpFloat);
+
+        return f.s == 0;
+    }
+            
     pub fn print_run_illustration(&self, label: &str) {
         println!("{}", label);
         println!("---------------------------------------------------------------------------------------");
