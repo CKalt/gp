@@ -2,9 +2,6 @@ use crate::gprun::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
-    
-#[cfg(gpopt_trace="on")]
-use crate::gprng::TRACE_COUNT;
 
 #[cfg(not(gpopt_rng="FileStream"))]
 use rand::Rng;
@@ -420,6 +417,26 @@ impl TreeSet {
         }
         self
     }
+
+    pub fn exec_trees(&mut self, run_number: i32) -> u16 {
+        let mut rc = RunContext::new();
+
+        for (i, tree) in self.tree_vec.iter_mut().enumerate() {
+            rc.prepare_run();
+            while rc.clock < RUN_CONTROL.max_clock {
+                exec_node(&mut rc, &mut tree.root);
+            }
+
+            if tree.compute_fitness(&rc) {
+                report_tree_result(tree, tree.tfid, None, -1.0);
+                rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
+                    self.gen));
+                self.winning_index = Some(i);
+                break;
+            }
+        }
+        rc.hits
+    }
 }
 
 #[cfg(gpopt_select_method="fpb")]
@@ -525,11 +542,6 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
 
     #[cfg(gpopt_rng="FileStream")]
     let r = rng.gen_float();
-
-//    #[cfg(gpopt_trace="on")]
-//    unsafe {
-//        println!("TP005.2:(rnd_greedy_dbl) rlog={},r={}", TRACE_COUNT, r);
-//    }
 
     let dbl_val: GpFloat = 
         if CONTROL.GRc < 0.0001 {
@@ -731,7 +743,7 @@ impl Tree {
         f.raw = f.r as GpInt * DL_SHIFT as GpInt;
 
         // average over generation
-        f.s = rc.n_pellets - rc.eat_count;
+        f.s = rc.hits - rc.eat_count;
         let a = 1.0 / (1.0 + (f.s as GpFloat));
         f.a = Fitness::float_to_int(a);
 
@@ -750,7 +762,7 @@ impl Tree {
         f.raw = f.r as GpFloat;
 
         // average over generation
-        f.s = rc.n_pellets - rc.eat_count;
+        f.s = rc.hits - rc.eat_count;
         f.a = 1.0 / (1.0 + f.s as GpFloat);
 
         return f.s == 0;

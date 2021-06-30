@@ -126,21 +126,21 @@ fn gen_tree_grow_method_r(rng: &mut GpRng,
 }
 
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
-        n_pellets: &u16) -> () {
+        hits: &u16) -> () {
     if CONTROL.show_all_trees {
         println!("Generation {}", trees.gen);
         trees.print();
     }
     if CONTROL.show_all_tree_results {
         println!("gen {}", trees.gen);
-        tree_result_header(None, n_pellets);
+        tree_result_header(None, hits);
         for (i,t) in trees.tree_vec.iter().enumerate() {
             report_tree_result(t, Some(i), None, -1.0);
         }
     }
     if CONTROL.show_best_tree_results {
         if *header_need {
-            tree_result_header(Some(trees.gen), n_pellets);
+            tree_result_header(Some(trees.gen), hits);
             *header_need = false;
         }
         let i = trees.tree_vec.len()-1;
@@ -251,7 +251,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-        let n_pellets = exec_trees(&mut trees, run_number);
+        let hits = trees.exec_trees(run_number);
         if trees.winning_index != None {
             break;
         }
@@ -270,7 +270,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
 //            println!("at pause point gen={} skipping until gen=1 here.", trees.gen);
 //        }
 
-        report_results(rng, &mut trees, &mut header_need, &n_pellets);
+        report_results(rng, &mut trees, &mut header_need, &hits);
 
 //if trees.gen == 1 {
 //    println!("pause");

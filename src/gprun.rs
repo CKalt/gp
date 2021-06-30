@@ -1,5 +1,4 @@
 use crate::tree::Tree;
-use crate::tree::TreeSet;
 use crate::tree::exec_node;
 use crate::tree::GpFloat;
 
@@ -222,6 +221,7 @@ struct FitnessCase {
     h1: f32,
     d:  f32,
 }
+<<<<<<< HEAD
 
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
@@ -339,37 +339,36 @@ impl RunContext {
                 panic!("Fitness case #{} is invalid.", i);
             }
         }
-
         rc
+    }
+    pub fn print_run_illustration(&self, label: &str) {
+        println!("{}", label);
+        println!("---------------------------------------------------------------------------------------");
+        for y in 0..=RUN_CONTROL_MAX_Y as usize {
+            for x in 0..=RUN_CONTROL_MAX_X as usize {
+                print!("{}",
+                    match self.grid[y][x] {
+                        Clear => ". ",
+                        Food => "X ",
+                        FoodEaten => "@ ",
+                        NoFoodFound => "O ",
+                    });
+            }
+        }
     }
     fn prepare_run(&mut self) { 
     }
-}
-
-pub fn exec_trees(mut trees: &mut TreeSet, run_number: i32) -> u16 {
-    let mut rc = RunContext::new();
-
-    for (i, tree) in trees.tree_vec.iter_mut().enumerate() {
-        rc.prepare_run();
-        while rc.clock < RUN_CONTROL.max_clock {
-            exec_node(&mut rc, &mut tree.root);
-        }
-
-        if tree.compute_fitness(&rc) {
-            report_tree_result(tree, tree.tfid, None, -1.0);
-            rc.print_grid(&format!("Have Winner! - Run# {} Gen# {}", run_number,
-                trees.gen));
-            trees.winning_index = Some(i);
-            break;
-        }
+    fn get_hits_label() -> &'static str {
+        "n_pellets"
     }
-    rc.hits
 }
+
+pub fn init_run() { }
 
 pub fn exec_single_tree(tree : &mut Tree) {
     let mut rc = RunContext::new();
     rc.prepare_run();
-    rc.print_grid("Before Run");
+    rc.print_run_illustration("Before Run");
     while rc.clock < RUN_CONTROL.max_clock {
         exec_node(&mut rc, &mut tree.root);
     }
@@ -377,7 +376,7 @@ pub fn exec_single_tree(tree : &mut Tree) {
     if tree.compute_fitness(&rc) {
         println!("Have Winner");
     }
-    rc.print_grid("After Run");
+    rc.print_run_illustration("After Run");
 }
 
 pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: GpFloat) {
@@ -393,8 +392,8 @@ pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg
     }
 }
 
-pub fn tree_result_header(opt_gen: Option<u16>, n_pellets: &u16) {
-    println!("n_pellets={}", *n_pellets);
+pub fn tree_result_header(opt_gen: Option<u16>, hits: &u16) {
+    println!("{}={}", RunContext::get_hits_label(), *hits);
     if let Some(_) = opt_gen {
         println!("{:>6} {:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8} {:>6}", 
             "gen", "tfid", "tcid", "hits", "r", "s", "a", "n", "nfr", "avgRawF");

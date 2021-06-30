@@ -91,7 +91,6 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     #[cfg(gpopt_trace="on")]
     println!("TP006:c={},r={}", c, r);
 
-    //#[cfg(gpopt_trace="on")]
     TRACE_COUNT.store(c, Ordering::SeqCst);
 
     let d = (r as f64) / (RAND_MAX as f64);
@@ -100,8 +99,8 @@ fn rnd(max: i16, rng_rdr: &mut BufReader<File>) -> i16 {
     result
 }
     
-#[cfg(gpopt_trace="on")]
-static TRACE_COUNT: AtomicI32 = AtomicI32::new(0);
+#[cfg(gpopt_rng="FileStream")]
+pub static TRACE_COUNT: AtomicI32 = AtomicI32::new(0);
 
 // rnd - return random double value between 0.0 and 1.0
 #[cfg(gpopt_rng="FileStream")]
@@ -112,7 +111,6 @@ fn rnd_dbl(rng_rdr: &mut BufReader<File>) -> f64 {
     #[cfg(gpopt_trace="off")]
     let (c,r) = read_i32_pair_from_fbuf_rdr(rng_rdr);
 
-    //#[cfg(gpopt_trace="on")]
     TRACE_COUNT.store(c, Ordering::SeqCst);
 
     #[cfg(gpopt_trace="on")]
