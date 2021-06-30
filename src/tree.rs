@@ -427,7 +427,7 @@ impl TreeSet {
                 exec_node(&mut rc, &mut tree.root);
             }
 
-            if tree.compute_fitness(&rc) {
+            if rc.compute_fitness(tree) {
                 tree.print_result(None, -1.0);
                 rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
                     self.gen));
@@ -596,7 +596,7 @@ pub type GpFitness = GpInt;
 pub type GpFitness = GpFloat;
 
 #[cfg(gpopt_fitness_type="int")]
-const DL_SHIFT: GpFloat = 1000000000.0;
+pub const DL_SHIFT: GpFloat = 1000000000.0;
         
 pub struct Fitness {
     // Base values - real values are stored after multiplying by DL_SHIFT
@@ -729,45 +729,7 @@ impl Tree {
         self.num_terminal_nodes = Some(counts.0);
         self.num_function_nodes = Some(counts.1);
     }
-    /// computes fitness returns true if winner
-    #[cfg(gpopt_fitness_type="int")]
-    pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
-        let mut f = &mut self.fitness;
-        f.r = rc.eat_count;
-        self.hits = f.r as u32;
 
-        // init fitness "base" values
-        f.n = -1;
-        f.a = -1;
-        f.nfr = -1;
-        f.raw = f.r as GpInt * DL_SHIFT as GpInt;
-
-        // average over generation
-        f.s = rc.hits - rc.eat_count;
-        let a = 1.0 / (1.0 + (f.s as GpFloat));
-        f.a = Fitness::float_to_int(a);
-
-        return f.s == 0;
-    }
-    #[cfg(gpopt_fitness_type="float")]
-    pub fn compute_fitness(&mut self, rc: &RunContext) -> bool {
-        let mut f = &mut self.fitness;
-        f.r = rc.eat_count;
-        self.hits = f.r as u32;
-
-        // init fitness "base" values
-        f.n = -1.0;
-        f.a = -1.0;
-        f.nfr = -1.0;
-        f.raw = f.r as GpFloat;
-
-        // average over generation
-        f.s = rc.hits - rc.eat_count;
-        f.a = 1.0 / (1.0 + f.s as GpFloat);
-
-        return f.s == 0;
-    }
-            
     pub fn print(&self) {
         #[cfg(gpopt_trace="on")]
         {
@@ -840,7 +802,7 @@ impl Tree {
             exec_node(&mut rc, &mut self.root);
         }
 
-        if self.compute_fitness(&rc) {
+        if rc.compute_fitness(self) {
             println!("Have Winner");
         }
         rc.print_run_illustration("After Run");

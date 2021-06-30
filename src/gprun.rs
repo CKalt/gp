@@ -1,9 +1,19 @@
+use crate::tree::Tree;
 use crate::tree::exec_node;
-
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::control::CONTROL;
+
+use crate::tree::GpFloat;
+    
+#[cfg(gpopt_fitness_type="int")]
+use crate::tree::GpInt;
+#[cfg(gpopt_fitness_type="int")]
+use crate::tree::DL_SHIFT;
+
+#[cfg(gpopt_fitness_type="int")]
+use crate::Fitness;
 
 pub enum GpType {
     Value(f32),
@@ -219,7 +229,6 @@ struct FitnessCase {
     h1: f32,
     d:  f32,
 }
-<<<<<<< HEAD
 
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
