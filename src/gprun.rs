@@ -291,20 +291,6 @@ impl RunContext {
 
 pub fn init_run() { }
 
-pub fn exec_single_tree(tree : &mut Tree) {
-    let mut rc = RunContext::new();
-    rc.prepare_run();
-    rc.print_run_illustration("Before Run");
-    while rc.clock < RUN_CONTROL.max_clock {
-        exec_node(&mut rc, &mut tree.root);
-    }
-
-    if tree.compute_fitness(&rc) {
-        println!("Have Winner");
-    }
-    rc.print_run_illustration("After Run");
-}
-
 pub fn report_tree_result(t: &Tree, i: Option<usize> , opt_gen: Option<u16>, avg_raw_f: GpFloat) {
     assert_eq!(i, t.tfid);
     let f = &t.fitness;
