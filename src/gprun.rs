@@ -341,25 +341,10 @@ impl RunContext {
         }
         rc
     }
-    pub fn print_run_illustration(&self, label: &str) {
-        println!("{}", label);
-        println!("---------------------------------------------------------------------------------------");
-        for y in 0..=RUN_CONTROL_MAX_Y as usize {
-            for x in 0..=RUN_CONTROL_MAX_X as usize {
-                print!("{}",
-                    match self.grid[y][x] {
-                        Clear => ". ",
-                        Food => "X ",
-                        FoodEaten => "@ ",
-                        NoFoodFound => "O ",
-                    });
-            }
-        }
-    }
-    fn prepare_run(&mut self) { 
-    }
+    pub fn print_run_illustration(&self, label: &str) { }
+    fn prepare_run(&mut self) { }
     fn get_hits_label() -> &'static str {
-        "n_pellets"
+        "num cases w/error lt 0.01"
     }
 }
 
