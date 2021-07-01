@@ -9,7 +9,7 @@ use tree::*;
 use control::*;
 use Node::*;
 
-#[cfg(not(gpopt_rng="FileStream"))]
+#[cfg(not(gpopt_rng="file_stream"))]
 use rand::Rng;
 
 use gprng::GpRng;
@@ -155,10 +155,10 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
 // rnd_internal_point - randomly decides whether to do crossover at an
 // internal point (function) or terminal based on control Pip value.
 fn rnd_internal_point(rng: &mut GpRng) -> bool {
-    #[cfg(gpopt_rng="FileStream")]
+    #[cfg(gpopt_rng="file_stream")]
     let num: GpFloat = rng.gen_float();
 
-    #[cfg(not(gpopt_rng="FileStream"))]
+    #[cfg(not(gpopt_rng="file_stream"))]
     let num: GpFloat = rng.gen_range(0.0..1.0);
 
     num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.

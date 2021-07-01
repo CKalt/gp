@@ -1,13 +1,13 @@
 # gpopt_select_method := fpb | tourn
-# gpopt_rng := Thread | Seedable | FileStream
+# gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
 # gpopt_fitness_type := float | int
-# gpopt_clock_termination := off | on
+# gpopt_termination_criteria := one_exec | clock
 [build]
 rustflags = """
     --cfg gpopt_select_method="fpb"
-    --cfg gpopt_rng="Seedable"
+    --cfg gpopt_rng="seedable"
     --cfg gpopt_trace="off"
     --cfg gpopt_fitness_type="int"
-    --cfg gpopt_clock_termination="off"
+    --cfg gpopt_termination_criteria="one_exec"
 """

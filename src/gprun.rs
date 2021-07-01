@@ -16,6 +16,7 @@ use crate::tree::DL_SHIFT;
 use crate::Fitness;
 
 pub enum GpType {
+    Init,
     Value(f32),
     Terminate,
 }
@@ -339,6 +340,8 @@ impl RunContext {
                 ],
             #[cfg(gpopt_clock_termination="on")]
             clock: 0,
+            hits: 0,
+            last_exec_result: GpType::Init,
         };
 
         for (i, fc) in rc.iter() {
