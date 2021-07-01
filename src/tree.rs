@@ -591,6 +591,10 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
 }
 
 
+pub type GpHits = u32;
+pub type GpRaw = u16;
+pub type GpStandardized = u16;
+
 #[cfg(gpopt_fitness_type="int")]
 pub type GpInt = i64;
 pub type GpFloat = f64;
@@ -610,11 +614,11 @@ pub struct Fitness {
     pub n:   GpFitness,
     pub a:   GpFitness,
     pub raw: GpFitness,   // note that if run Fitness uses integer type
-                        // and then this just contains a converted copy
+                        // and then this just contains a converted copy of r
 
     // Ren Values
-    pub r: u16,
-    pub s: u16,
+    pub r: GpRaw,
+    pub s: GpStandardized,
 }
 
 #[cfg(gpopt_fitness_type="int")]
@@ -691,7 +695,7 @@ pub struct Tree {
     pub fitness: Fitness,
     pub num_function_nodes: Option<TreeNodeIndex>,
     pub num_terminal_nodes: Option<TreeNodeIndex>,
-    pub hits: u32,
+    pub hits: GpHits,
 }
 impl Tree {
     pub fn new(root: FunctionNode) -> Tree {

@@ -6,6 +6,7 @@ use crate::tree::Terminal;
 use crate::control::CONTROL;
 
 use crate::tree::GpFloat;
+use crate::tree::GpHits;
     
 #[cfg(gpopt_fitness_type="int")]
 use crate::tree::GpInt;
@@ -284,7 +285,7 @@ impl RunContext {
     pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
         let mut f = &mut tree.fitness;
         f.r = self.eat_count;
-        tree.hits = f.r as u32;
+        tree.hits = f.r as GpHits;
 
         // init fitness "base" values
         f.n = -1;
