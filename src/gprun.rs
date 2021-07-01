@@ -236,15 +236,15 @@ struct FitnessCase {
 /// where it can then access it's fitness case data and currency values.
 struct RunContext {
     fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
-    cur_fc_index: usize,
-    hits: u16,
     #[cfg(gpopt_clock_termination="on")]
     clock: u16,
+
+    hits: u16,
+    sum_abs_error: f32,
 }
 impl RunContext {
     fn new() -> RunContext {
         let rc = RunContext {
-            cur_fc_index: 0,
             fitness_cases:
                 [
                     FitnessCase{
@@ -341,7 +341,7 @@ impl RunContext {
             #[cfg(gpopt_clock_termination="on")]
             clock: 0,
             hits: 0,
-            last_exec_result: GpType::Init,
+            sum_abs_error: 0.0,
         };
 
         for (i, fc) in rc.iter() {
@@ -351,10 +351,73 @@ impl RunContext {
         }
         rc
     }
+    pub fn reset_accumulators(&mut self) {
+        self.hits = 0;
+        self.sum_abs_error = 0.0;
+    }
+    pub fn eval_fitness_case(&mut self, fc: &FitnessCase, result: GpType) {
+        if let GpType::Value(result_value) = result {
+            let abs_error = (result - fc.d).abs();
+            self.sum_abs_error += abs_error;
+            if abs_error < 0.01 {
+                self.hits += 1;
+            }
+        }
+        else {
+            panic!("Non-Value result={:?} not valid for eval fc.", result);
+        }
+    }
     pub fn print_run_illustration(&self, label: &str) { }
     fn prepare_run(&mut self) { }
     fn get_hits_label() -> &'static str {
         "num cases w/error lt 0.01"
+    }
+
+    /// computes fitness returns true if winner
+    #[cfg(gpopt_fitness_type="int")]
+    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
+        if let Value(result_value) = self.last_exec_result {
+
+        }
+        else {
+            panic!("exec result ({:?} not a Value", self.last_exec_result);
+        }
+
+
+        let mut f = &mut tree.fitness;
+        f.r = self.eat_count;
+        tree.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1;
+        f.a = -1;
+        f.nfr = -1;
+        f.raw = f.r as GpInt * DL_SHIFT as GpInt;
+
+        // average over generation
+        f.s = self.hits - self.eat_count;
+        let a = 1.0 / (1.0 + (f.s as GpFloat));
+        f.a = Fitness::float_to_int(a);
+
+        return f.s == 0;
+    }
+    #[cfg(gpopt_fitness_type="float")]
+    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
+        let mut f = &mut tree.fitness;
+        f.r = self.eat_count;
+        tree.hits = f.r as u32;
+
+        // init fitness "base" values
+        f.n = -1.0;
+        f.a = -1.0;
+        f.nfr = -1.0;
+        f.raw = f.r as GpFloat;
+
+        // average over generation
+        f.s = self.hits - self.eat_count;
+        f.a = 1.0 / (1.0 + f.s as GpFloat);
+
+        return f.s == 0;
     }
 }
 

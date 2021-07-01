@@ -430,7 +430,11 @@ impl TreeSet {
             }
             #[cfg(gpopt_termination_criteria="one_exec")]
             {
-                rc.last_exec_result = exec_node(&mut rc, &mut tree.root);
+                rc.reset_accumulators();
+                for fc in rc.fitness_cases {
+                    let result = exec_node(&mut rc, &mut tree.root);
+                    rc.eval_fitness_case(fc, result);
+                }
             }
 
             if rc.compute_fitness(tree) {
@@ -610,7 +614,7 @@ pub struct Fitness {
     pub n:   GpFitness,
     pub a:   GpFitness,
     pub raw: GpFitness,   // note that if run Fitness uses integer type
-                        // and then this just contains a converted copy
+                          // and then this just contains a converted copy
 
     // Ren Values
     pub r: u16,
