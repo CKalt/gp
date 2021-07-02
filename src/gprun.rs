@@ -17,12 +17,16 @@ use crate::tree::DL_SHIFT;
 #[cfg(gpopt_fitness_type="int")]
 use crate::Fitness;
 
+#[cfg(gpopt_exec_criteria="clock")]
 pub enum GpType {
-    Init,
     Value(GpRaw),
     Terminate,
 }
+#[cfg(gpopt_exec_criteria="clock")]
 use GpType::*;
+
+#[cfg(gpopt_exec_criteria="each_fitness_case")]
+pub type GpType = GpRaw;
 
 // TERMINAL SPECIFICS
 pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
@@ -63,67 +67,67 @@ pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
     },
 ];
 
-fn terminal_l0(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_l0(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].l0);
+    return fc.l0;
 }
 
-fn terminal_w0(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_w0(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].w0);
+    return fc.w0;
 }
 
-fn terminal_h0(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_h0(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].h0);
+    return fc.h0;
 }
 
-fn terminal_l1(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_l1(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].l1);
+    return fc.l1;
 }
 
-fn terminal_w1(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_w1(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].w1);
+    return fc.w1;
 }
 
-fn terminal_h1(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_h1(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].h1);
+    return fc.h1;
 }
 
-fn terminal_d(rc: &mut RunContext) -> GpType {
-    #[cfg(gpopt_clock_termination="on")]
+fn terminal_d(fc: &FitnessCase) -> GpType {
+    #[cfg(gpopt_exec_criteria="clock")]
     if let GpType::Terminate = clock_tic(rc) {
         return GpType::Terminate
     }
 
-    return GpType::Value(rc.fitness_cases[rc.cur_fc_index].d);
+    return fc.d;
 }
 
 pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
@@ -153,6 +157,7 @@ pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
     },
 ];
 
+#[cfg(gpopt_exec_criteria="clock")]
 fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpType {
     match val1 {
         Terminate => val1,
@@ -160,43 +165,45 @@ fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpT
             match val2 {
                 Terminate => val2,
                 Value(num2) => Value( op(num1, num2) ),
-                Init => panic!("attempt to eval an invalid Init GpType"),
             },
-        Init => panic!("attempt to eval an invalid Init GpType"),
     }
 }
+#[cfg(gpopt_exec_criteria="each_fitness_case")]
+fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpType {
+    op(val1, val2)
+}
 
-fn func_add(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(rc, &func.branch[0]);
-    let val2 = exec_node(rc, &func.branch[1]);
+fn func_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
     eval_binary_op(val1, val2, |a,b| a+b)
 }
 
-fn func_sub(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(rc, &func.branch[0]);
-    let val2 = exec_node(rc, &func.branch[1]);
+fn func_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
     eval_binary_op(val1, val2, |a,b| a-b)
 }
 
-fn func_mult(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(rc, &func.branch[0]);
-    let val2 = exec_node(rc, &func.branch[1]);
+fn func_mult(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
     eval_binary_op(val1, val2, |a,b| a*b)
 }
 
-fn func_prot_div(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(rc, &func.branch[0]);
-    let val2 = exec_node(rc, &func.branch[1]);
+fn func_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
     eval_binary_op(val1, val2, |a,b| if b == 0.0 {1.0} else {a/b} )
 }
 
-#[cfg(gpopt_clock_termination="on")]
-fn clock_reset(rc: &mut RunContext) {
+#[cfg(gpopt_exec_criteria="clock")]
+fn clock_reset(fc: &FitnessCase) {
     rc.clock = 0;
 }
 
-#[cfg(gpopt_clock_termination="on")]
-fn clock_tic(rc: &mut RunContext) -> GpType {
+#[cfg(gpopt_exec_criteria="clock")]
+fn clock_tic(fc: &FitnessCase) -> GpType {
     if rc.clock < RUN_CONTROL.max_clock {
         rc.clock += 1;
         GpType::Continue
@@ -206,27 +213,27 @@ fn clock_tic(rc: &mut RunContext) -> GpType {
     }
 }
 
-#[cfg(gpopt_clock_termination="on")]
-fn terminate(rc: &mut RunContext) -> GpType {
+#[cfg(gpopt_exec_criteria="clock")]
+fn terminate(fc: &FitnessCase) -> GpType {
     rc.clock = RUN_CONTROL.max_clock;
     GpType::Terminate
 }
 
 /// RunControl defines parameters controlling the running of individuals.
+#[cfg(gpopt_exec_criteria="clock")]
 pub struct RunControl {
-    #[cfg(gpopt_clock_termination="on")]
     pub max_clock: u16, // sets limit for entire population run duration
 }
 
+#[cfg(gpopt_exec_criteria="clock")]
 pub static RUN_CONTROL: RunControl = RunControl {
-#[cfg(gpopt_clock_termination="on")]
     max_clock: 3000,
 };
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
 // Fitness
-struct FitnessCase {
+pub struct FitnessCase {
     l0: GpRaw,
     w0: GpRaw,
     h0: GpRaw,
@@ -236,13 +243,17 @@ struct FitnessCase {
     d:  GpRaw,
 }
 impl FitnessCase {
+    #[cfg(gpopt_exec_criteria="each_fitness_case")]
+    pub fn compute_error(&self, result: GpType) -> GpRaw {
+        (result- self.d).abs()
+    }
+
+    #[cfg(gpopt_exec_criteria="clock")]
     pub fn compute_error(&self, result: GpType) -> GpRaw {
         match result {
             Value(result_value) => {
                 (result_value - self.d).abs()
             },
-            Init =>
-                panic!("Unable to eval fitness case for Non-Value result=Init"),
             Terminate =>
                 panic!("Unable to eval fitness case for Non-Value result=Terminate"),
 
@@ -255,7 +266,7 @@ impl FitnessCase {
 /// where it can then access it's fitness case data and currency values.
 pub struct RunContext {
     pub fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
-    #[cfg(gpopt_clock_termination="on")]
+    #[cfg(gpopt_exec_criteria="clock")]
     clock: u16,
     pub cur_fc_index: usize,
 
@@ -359,7 +370,7 @@ impl RunContext {
                         d:  45.0,
                     },
                 ],
-            #[cfg(gpopt_clock_termination="on")]
+            #[cfg(gpopt_exec_criteria="clock")]
             clock: 0,
             hits: 0,
             error: 0.0,

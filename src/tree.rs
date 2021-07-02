@@ -8,8 +8,8 @@ use rand::Rng;
 
 use Node::*;
 
-type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
-pub type TermNodeCode = fn (rc: &mut RunContext) -> GpType;
+type FuncNodeCode = fn (fc: &FitnessCase, fnc: &FunctionNode) -> GpType;
+pub type TermNodeCode = fn (fc: &FitnessCase) -> GpType;
 
 pub enum Node {
     TNode(& 'static Terminal), // Terminal nodes are borrowed references
@@ -434,7 +434,7 @@ impl TreeSet {
                 let f = &rc.fitness_cases;
                 for (i, fc) in f.iter().enumerate() {
                     rc.cur_fc_index = i;
-                    let result = exec_node(&mut rc, &mut tree.root);
+                    let result = exec_node(fc, &mut tree.root);
                     let error = fc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
@@ -820,9 +820,7 @@ impl Tree {
         rc.print_run_illustration("Before Run");
             
         #[cfg(gpopt_exec_criteria="clock")]
-        while rc.clock < RUN_CONTROL.max_clock {
-            exec_node(&mut rc, &mut self.root);
-        }
+        panic!("clock exec not used this problem.");
         #[cfg(gpopt_exec_criteria="each_fitness_case")]
         {
             let mut sum_hits: GpHits = 0;
@@ -830,7 +828,7 @@ impl Tree {
             let f = &rc.fitness_cases;
             for (i, fc) in f.iter().enumerate() {
                 rc.cur_fc_index = i;
-                let result = exec_node(&mut rc, &self.root);
+                let result = exec_node(fc, &self.root);
                 let error = fc.compute_error(result);
                 sum_error += error;
                 if error < 0.01 {
@@ -873,14 +871,14 @@ impl Tree {
     }
 }
 
-pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {
+pub fn exec_node(fc: &FitnessCase, node: &Node) -> GpType {
     match node {
         TNode(t) => {
-            (t.code)(rc)
+            (t.code)(fc)
         }
 
         FNode(f) => {
-            (f.fnc.code)(rc, &f)
+            (f.fnc.code)(fc, &f)
         }
     }
 }
