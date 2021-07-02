@@ -6,6 +6,8 @@ use crate::tree::Terminal;
 use crate::control::CONTROL;
 
 use crate::tree::GpFloat;
+use crate::tree::GpHits;
+use crate::tree::GpRaw;
     
 #[cfg(gpopt_fitness_type="int")]
 use crate::tree::GpInt;
@@ -17,9 +19,10 @@ use crate::Fitness;
 
 pub enum GpType {
     Init,
-    Value(f32),
+    Value(GpRaw),
     Terminate,
 }
+use GpType::*;
 
 // TERMINAL SPECIFICS
 pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
@@ -150,14 +153,16 @@ pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
     },
 ];
 
-fn eval_binary_op(val1: GpType, val2: GpType, op: fn(i32,i32)->i32 ) -> GpType {
+fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpType {
     match val1 {
         Terminate => val1,
         Value(num1) =>
             match val2 {
                 Terminate => val2,
-                Value(num2) => Value( op(num1, num2) )
-            }
+                Value(num2) => Value( op(num1, num2) ),
+                Init => panic!("attempt to eval an invalid Init GpType"),
+            },
+        Init => panic!("attempt to eval an invalid Init GpType"),
     }
 }
 
@@ -222,29 +227,45 @@ pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
 // Fitness
 struct FitnessCase {
-    l0: f32,
-    w0: f32,
-    h0: f32,
-    l1: f32,
-    w1: f32,
-    h1: f32,
-    d:  f32,
+    l0: GpRaw,
+    w0: GpRaw,
+    h0: GpRaw,
+    l1: GpRaw,
+    w1: GpRaw,
+    h1: GpRaw,
+    d:  GpRaw,
+}
+impl FitnessCase {
+    pub fn compute_error(&self, result: GpType) -> GpRaw {
+        match result {
+            Value(result_value) => {
+                (result_value - self.d).abs()
+            },
+            Init =>
+                panic!("Unable to eval fitness case for Non-Value result=Init"),
+            Terminate =>
+                panic!("Unable to eval fitness case for Non-Value result=Terminate"),
+
+        }
+    }
 }
 
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
 /// where it can then access it's fitness case data and currency values.
-struct RunContext {
-    fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
+pub struct RunContext {
+    pub fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
     #[cfg(gpopt_clock_termination="on")]
     clock: u16,
+    pub cur_fc_index: usize,
 
-    hits: u16,
-    sum_abs_error: f32,
+    pub hits: GpHits,
+    pub error: GpRaw,
 }
 impl RunContext {
-    fn new() -> RunContext {
+    pub fn new() -> RunContext {
         let rc = RunContext {
+            cur_fc_index: 0,
             fitness_cases:
                 [
                     FitnessCase{
@@ -341,83 +362,44 @@ impl RunContext {
             #[cfg(gpopt_clock_termination="on")]
             clock: 0,
             hits: 0,
-            sum_abs_error: 0.0,
+            error: 0.0,
         };
 
-        for (i, fc) in rc.iter() {
-            if fc.d != (fc.w*fc.h*fc.l) - (fc.w*fc.h*c.l) {
+        for (i, fc) in rc.fitness_cases.iter().enumerate() {
+            if fc.d != (fc.w0 * fc.h0 * fc.l0) - (fc.w1 * fc.h1 * fc.l1) {
                 panic!("Fitness case #{} is invalid.", i);
             }
         }
         rc
     }
-    pub fn reset_accumulators(&mut self) {
-        self.hits = 0;
-        self.sum_abs_error = 0.0;
-    }
-    pub fn eval_fitness_case(&mut self, fc: &FitnessCase, result: GpType) {
-        if let GpType::Value(result_value) = result {
-            let abs_error = (result - fc.d).abs();
-            self.sum_abs_error += abs_error;
-            if abs_error < 0.01 {
-                self.hits += 1;
-            }
-        }
-        else {
-            panic!("Non-Value result={:?} not valid for eval fc.", result);
-        }
-    }
-    pub fn print_run_illustration(&self, label: &str) { }
-    fn prepare_run(&mut self) { }
-    fn get_hits_label() -> &'static str {
+    pub fn print_run_illustration(&self, _label: &str) { }
+    pub fn prepare_run(&mut self) { }
+    pub fn get_hits_label() -> &'static str {
         "num cases w/error lt 0.01"
     }
 
     /// computes fitness returns true if winner
-    #[cfg(gpopt_fitness_type="int")]
-    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
-        if let Value(result_value) = self.last_exec_result {
-
-        }
-        else {
-            panic!("exec result ({:?} not a Value", self.last_exec_result);
-        }
-
-
-        let mut f = &mut tree.fitness;
-        f.r = self.eat_count;
-        tree.hits = f.r as u32;
-
-        // init fitness "base" values
-        f.n = -1;
-        f.a = -1;
-        f.nfr = -1;
-        f.raw = f.r as GpInt * DL_SHIFT as GpInt;
-
-        // average over generation
-        f.s = self.hits - self.eat_count;
-        let a = 1.0 / (1.0 + (f.s as GpFloat));
-        f.a = Fitness::float_to_int(a);
-
-        return f.s == 0;
-    }
     #[cfg(gpopt_fitness_type="float")]
     pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
         let mut f = &mut tree.fitness;
-        f.r = self.eat_count;
-        tree.hits = f.r as u32;
+        f.r = self.error;
+        tree.hits = self.hits;
 
         // init fitness "base" values
         f.n = -1.0;
         f.a = -1.0;
         f.nfr = -1.0;
-        f.raw = f.r as GpFloat;
+        f.raw = f.r;
 
         // average over generation
-        f.s = self.hits - self.eat_count;
         f.a = 1.0 / (1.0 + f.s as GpFloat);
 
-        return f.s == 0;
+        // if each fitness case was a hit then we have a winner.
+        return self.hits == (self.fitness_cases.len() as GpHits);
+    }
+    #[cfg(gpopt_fitness_type="int")]
+    pub fn compute_fitness(&self, tree: &mut Tree) -> bool {
+        panic!("int fitness_type is not implemented.");
     }
 }
 

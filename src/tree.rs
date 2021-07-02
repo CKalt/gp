@@ -424,17 +424,25 @@ impl TreeSet {
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
             rc.prepare_run();
 
-            #[cfg(gpopt_termination_criteria="clock")]
-            while rc.clock < RUN_CONTROL.max_clock {
-                rc.last_exec_result = exec_node(&mut rc, &mut tree.root);
-            }
-            #[cfg(gpopt_termination_criteria="one_exec")]
+            #[cfg(gpopt_exec_criteria="clock")]
+            panic!("clock exec not used this problem.");
+            #[cfg(gpopt_exec_criteria="each_fitness_case")]
             {
-                rc.reset_accumulators();
-                for fc in rc.fitness_cases {
+                // init accumulators
+                let mut sum_hits: GpHits = 0;
+                let mut sum_error: GpRaw = 0.0;
+                let f = &rc.fitness_cases;
+                for (i, fc) in f.iter().enumerate() {
+                    rc.cur_fc_index = i;
                     let result = exec_node(&mut rc, &mut tree.root);
-                    rc.eval_fitness_case(fc, result);
+                    let error = fc.compute_error(result);
+                    sum_error += error;
+                    if error < 0.01 {
+                        sum_hits += 1;
+                    }
                 }
+                rc.hits = sum_hits;
+                rc.error = sum_error;
             }
 
             if rc.compute_fitness(tree) {
@@ -594,10 +602,13 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
     dbl_val
 }
 
+pub type GpHits = u16;
+pub type GpRaw = f32;
+pub type GpStandardized = f32;
 
 #[cfg(gpopt_fitness_type="int")]
 pub type GpInt = i64;
-pub type GpFloat = f64;
+pub type GpFloat = f32;
 
 #[cfg(gpopt_fitness_type="int")]
 pub type GpFitness = GpInt;
@@ -614,11 +625,10 @@ pub struct Fitness {
     pub n:   GpFitness,
     pub a:   GpFitness,
     pub raw: GpFitness,   // note that if run Fitness uses integer type
-                          // and then this just contains a converted copy
+                          // and then this just contains a converted copy of r
 
-    // Ren Values
-    pub r: u16,
-    pub s: u16,
+    pub r: GpRaw,
+    pub s: GpStandardized,
 }
 
 #[cfg(gpopt_fitness_type="int")]
@@ -668,8 +678,8 @@ impl Fitness {
             a:   0.0,
             raw: 0.0,
 
-            r: 0,
-            s: 0,
+            r: 0.0,
+            s: 0.0,
         }
     }
     #[inline(always)]
@@ -695,7 +705,7 @@ pub struct Tree {
     pub fitness: Fitness,
     pub num_function_nodes: Option<TreeNodeIndex>,
     pub num_terminal_nodes: Option<TreeNodeIndex>,
-    pub hits: u32,
+    pub hits: GpHits,
 }
 impl Tree {
     pub fn new(root: FunctionNode) -> Tree {
@@ -808,8 +818,27 @@ impl Tree {
         let mut rc = RunContext::new();
         rc.prepare_run();
         rc.print_run_illustration("Before Run");
+            
+        #[cfg(gpopt_exec_criteria="clock")]
         while rc.clock < RUN_CONTROL.max_clock {
             exec_node(&mut rc, &mut self.root);
+        }
+        #[cfg(gpopt_exec_criteria="each_fitness_case")]
+        {
+            let mut sum_hits: GpHits = 0;
+            let mut sum_error: GpRaw = 0.0;
+            let f = &rc.fitness_cases;
+            for (i, fc) in f.iter().enumerate() {
+                rc.cur_fc_index = i;
+                let result = exec_node(&mut rc, &self.root);
+                let error = fc.compute_error(result);
+                sum_error += error;
+                if error < 0.01 {
+                    sum_hits += 1;
+                }
+            }
+            rc.hits = sum_hits;
+            rc.error = sum_error;
         }
 
         if rc.compute_fitness(self) {
