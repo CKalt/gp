@@ -2,12 +2,12 @@
 # gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
 # gpopt_fitness_type := float | int
-# gpopt_termination_criteria := one_exec | clock
+# gpopt_exec_criteria := each_fitness_case | clock
 [build]
 rustflags = """
     --cfg gpopt_select_method="fpb"
     --cfg gpopt_rng="seedable"
     --cfg gpopt_trace="off"
-    --cfg gpopt_fitness_type="int"
-    --cfg gpopt_termination_criteria="one_exec"
+    --cfg gpopt_fitness_type="float"
+    --cfg gpopt_exec_criteria="each_fitness_case"
 """

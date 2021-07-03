@@ -417,8 +417,7 @@ impl TreeSet {
         }
         self
     }
-
-    pub fn exec(&mut self, run_number: i32) -> u16 {
+    pub fn exec_all(&mut self, run_number: i32) -> u16 {
         let mut rc = RunContext::new();
 
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
@@ -432,8 +431,7 @@ impl TreeSet {
                 let mut sum_hits: GpHits = 0;
                 let mut sum_error: GpRaw = 0.0;
                 let f = &rc.fitness_cases;
-                for (i, fc) in f.iter().enumerate() {
-                    rc.cur_fc_index = i;
+                for fc in f.iter() {
                     let result = exec_node(fc, &mut tree.root);
                     let error = fc.compute_error(result);
                     sum_error += error;
@@ -814,7 +812,7 @@ impl Tree {
     pub fn qualifies(&self) -> bool {
         !self.depth_gt(CONTROL.Dc)
     }
-    pub fn exec(&mut self) {
+    pub fn exec_one(&mut self) {
         let mut rc = RunContext::new();
         rc.prepare_run();
         rc.print_run_illustration("Before Run");
@@ -826,8 +824,7 @@ impl Tree {
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0.0;
             let f = &rc.fitness_cases;
-            for (i, fc) in f.iter().enumerate() {
-                rc.cur_fc_index = i;
+            for fc in f.iter() {
                 let result = exec_node(fc, &self.root);
                 let error = fc.compute_error(result);
                 sum_error += error;

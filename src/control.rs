@@ -42,7 +42,7 @@ pub const CONTROL: Control = Control {
     Pr:                 0.10,       // Probability of reproduction
     Pip:                0.90,       // Probability of cross over internal point
     num_functions:      4,
-    num_terminals:      7,
+    num_terminals:      6,
     GRc:                0.16,
     R:                  0,
     no_fitness_cases:   0,

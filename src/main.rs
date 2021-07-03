@@ -251,7 +251,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-        let hits = trees.exec(run_number);
+        let hits = trees.exec_all(run_number);
         if trees.winning_index != None {
             break;
         }
@@ -388,7 +388,7 @@ fn main() {
     if let Some(mut winner) = opt_winner {
         println!("run_number={}", run_number);
         winner.print();
-        winner.exec();
+        winner.exec_one();
     } else {
         println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
             CONTROL.R);
