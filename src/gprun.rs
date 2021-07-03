@@ -216,7 +216,7 @@ pub struct FitnessCase {
     l1: GpRaw,
     w1: GpRaw,
     h1: GpRaw,
-    d:  GpRaw,
+    pub d:  GpRaw,
 }
 impl FitnessCase {
     #[cfg(gpopt_exec_criteria="each_fitness_case")]
@@ -362,7 +362,8 @@ impl RunContext {
         }
         rc
     }
-    pub fn print_run_illustration(&self, _label: &str) { }
+    pub fn print_run_illustration(&self, _label: &str) {
+    }
     pub fn prepare_run(&mut self) { }
     pub fn get_hits_label() -> &'static str {
         "num cases w/error lt 0.01"

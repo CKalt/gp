@@ -1,3 +1,5 @@
+use format_num::NumberFormat;
+
 use crate::gprun::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
@@ -812,7 +814,8 @@ impl Tree {
     pub fn qualifies(&self) -> bool {
         !self.depth_gt(CONTROL.Dc)
     }
-    pub fn exec_one(&mut self) {
+    pub fn print_exec_one(&mut self) {
+        self.print();
         let mut rc = RunContext::new();
         rc.prepare_run();
         rc.print_run_illustration("Before Run");
@@ -820,17 +823,27 @@ impl Tree {
         #[cfg(gpopt_exec_criteria="clock")]
         panic!("clock exec not used this problem.");
         #[cfg(gpopt_exec_criteria="each_fitness_case")]
+        let num = NumberFormat::new();
+        #[cfg(gpopt_exec_criteria="each_fitness_case")]
         {
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0.0;
-            let f = &rc.fitness_cases;
-            for fc in f.iter() {
+            for (i, fc) in rc.fitness_cases.iter().enumerate() {
                 let result = exec_node(fc, &self.root);
                 let error = fc.compute_error(result);
+                let hit = error < 0.01;
                 sum_error += error;
-                if error < 0.01 {
+                if hit {
                     sum_hits += 1;
                 }
+
+                println!("i={},d={},result={},error={},hit?={},sum_hits={}",
+                    num.format("2d", i as f64),
+                    num.format("10.5f", fc.d),
+                    num.format("10.5f", result),
+                    num.format("10.5f", error),
+                    num.format("1d", hit as u8),
+                    num.format("2d", sum_hits as f64));
             }
             rc.hits = sum_hits;
             rc.error = sum_error;

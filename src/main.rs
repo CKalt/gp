@@ -387,8 +387,7 @@ fn main() {
         
     if let Some(mut winner) = opt_winner {
         println!("run_number={}", run_number);
-        winner.print();
-        winner.exec_one();
+        winner.print_exec_one();
     } else {
         println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
             CONTROL.R);
