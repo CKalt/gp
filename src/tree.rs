@@ -1,11 +1,12 @@
 use format_num::NumberFormat;
 
+#[cfg(gpopt_select_method="tournament")]
+use std::collections::HashMap;
+
 use crate::gprun::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
 use crate::gprng::GpRng;
-
-#[cfg(not(gpopt_rng="file_stream"))]
 use rand::Rng;
 
 use Node::*;
@@ -289,15 +290,10 @@ pub enum GenerateMethod {
 }
 
 type TreeNodeIndex = i32;
-#[allow(dead_code)]
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
     pub avg_raw_f:      GpFloat,
     pub tree_vec:       Vec<Tree>,
-    tag_array:          [bool; CONTROL.M], // used for temporary individual state
-                        // marking during tournament selection to insure
-                        // unique individuals compete by avoiding duplicate
-                        // usage.
     pub gen: u16,       // current generation for treeset
 }
 impl TreeSet {
@@ -306,7 +302,6 @@ impl TreeSet {
             winning_index:  None,
             avg_raw_f:      0.0,
             tree_vec:       Vec::new(), // TODO: for better performance change to array (must find good init method)
-            tag_array:      [false; CONTROL.M], // This is easy to init,
             gen:            gen
         }
     }
@@ -472,6 +467,11 @@ pub trait SelectMethod {
     fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
 
+#[cfg(gpopt_select_method="tournament")]
+#[cfg(gpopt_fitness_type="float")]
+pub trait SelectMethod {
+    fn select_tree(&self, rng: &mut GpRng) -> &Tree;
+}
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
@@ -550,6 +550,43 @@ impl SelectMethod for TreeSet {
     }
 }
 
+#[cfg(gpopt_select_method="tournament")]
+impl SelectMethod for TreeSet {
+    fn select_tree(&self, rng: &mut GpRng) -> &Tree {
+        // perform tournament selection by choosing the tree with best 
+        // normalized fitness among a random set of 7 trees.
+        assert!(!self.tree_vec.len() > 50);
+
+        let last_ti = self.tree_vec.len() - 1;
+        let mut r: usize = rng.gen_range(0..=last_ti);
+        let mut best_tree = &self.tree_vec[r];
+
+        let mut t_group: HashMap<usize, bool> = HashMap::new();
+
+        t_group.insert(r, true); // tag the slot as used
+        for _ in 2..=7 {
+            let mut sanity: u8 = 100;
+
+            // loop until we find an r not already in t_group
+            while t_group.contains_key(&r) {
+                r = rng.gen_range(0..=last_ti);
+
+                sanity -= 1u8;
+                if sanity < 1 {
+                    panic!("sanity limit reached while doing tournament selection");
+                }
+            }
+            t_group.insert(r, true); // tag the slot as used
+
+            if best_tree.fitness.n < self.tree_vec[r].fitness.n {
+                best_tree = &self.tree_vec[r];
+            }
+        }
+        best_tree
+    }
+}
+
+#[cfg(gpopt_select_method="fpb")]
 #[cfg(gpopt_fitness_type="int")]
 fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
     #[cfg(not(gpopt_rng="file_stream"))]
@@ -573,6 +610,8 @@ fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
         };
     Fitness::float_to_int(dbl_val)
 }
+
+#[cfg(gpopt_select_method="fpb")]
 #[cfg(gpopt_fitness_type="float")]
 fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
     #[cfg(not(gpopt_rng="file_stream"))]

@@ -152,7 +152,7 @@ fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpT
 fn func_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = exec_node(fc, &func.branch[0]);
     let val2 = exec_node(fc, &func.branch[1]);
-    val1 * val2
+    val1 + val2
 }
 
 fn func_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
@@ -381,6 +381,7 @@ impl RunContext {
         f.a = -1.0;
         f.nfr = -1.0;
         f.raw = f.r;
+        f.s = f.r;
 
         // average over generation
         f.a = 1.0 / (1.0 + f.s as GpFloat);

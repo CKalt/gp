@@ -262,19 +262,8 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         trees.compute_normalized_fitness()
              .sort_by_normalized_fitness();
 
-//        #[cfg(gpopt_trace="on")]
-//        if trees.gen == 1 {
-//            panic!("pause");
-//        }
-//        else {
-//            println!("at pause point gen={} skipping until gen=1 here.", trees.gen);
-//        }
-
         report_results(rng, &mut trees, &mut header_need, &hits);
 
-//if trees.gen == 1 {
-//    println!("pause");
-//}
         if trees.gen >= CONTROL.G {
             break;
         }
