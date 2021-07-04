@@ -240,7 +240,7 @@ fn use_reproduction(index: usize ) -> bool {
     result
 }
 
-fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
+fn run(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
@@ -251,7 +251,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-        let hits = trees.exec_all(run_number);
+        let hits = trees.exec_all(rc);
         if trees.winning_index != None {
             break;
         }
@@ -331,9 +331,14 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Tree> {
         trees.gen += 1;
     }
 
+    // return some optional Winner or None
     match trees.winning_index {
         Some(i) => {
-            let winner = trees.tree_vec[i].clone();
+            let winner = Winner{
+                tree: trees.tree_vec[i].clone(),
+                run: run_number,
+                gen: trees.gen
+            };
             Some(winner)
         },
         _ => None,
@@ -363,10 +368,12 @@ fn main() {
 
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
+    let mut rc = RunContext::new();
+
     let opt_winner = loop { // go until we have a winner
         run_number += 1;
         println!("Run #{}", run_number);
-        if let Some(winner) = run(&mut rng, run_number) {
+        if let Some(winner) = run(&mut rc, &mut rng, run_number) {
             break Some(winner);
         }
         else if run_number == CONTROL.R && CONTROL.R != 0 {
@@ -376,7 +383,10 @@ fn main() {
         
     if let Some(mut winner) = opt_winner {
         println!("run_number={}", run_number);
-        winner.print_exec_one();
+        winner.print_result();
+        rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
+            winner.gen));
+        winner.tree.print_exec_one();
     } else {
         println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
             CONTROL.R);

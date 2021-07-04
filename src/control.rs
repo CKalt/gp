@@ -48,7 +48,7 @@ pub const CONTROL: Control = Control {
     no_fitness_cases:   0,
     show_all_trees:     false,
     show_all_tree_results: false,
-    show_best_tree_results: true,
-    show_controls: true,
+    show_best_tree_results: false,
+    show_controls: false,
     run_tests: false,
 };

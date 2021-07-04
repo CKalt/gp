@@ -14,6 +14,18 @@ use Node::*;
 type FuncNodeCode = fn (fc: &FitnessCase, fnc: &FunctionNode) -> GpType;
 pub type TermNodeCode = fn (fc: &FitnessCase) -> GpType;
 
+pub struct Winner {
+    pub tree: Tree,
+    pub run: i32,
+    pub gen: u16,
+}
+impl Winner {
+    pub fn print_result(&self) {
+        Tree::print_result_header(None, &self.tree.hits);
+        self.tree.print_result(None, -1.0);
+    }
+}
+
 pub enum Node {
     TNode(& 'static Terminal), // Terminal nodes are borrowed references
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
@@ -414,9 +426,7 @@ impl TreeSet {
         }
         self
     }
-    pub fn exec_all(&mut self, run_number: i32) -> u16 {
-        let mut rc = RunContext::new();
-
+    pub fn exec_all(&mut self, rc: &mut RunContext) -> u16 {
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
             rc.prepare_run();
 
@@ -441,9 +451,6 @@ impl TreeSet {
             }
 
             if rc.compute_fitness(tree) {
-                tree.print_result(None, -1.0);
-                rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
-                    self.gen));
                 self.winning_index = Some(i);
                 break;
             }
@@ -861,6 +868,7 @@ impl Tree {
             
         #[cfg(gpopt_exec_criteria="clock")]
         panic!("clock exec not used this problem.");
+
         #[cfg(gpopt_exec_criteria="each_fitness_case")]
         let num = NumberFormat::new();
         #[cfg(gpopt_exec_criteria="each_fitness_case")]
