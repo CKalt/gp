@@ -1,11 +1,13 @@
 mod gprun;
 mod tree;
+mod tree_set;
 mod control;
 mod gprng;
 mod util;
 
 use gprun::*;
 use tree::*;
+use tree_set::*;
 use control::*;
 
 use gprng::GpRng;
