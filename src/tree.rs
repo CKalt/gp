@@ -1,4 +1,5 @@
 use format_num::NumberFormat;
+use std::mem;
 
 #[cfg(gpopt_select_method="tournament")]
 use std::collections::HashMap;
@@ -317,6 +318,139 @@ impl TreeSet {
             gen:            gen
         }
     }
+    fn tree_match(t1: &Tree, t2: &Tree) -> bool {
+        t1.root.deep_match(&t2.root)
+    }
+    fn tree_match_exists(&self, target_tree: &Tree) -> bool {
+        for tree in self.tree_vec.iter() {
+            if Self::tree_match(tree, target_tree) {
+                return true;
+            }
+        }
+        return false;
+    }
+    fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
+        let mut root = FunctionNode::new_rnd(rng);
+        Self::gen_tree_full_method_r(rng, &mut root, 2, depth);
+        Tree::new(root)
+    }
+    fn gen_tree_full_method_r(rng: &mut GpRng,
+            func_node: &mut FunctionNode, level: u16, depth: u16) {
+        if level >= depth {
+            for i in 0..func_node.fnc.arity {
+                let rnd_tref = Terminal::get_rnd_ref(rng); // Always a Terminal Node
+                func_node.set_arg(i, TNode(rnd_tref));
+            }
+        }
+        else {
+            let c_depth = level+1;
+            for i in 0..func_node.fnc.arity {
+                let rnd_fn = FunctionNode::new_rnd(rng); // Always a Funciton Node
+                let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+
+                match *node {
+                    FNode(ref mut fn_ref) =>
+                        Self::gen_tree_full_method_r(rng, fn_ref, c_depth, depth),
+                    _ => panic!("expected FunctionNode"),
+                }
+            }
+        }
+    }
+    fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
+        let mut root = FunctionNode::new_rnd(rng);
+        Self::gen_tree_grow_method_r(rng, &mut root, 2, depth);
+
+        Tree::new(root)
+    }
+    fn gen_tree_grow_method_r(rng: &mut GpRng, 
+            func_node: &mut FunctionNode, level: u16, depth: u16) {
+        if level >= depth {
+            for i in 0..func_node.fnc.arity {
+                let rnd_tref = Terminal::get_rnd_ref(rng); // Always a Terminal Node
+                func_node.set_arg(i, TNode(rnd_tref));
+            }
+        }
+        else {
+            let c_depth = level+1;
+            for i in 0..func_node.fnc.arity {
+                let rnd_ft_node = Node::new_rnd(rng); // Either a Function or Terminal Node
+                let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+                if let FNode(ref mut fn_ref) = node {
+                    Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth);
+                }
+            }
+        }
+    }
+    fn gen_tree(rng: &mut GpRng, generate_method : GenerateMethod,
+            d: u16) -> Tree {
+        match generate_method {
+            GenerateMethod::Full => Self::gen_tree_full_method(rng, d),
+            GenerateMethod::Grow => Self::gen_tree_grow_method(rng, d),
+        }
+    }
+    fn create_unique_tree(&self, rng: &mut GpRng, mut d: u16) -> Tree {
+        let mut i = 1u16;
+        let gen_method = 
+            if (self.tree_vec.len() % 2) == 0 {
+                GenerateMethod::Full
+            }
+            else {
+                GenerateMethod::Grow
+            };
+
+        let mut t = Self::gen_tree(rng, gen_method, d);
+
+        while self.tree_match_exists(&t) {
+            i += 1;
+            if i > 11 {
+                d += 1;
+                i = 1;
+            }
+            t = Self::gen_tree(rng, gen_method, d);
+        }
+
+        return t;
+    }
+
+    pub fn create_initial_population(rng: &mut GpRng) -> TreeSet {
+        // Following Koza's recipe, he calls "ramped half-and-half",
+        // we will evenly produce population segments starting with 2
+        // up to the maxium depth (CONTROL.Di) and alternate
+        // between Full Method and Grow Method for S Expressions.
+        let mut trees = Self::new(0);
+        let seg = CONTROL.M as GpFloat / (CONTROL.Di as GpFloat - 1.0);
+        let mut bdr = 0.0;
+
+        #[cfg(gpopt_trace="on")]
+        println!("TP001:create_init_pop start");
+        for d in 2..=CONTROL.Di {
+            bdr += seg;
+            while trees.tree_vec.len() < bdr as usize &&
+                  trees.tree_vec.len() < CONTROL.M {
+                let mut new_tree = trees.create_unique_tree(rng, d);
+                new_tree.count_nodes();
+
+                trees.push_tree(new_tree);
+
+                #[cfg(gpopt_trace="on")]
+                trees.tree_vec[trees.tree_vec.len()-1].print();
+            }
+        }
+
+        // fill out to end in case there are "left-overs" due to rounding
+        while trees.tree_vec.len() < CONTROL.M {
+            let mut new_tree = trees.create_unique_tree(rng, CONTROL.Di);
+            new_tree.count_nodes();
+            trees.push_tree(new_tree);
+                
+            #[cfg(gpopt_trace="on")]
+            trees.tree_vec[trees.tree_vec.len()-1].print();
+        }
+        #[cfg(gpopt_trace="on")]
+        println!("TP002:create_init_pop done");
+
+        trees
+    }
 
     pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
@@ -456,6 +590,119 @@ impl TreeSet {
             }
         }
         rc.hits
+    }
+
+    //fn use_reproduction(index: usize ) -> bool {
+    //    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
+    //    let int_index_ratio = Fitness::float_to_int(
+    //        float_index_ratio
+    //    );
+    //    let int_control_ratio = Fitness::float_to_int(CONTROL.Pr);
+    //    let result = int_index_ratio < int_control_ratio;
+    //    result
+    //}
+    fn use_reproduction(&self) -> bool {
+        let index = self.tree_vec.len();
+        let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
+        result
+    }
+    fn push_tree(&mut self, mut tree: Tree) {
+        let index = self.tree_vec.len();
+        assert!(index < CONTROL.M);
+        tree.tcid = index;
+        self.tree_vec.push(tree);
+    }
+    // rnd_internal_point - randomly decides whether to do crossover at an
+    // internal point (function) or terminal based on control Pip value.
+    fn rnd_internal_point(rng: &mut GpRng) -> bool {
+        #[cfg(gpopt_rng="file_stream")]
+        let num: GpFloat = rng.gen_float();
+
+        #[cfg(not(gpopt_rng="file_stream"))]
+        let num: GpFloat = rng.gen_range(0.0..1.0);
+
+        num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
+    }
+    fn perform_crossover(rng: &mut GpRng,
+            t1: &mut Tree, t2: &mut Tree) {
+        assert_ne!(t1.num_terminal_nodes, None);
+        assert_ne!(t2.num_terminal_nodes, None);
+
+        let swap_target1 =
+            if t1.num_function_nodes.unwrap() > 0 && Self::rnd_internal_point(rng) {
+                t1.get_rnd_function_node_ref(rng)
+            } else {
+                t1.get_rnd_terminal_node_ref(rng)
+            };
+
+        let swap_target2 =
+            if t2.num_function_nodes.unwrap() > 0 && Self::rnd_internal_point(rng) {
+                t2.get_rnd_function_node_ref(rng)
+            } else {
+                t2.get_rnd_terminal_node_ref(rng)
+            };
+        mem::swap(swap_target1, swap_target2);
+    }
+    pub fn breed_new_generation(&mut self, rng: &mut GpRng) -> TreeSet {
+        let mut new_trees = Self::new(self.gen);
+        #[cfg(gpopt_trace="on")]
+        println!("TP003:breed start");
+        while new_trees.tree_vec.len() < CONTROL.M {
+            if new_trees.use_reproduction() {
+                // do reproduction
+                #[cfg(gpopt_trace="on")]
+                println!("TP003.1:breeding reproduction branch");
+
+                let mut t = self.select_tree(rng).clone();
+                
+                t.clear_node_counts();
+                t.count_nodes();
+                new_trees.push_tree(t);
+
+                #[cfg(gpopt_trace="on")]
+                new_trees.tree_vec[new_trees.tree_vec.len()-1].print();
+            }
+            else {
+                // do crossover
+                #[cfg(gpopt_trace="on")]
+                println!("TP003.1:breeding crossover branch");
+
+                let (mut nt1, mut nt2);
+                loop {
+                    let t1 = self.select_tree(rng);
+                    let t2 = self.select_tree(rng);
+
+                    nt1 = t1.clone();
+                    nt2 = t2.clone();
+
+                    Self::perform_crossover(rng, &mut nt1, &mut nt2);
+                    if nt1.qualifies() && nt2.qualifies() {
+                        break;
+                    }
+                }
+                nt1.clear_node_counts();
+                nt1.count_nodes();
+
+                new_trees.push_tree(nt1);
+
+                #[cfg(gpopt_trace="on")]
+                new_trees.tree_vec[new_trees.tree_vec.len()-1].print();
+
+                if new_trees.tree_vec.len() < CONTROL.M {
+                    nt2.clear_node_counts();
+                    nt2.count_nodes();
+                    new_trees.push_tree(nt2);
+
+                    #[cfg(gpopt_trace="on")]
+                    new_trees.tree_vec[new_trees.tree_vec.len()-1].print();
+                }
+            }
+        }
+        #[cfg(gpopt_trace="on")]
+        println!("TP004:breed done");
+
+        assert_eq!(new_trees.tree_vec.len(), CONTROL.M);
+        new_trees
     }
 }
 
