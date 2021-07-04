@@ -123,7 +123,7 @@ fn main() {
     };
         
     if let Some(mut winner) = opt_winner {
-        println!("run_number={}", run_number);
+        println!("run={}, gen={}", winner.run, winner.gen);
         winner.print_result();
         rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
             winner.gen));
