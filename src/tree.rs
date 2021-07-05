@@ -113,7 +113,7 @@ impl Node {
             print!(" ");
         }
     }
-    /// always performed against a Tree.root node
+    /// always performed against a TreeBranch.root node
     /// which is why a tree is used instead of a Node here.
     /// It sets up the recursive call to find_function_node_ref_r.
     fn find_function_node_ref(&mut self, fi: TreeNodeIndex) -> &mut Node {
@@ -412,6 +412,12 @@ impl Fitness {
     }
 }
 
+enum BranchType {
+    Result0,
+    FunctionDef0,
+}
+use BranchType::*;
+
 struct TreeBranch {
     pub root: Node,
     pub num_function_nodes: Option<TreeNodeIndex>,
@@ -475,14 +481,20 @@ impl Tree {
             func_def_branch: self.func_def_branch.clone(),
         }
     }
+    pub fn get_num_function_nodes_bt(&self, b_type: BranchType) -> Option<TreeNodeIndex> {
+        match b_type {
+            Result0     =>  self.result_branch.num_function_nodes,
+            FunctionDef =>  self.func_def_branch.num_function_nodes,
+        }
+    }
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
-        let num_fnodes2 = self.func_def_branch.num_function_nodes.unwrap();
+        let num_fnodes1 = self.func_def_branch.num_function_nodes.unwrap();
+        let num_fnodes2 = self.result_branch.num_function_nodes.unwrap();
         Some(num_fnodes1 + num_fnodes2)
     }
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_tnodes1 = self.result_branch.num_terminal_nodes;
-        let num_tnodes2 = self.func_def_branch.num_terminal_nodes;
+        let num_tnodes1 = self.func_def_branch.num_terminal_nodes;
+        let num_tnodes2 = self.result_branch.num_terminal_nodes;
         Some(num_tnodes1 + num_tnodes2)
     }
     pub fn clear_node_counts(&mut self) {
@@ -511,7 +523,6 @@ impl Tree {
         self.root.print();
         println!("");
     }
-
     pub fn get_rnd_function_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex, &mut Node) {
@@ -519,30 +530,56 @@ impl Tree {
         (fi, Node::find_function_node_ref(self, fi))
     }
     pub fn get_rnd_function_node_ref(&mut self,
-            rng: &mut GpRng) -> &mut Node {
+            rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
-        let num_branch_fnodes = self.result_branch.num_function_nodes.unwrap();
+        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
 
-        UC
-        if fi < num_branch_fnodes {
-            self.result_branch.root.find_function_node_ref(fi)
+        if fi < num_fd_branch_fnodes {
+            (FunctionDef0, 
+                self.func_def_branch.root.find_function_node_ref(fi))
         } else {
-            self.func_def_branch.root.find_function_node_ref(
-                fi - num_breanch_fnodes)
+            (Result0,
+                self.result_branch.root.find_function_node_ref(
+                        fi - num_fd__branch_fnodes))
         }
+    }
+    pub fn get_rnd_function_node_ref_bt(&mut self,
+            rng: &mut GpRng, b_type: BranchType) -> &mut Node {
+        let fi = self.get_rnd_function_index_bt(rng, b_type);
+        match b_type {
+            Result0 => self.result_branch.root.find_function_node_ref(fi)),
+            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi)),
+        }
+    }
+    fn get_rnd_function_index_bt(&self, rng: &mut GpRng, b_type BranchType)
+            -> TreeNodeIndex {
+        let num_fnodes = self
+            .get_num_function_nodes_bt(b_type)
+            .expect("Tree does not have count of function nodes.");
+
+        rng.gen_range(0..num_fnodes)
     }
     fn get_rnd_function_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_fnodes = self
             .get_num_function_nodes()
-            .expect("Tree does not have count of function nodes. ");
+            .expect("Tree does not have count of function nodes.");
 
         rng.gen_range(0..num_fnodes)
     }
     pub fn get_rnd_terminal_node_ref(&mut self,
-            rng: &mut GpRng) -> &mut Node {
+            rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        Node::find_terminal_node_ref(self, ti)
+        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
+
+        if ti < num_fd_branch_tnodes {
+            (FunctionDef0, 
+                self.func_def_branch.root.find_terminal_node_ref(ti))
+        } else {
+            (Result0,
+                self.result_branch.root.find_terminal_node_ref(
+                        ti - num_fd__branch_tnodes))
+        }
     }
     #[allow(dead_code)]
     pub fn get_rnd_terminal_node_ref_i(&mut self,
@@ -554,7 +591,7 @@ impl Tree {
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_tnodes = self
-            .num_terminal_nodes
+            .get_num_terminal_nodes()
             .expect("Tree does not have count of terminal nodes. ");
 
         rng.gen_range(0..num_tnodes)

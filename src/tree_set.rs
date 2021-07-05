@@ -177,19 +177,16 @@ impl TreeSet {
 
         trees
     }
-
     pub fn get_rnd_tree(&mut self, rng: &mut GpRng)
             -> &mut Tree {
         let rnd_index: usize = rng.gen_range(0..self.tree_vec.len() as i32) as usize;
         &mut self.tree_vec[rnd_index]
     }
-
     pub fn print(&self) {
         for tree in self.tree_vec.iter() {
             tree.print();
         }
     }
-
     /// for each tree compute the n_functions, n_terminals
     /// values.
     pub fn count_nodes(&mut self) {
@@ -197,7 +194,6 @@ impl TreeSet {
             tree.count_nodes();
         }
     }
-
     #[cfg(gpopt_fitness_type="int")]
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
         let mut sum_a: GpInt = 0;
@@ -254,7 +250,6 @@ impl TreeSet {
 
         self
     }
-
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
         #[cfg(gpopt_fitness_type="int")]
         self.tree_vec
@@ -265,7 +260,6 @@ impl TreeSet {
             
         self.assign_nfr_rankings()
     }
-
     #[cfg(gpopt_fitness_type="int")]
     fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
         let mut nfr: GpInt = 0;
@@ -352,20 +346,25 @@ impl TreeSet {
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.num_terminal_nodes, None);
         assert_ne!(t2.num_terminal_nodes, None);
+        let node:   &Node;
+        let b_type: BranchType;
 
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
-                t1.get_rnd_function_node_ref(rng)
+                (b_type, node) = t1.get_rnd_function_node_ref(rng);
+                node
             } else {
-                t1.get_rnd_terminal_node_ref(rng)
+                (b_type, node) = t1.get_rnd_terminal_node_ref(rng);
+                node
             };
 
         let swap_target2 =
             if t2.num_function_nodes.unwrap() > 0 && Self::rnd_internal_point(rng) {
-                t2.get_rnd_function_node_ref(rng)
+                t2.get_rnd_function_node_ref_bt(rng, b_type)
             } else {
-                t2.get_rnd_terminal_node_ref(rng)
+                t2.get_rnd_terminal_node_ref_bt(rng, b_type)
             };
+
         mem::swap(swap_target1, swap_target2);
     }
     pub fn breed_new_generation(&mut self, rng: &mut GpRng) -> TreeSet {
