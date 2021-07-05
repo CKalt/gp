@@ -31,14 +31,15 @@ pub enum Node {
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
 }
 impl Node {
-    pub fn new_rnd(rng: &mut GpRng) -> Node {
-        let num_ft = CONTROL.num_functions + CONTROL.num_terminals;
+    pub fn new_rnd(rng: &mut GpRng,
+            funcs: &[Function], terms: &[Terminal]) -> Node {
+        let num_ft = funcs.len() + terms.len();
         let r = rng.gen_range(0..num_ft as i32) as u8;
-        if r < CONTROL.num_terminals {
-            TNode(&TERMINAL[r as usize])
+        if r < terms.len() {
+            TNode(terms[r as usize])
         }
         else {
-            let rand_fid = r - CONTROL.num_terminals;
+            let rand_fid = r - terms.len();
             FNode(FunctionNode::new(rand_fid))
         }
     }
