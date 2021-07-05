@@ -475,6 +475,16 @@ impl Tree {
             func_def_branch_branch: self.func_def_branch_branch.clone(),
         }
     }
+    pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
+        let num_fnodes1 = self.result_branch_branch.num_function_nodes.unwrap();
+        let num_fnodes2 = self.func_def_branch_branch.num_function_nodes.unwrap();
+        Some(num_fnodes1 + num_fnodes2)
+    }
+    pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
+        let num_tnodes1 = self.result_branch_branch.num_terminal_nodes;
+        let num_tnodes2 = self.func_def_branch_branch.num_terminal_nodes;
+        Some(num_tnodes1 + num_tnodes2)
+    }
     pub fn clear_node_counts(&mut self) {
         self.result_branch_branch.clear_node_counts();
         self.func_def_branch_branch.clear_node_counts();
@@ -508,7 +518,6 @@ impl Tree {
         let fi = self.get_rnd_function_index(rng);
         (fi, Node::find_function_node_ref(self, fi))
     }
-    #[allow(dead_code)]
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> &mut Node {
         let fi = self.get_rnd_function_index(rng);
