@@ -397,6 +397,20 @@ impl Fitness {
     }
 }
 
+impl Fitness {
+    fn clone(&self) -> Fitness {
+        Fitness {
+            nfr: self.nfr,
+            n:   self.n,
+            a:   self.a
+            raw: self.raw,
+
+            r: self.r,
+            s: self.s,
+        }
+    }
+}
+
 struct TreeBranch {
     pub root: Node,
     pub num_function_nodes: Option<TreeNodeIndex>,
@@ -421,11 +435,6 @@ impl TreeBranch {
         self.num_terminal_nodes = None;
         self.num_function_nodes = None;
     }
-    /// count_nodes descends through tree and computes counts.
-    /// To insure code performs efficiently we assert that counts are not
-    /// counted twice. If this is infact needed
-    /// I.e. Expects that nodes have not already been counted as represented by
-    /// num_terminal_nodes and num_function_nodes values of None.
     pub fn count_nodes(&mut self) {
         let mut counts = (0i32, 0i32); // (num_terms, num_funcs)
         self.root.count_nodes(&mut counts);
@@ -459,7 +468,7 @@ impl Tree {
         Tree { 
             tfid: None,
             tcid: 0,
-            fitness: Fitness::new(),
+            fitness: self.Fitness::clone(),
             hits: 0,
             rpb0_branch: self.rpb0_branch.clone(),
             fdb0_branch: self.fdb0_branch.clone(),
