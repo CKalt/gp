@@ -17,19 +17,11 @@ use crate::tree::DL_SHIFT;
 #[cfg(gpopt_fitness_type="int")]
 use crate::Fitness;
 
-#[cfg(gpopt_exec_criteria="clock")]
-pub enum GpType {
-    Value(GpRaw),
-    Terminate,
-}
-#[cfg(gpopt_exec_criteria="clock")]
-use GpType::*;
-
 #[cfg(gpopt_exec_criteria="each_fitness_case")]
 pub type GpType = GpRaw;
 
-// TERMINAL SPECIFICS
-pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
+// TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - rpb0
+pub static TERMINAL_RPB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
     Terminal {
         tid:  0u8,
         name: "L0",
@@ -63,54 +55,30 @@ pub static TERMINAL: [Terminal; CONTROL.num_terminals as usize] = [
 ];
 
 fn terminal_l0(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.l0
 }
 
 fn terminal_w0(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.w0
 }
 
 fn terminal_h0(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.h0
 }
 
 fn terminal_l1(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.l1
 }
 
 fn terminal_w1(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.w1
 }
 
 fn terminal_h1(fc: &FitnessCase) -> GpType {
-    #[cfg(gpopt_exec_criteria="clock")]
-    if let GpType::Terminate = clock_tic(rc) {
-        return GpType::Terminate
-    }
     fc.h1
 }
 
-pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
+pub static FUNCTION_RPB0: [Function; CONTROL.num_functions_rpb0 as usize] = [
     Function {
         fid:  0u8,
         name: "+",
@@ -135,19 +103,13 @@ pub static FUNCTION: [Function; CONTROL.num_functions as usize] = [
         arity: 2,
         code: func_prot_div,
     },
+    Function {
+        fid:  4u8,
+        name: "ADF0",
+        arity: 3,
+        code: func_adf0,
+    },
 ];
-
-#[cfg(gpopt_exec_criteria="clock")]
-fn eval_binary_op(val1: GpType, val2: GpType, op: fn(GpRaw,GpRaw)->GpRaw) -> GpType {
-    match val1 {
-        Terminate => val1,
-        Value(num1) =>
-            match val2 {
-                Terminate => val2,
-                Value(num2) => Value( op(num1, num2) ),
-            },
-    }
-}
 
 fn func_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = exec_node(fc, &func.branch[0]);
@@ -173,38 +135,41 @@ fn func_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
     if val2 == 0.0 {1.0} else {val1/val2}
 }
 
-#[cfg(gpopt_exec_criteria="clock")]
-fn clock_reset(fc: &FitnessCase) {
-    rc.clock = 0;
+fn func_adf0(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let arg1 = exec_node(fc, &func.branch[0]);
+    let arg2 = exec_node(fc, &func.branch[1]);
+    let arg3 = exec_node(fc, &func.branch[2]);
+
+    fc.exec_adf0(arg1, arg2, arg3)
 }
 
-#[cfg(gpopt_exec_criteria="clock")]
-fn clock_tic(fc: &FitnessCase) -> GpType {
-    if rc.clock < RUN_CONTROL.max_clock {
-        rc.clock += 1;
-        GpType::Continue
-    }
-    else {
-        GpType::Terminate
-    }
+// TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - fdb0
+pub static TERMINAL_FDB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
+    Terminal {
+        tid:  0u8,
+        name: "ARG0",
+        code: terminal_arg0,
+    },
+    Terminal {
+        tid:  1u8,
+        name: "ARG1",
+        code: terminal_arg1,
+    },
+    Terminal {
+        tid:  2u8,
+        name: "ARG2",
+        code: terminal_arg2,
+    },
+];
+
+fn terminal_arg0(fc: &FitnessCase) -> GpType {
 }
 
-#[cfg(gpopt_exec_criteria="clock")]
-fn terminate(fc: &FitnessCase) -> GpType {
-    rc.clock = RUN_CONTROL.max_clock;
-    GpType::Terminate
+fn terminal_arg1(fc: &FitnessCase) -> GpType {
 }
 
-/// RunControl defines parameters controlling the running of individuals.
-#[cfg(gpopt_exec_criteria="clock")]
-pub struct RunControl {
-    pub max_clock: u16, // sets limit for entire population run duration
+fn terminal_arg2(fc: &FitnessCase) -> GpType {
 }
-
-#[cfg(gpopt_exec_criteria="clock")]
-pub static RUN_CONTROL: RunControl = RunControl {
-    max_clock: 3000,
-};
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
@@ -223,18 +188,6 @@ impl FitnessCase {
     pub fn compute_error(&self, result: GpType) -> GpRaw {
         (result- self.d).abs()
     }
-
-    #[cfg(gpopt_exec_criteria="clock")]
-    pub fn compute_error(&self, result: GpType) -> GpRaw {
-        match result {
-            Value(result_value) => {
-                (result_value - self.d).abs()
-            },
-            Terminate =>
-                panic!("Unable to eval fitness case for Non-Value result=Terminate"),
-
-        }
-    }
 }
 
 /// RunContext provides runtime control over a running individual. Each 
@@ -242,9 +195,6 @@ impl FitnessCase {
 /// where it can then access it's fitness case data and currency values.
 pub struct RunContext {
     pub fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
-    #[cfg(gpopt_exec_criteria="clock")]
-    clock: u16,
-
     pub hits: GpHits,
     pub error: GpRaw,
 }
@@ -344,8 +294,6 @@ impl RunContext {
                         d:  45.0,
                     },
                 ],
-            #[cfg(gpopt_exec_criteria="clock")]
-            clock: 0,
             hits: 0,
             error: 0.0,
         };
