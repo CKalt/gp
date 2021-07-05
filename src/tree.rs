@@ -116,13 +116,13 @@ impl Node {
     /// always performed against a Tree.root node
     /// which is why a tree is used instead of a Node here.
     /// It sets up the recursive call to find_function_node_ref_r.
-    fn find_function_node_ref(tree: &mut Tree, fi: TreeNodeIndex) -> &mut Node {
-        match tree.root {
+    fn find_function_node_ref(&mut self, fi: TreeNodeIndex) -> &mut Node {
+        match self {
             TNode(_) => panic!(
               "Invalid attempt to find a Function node with a terminal tree."),
             FNode(_) => {
                 let mut cur_fi: TreeNodeIndex = 0;
-                tree.root.find_function_node_ref_r(fi, &mut cur_fi).unwrap()
+                self.find_function_node_ref_r(fi, &mut cur_fi).unwrap()
             }
         }
     }
@@ -451,8 +451,8 @@ pub struct Tree {
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
     pub hits: GpHits,
-    pub result_branch_branch: TreeBranch,
-    pub func_def_branch_branch: TreeBranch,
+    pub result_branch: TreeBranch,
+    pub func_def_branch: TreeBranch,
 }
 impl Tree {
     pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
@@ -460,8 +460,8 @@ impl Tree {
             tfid: None,
             tcid: 0,
             fitness: Fitness::new(),
-            result_branch_branch: TreeBranch::new(result_branch_root),
-            func_def_branch_branch: TreeBranch::new(func_def_branch_root),
+            result_branch: TreeBranch::new(result_branch_root),
+            func_def_branch: TreeBranch::new(func_def_branch_root),
             hits: 0,
         }
     }
@@ -471,27 +471,27 @@ impl Tree {
             tcid: 0,
             fitness: self.Fitness::clone(),
             hits: 0,
-            result_branch_branch: self.result_branch_branch.clone(),
-            func_def_branch_branch: self.func_def_branch_branch.clone(),
+            result_branch: self.result_branch.clone(),
+            func_def_branch: self.func_def_branch.clone(),
         }
     }
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_fnodes1 = self.result_branch_branch.num_function_nodes.unwrap();
-        let num_fnodes2 = self.func_def_branch_branch.num_function_nodes.unwrap();
+        let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
+        let num_fnodes2 = self.func_def_branch.num_function_nodes.unwrap();
         Some(num_fnodes1 + num_fnodes2)
     }
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_tnodes1 = self.result_branch_branch.num_terminal_nodes;
-        let num_tnodes2 = self.func_def_branch_branch.num_terminal_nodes;
+        let num_tnodes1 = self.result_branch.num_terminal_nodes;
+        let num_tnodes2 = self.func_def_branch.num_terminal_nodes;
         Some(num_tnodes1 + num_tnodes2)
     }
     pub fn clear_node_counts(&mut self) {
-        self.result_branch_branch.clear_node_counts();
-        self.func_def_branch_branch.clear_node_counts();
+        self.result_branch.clear_node_counts();
+        self.func_def_branch.clear_node_counts();
     }
     pub fn count_nodes(&mut self) {
-        self.result_branch_branch.count_nodes();
-        self.func_def_branch_branch.count_nodes();
+        self.result_branch.count_nodes();
+        self.func_def_branch.count_nodes();
     }
 
     pub fn print(&self) {
@@ -521,12 +521,20 @@ impl Tree {
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> &mut Node {
         let fi = self.get_rnd_function_index(rng);
-        Node::find_function_node_ref(self, fi)
+        let num_branch_fnodes = self.result_branch.num_function_nodes.unwrap();
+
+        UC
+        if fi < num_branch_fnodes {
+            self.result_branch.root.find_function_node_ref(fi)
+        } else {
+            self.func_def_branch.root.find_function_node_ref(
+                fi - num_breanch_fnodes)
+        }
     }
     fn get_rnd_function_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_fnodes = self
-            .num_function_nodes
+            .get_num_function_nodes()
             .expect("Tree does not have count of function nodes. ");
 
         rng.gen_range(0..num_fnodes)

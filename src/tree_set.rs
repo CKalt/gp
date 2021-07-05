@@ -353,7 +353,6 @@ impl TreeSet {
         assert_ne!(t1.num_terminal_nodes, None);
         assert_ne!(t2.num_terminal_nodes, None);
 
-        (UC)
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
                 t1.get_rnd_function_node_ref(rng)
