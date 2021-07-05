@@ -397,40 +397,24 @@ impl Fitness {
     }
 }
 
-pub struct Tree {
-    pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
-                      // based index within TreeSet.tree_vec after sorting for
-                      // fitness (least fit are lower valued)
-    pub tcid: usize,  // The id of the Tree when first created and put into the array
+struct TreeBranch {
     pub root: Node,
-    pub fitness: Fitness,
     pub num_function_nodes: Option<TreeNodeIndex>,
     pub num_terminal_nodes: Option<TreeNodeIndex>,
-    pub hits: GpHits,
 }
-impl Tree {
-    pub fn new(root: FunctionNode) -> Tree {
-        Tree { 
-            tfid: None,
-            tcid: 0,
+impl TreeBranch {
+    fn new(root: FunctionNode) -> TreeBranch {
+        TreeBranch{
             root: FNode(root),
-            fitness: Fitness::new(),
             num_function_nodes: None,     // None until count_nodes is called
             num_terminal_nodes: None,     // None until count_nodes is called
-            hits: 0,
         }
     }
-    pub fn clone(&self) -> Tree {
-        let new_root = self.root.clone(); // clone Node
-
-        Tree { 
-            tfid: None,
-            tcid: 0,
-            root: new_root,
-            fitness: Fitness::new(),
+    fn clone(&self) -> TreeBranch {
+        TreeBranch{
+            root: self.root.clone(),
             num_function_nodes: self.num_function_nodes,
             num_terminal_nodes: self.num_terminal_nodes,
-            hits: 0,
         }
     }
     pub fn clear_node_counts(&mut self) {
@@ -443,12 +427,51 @@ impl Tree {
     /// I.e. Expects that nodes have not already been counted as represented by
     /// num_terminal_nodes and num_function_nodes values of None.
     pub fn count_nodes(&mut self) {
-//        assert_eq!(self.num_terminal_nodes, None);
-//        assert_eq!(self.num_function_nodes, None);
         let mut counts = (0i32, 0i32); // (num_terms, num_funcs)
         self.root.count_nodes(&mut counts);
         self.num_terminal_nodes = Some(counts.0);
         self.num_function_nodes = Some(counts.1);
+    }
+}
+
+pub struct Tree {
+    pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
+                      // based index within TreeSet.tree_vec after sorting for
+                      // fitness (least fit are lower valued)
+    pub tcid: usize,  // The id of the Tree when first created and put into the array
+    pub fitness: Fitness,
+    pub hits: GpHits,
+    pub rpb0_branch: TreeBranch,
+    pub fdb0_branch: TreeBranch,
+}
+impl Tree {
+    pub fn new(rpb0_root: FunctionNode, fdb0_root: FunctionNode) -> Tree {
+        Tree { 
+            tfid: None,
+            tcid: 0,
+            fitness: Fitness::new(),
+            rpb0_branch: TreeBranch::new(rpb0_root),
+            fdb0_branch: TreeBranch::new(rdb0_root),
+            hits: 0,
+        }
+    }
+    pub fn clone(&self) -> Tree {
+        Tree { 
+            tfid: None,
+            tcid: 0,
+            fitness: Fitness::new(),
+            hits: 0,
+            rpb0_branch: self.rpb0_branch.clone(),
+            fdb0_branch: self.fdb0_branch.clone(),
+        }
+    }
+    pub fn clear_node_counts(&mut self) {
+        self.rpb0_branch.clear_node_counts();
+        self.fdb0_branch.clear_node_counts();
+    }
+    pub fn count_nodes(&mut self) {
+        self.rpb0_branch.count_nodes();
+        self.fdb0_branch.count_nodes();
     }
 
     pub fn print(&self) {

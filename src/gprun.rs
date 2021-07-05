@@ -20,12 +20,137 @@ use crate::Fitness;
 #[cfg(gpopt_exec_criteria="each_fitness_case")]
 pub type GpType = GpRaw;
 
+fn function_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
+    val1 + val2
+}
+
+fn function_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
+    val1 - val2
+}
+
+fn function_mult(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
+    val1 * val2
+}
+
+fn function_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let val1 = exec_node(fc, &func.branch[0]);
+    let val2 = exec_node(fc, &func.branch[1]);
+    if val2 == 0.0 {1.0} else {val1/val2}
+}
+
+fn function_adf0(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+    let arg1 = exec_node(fc, &func.branch[0]);
+    let arg2 = exec_node(fc, &func.branch[1]);
+    let arg3 = exec_node(fc, &func.branch[2]);
+
+    fc.exec_adf0(arg1, arg2, arg3)
+}
+
+fn terminal_l0(fc: &FitnessCase) -> GpType {
+    fc.l0
+}
+
+fn terminal_w0(fc: &FitnessCase) -> GpType {
+    fc.w0
+}
+
+fn terminal_h0(fc: &FitnessCase) -> GpType {
+    fc.h0
+}
+
+fn terminal_l1(fc: &FitnessCase) -> GpType {
+    fc.l1
+}
+
+fn terminal_w1(fc: &FitnessCase) -> GpType {
+    fc.w1
+}
+
+fn terminal_h1(fc: &FitnessCase) -> GpType {
+    fc.h1
+}
+
+fn terminal_arg0(fc: &FitnessCase) -> GpType {
+}
+
+fn terminal_arg1(fc: &FitnessCase) -> GpType {
+}
+
+fn terminal_arg2(fc: &FitnessCase) -> GpType {
+}
+
+pub static FUNCTION_RPB0: [Function; CONTROL.num_functions_rpb0 as usize] = [
+    Function {
+        fid:  0u8,
+        name: "+",
+        arity: 2,
+        code: function_add,
+    },
+    Function {
+        fid:  1u8,
+        name: "-",
+        arity: 2,
+        code: function_sub,
+    },
+    Function {
+        fid:  2u8,
+        name: "*",
+        arity: 2,
+        code: function_mult,
+    },
+    Function {
+        fid:  3u8,
+        name: "%",
+        arity: 2,
+        code: function_prot_div,
+    },
+    Function {
+        fid:  4u8,
+        name: "ADF0",
+        arity: 3,
+        code: function_adf0,
+    },
+];
+
+pub static FUNCTION_FDB0: [Function; CONTROL.num_functions_fdb0 as usize] = [
+    Function {
+        fid:  0u8,
+        name: "+",
+        arity: 2,
+        code: function_add,
+    },
+    Function {
+        fid:  1u8,
+        name: "-",
+        arity: 2,
+        code: function_sub,
+    },
+    Function {
+        fid:  2u8,
+        name: "*",
+        arity: 2,
+        code: function_mult,
+    },
+    Function {
+        fid:  3u8,
+        name: "%",
+        arity: 2,
+        code: function_prot_div,
+    },
+];
+
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - rpb0
 pub static TERMINAL_RPB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
     Terminal {
         tid:  0u8,
         name: "L0",
-        code: terminal_l0
+        code: terminal_l0,
     },
     Terminal {
         tid:  1u8,
@@ -54,97 +179,8 @@ pub static TERMINAL_RPB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
     },
 ];
 
-fn terminal_l0(fc: &FitnessCase) -> GpType {
-    fc.l0
-}
-
-fn terminal_w0(fc: &FitnessCase) -> GpType {
-    fc.w0
-}
-
-fn terminal_h0(fc: &FitnessCase) -> GpType {
-    fc.h0
-}
-
-fn terminal_l1(fc: &FitnessCase) -> GpType {
-    fc.l1
-}
-
-fn terminal_w1(fc: &FitnessCase) -> GpType {
-    fc.w1
-}
-
-fn terminal_h1(fc: &FitnessCase) -> GpType {
-    fc.h1
-}
-
-pub static FUNCTION_RPB0: [Function; CONTROL.num_functions_rpb0 as usize] = [
-    Function {
-        fid:  0u8,
-        name: "+",
-        arity: 2,
-        code: func_add,
-    },
-    Function {
-        fid:  1u8,
-        name: "-",
-        arity: 2,
-        code: func_sub,
-    },
-    Function {
-        fid:  2u8,
-        name: "*",
-        arity: 2,
-        code: func_mult,
-    },
-    Function {
-        fid:  3u8,
-        name: "%",
-        arity: 2,
-        code: func_prot_div,
-    },
-    Function {
-        fid:  4u8,
-        name: "ADF0",
-        arity: 3,
-        code: func_adf0,
-    },
-];
-
-fn func_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
-    val1 + val2
-}
-
-fn func_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
-    val1 - val2
-}
-
-fn func_mult(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
-    val1 * val2
-}
-
-fn func_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
-    if val2 == 0.0 {1.0} else {val1/val2}
-}
-
-fn func_adf0(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let arg1 = exec_node(fc, &func.branch[0]);
-    let arg2 = exec_node(fc, &func.branch[1]);
-    let arg3 = exec_node(fc, &func.branch[2]);
-
-    fc.exec_adf0(arg1, arg2, arg3)
-}
-
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - fdb0
-pub static TERMINAL_FDB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
+pub static TERMINAL_FDB0: [Terminal; CONTROL.num_terminals_fdb0 as usize] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
@@ -161,15 +197,6 @@ pub static TERMINAL_FDB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
         code: terminal_arg2,
     },
 ];
-
-fn terminal_arg0(fc: &FitnessCase) -> GpType {
-}
-
-fn terminal_arg1(fc: &FitnessCase) -> GpType {
-}
-
-fn terminal_arg2(fc: &FitnessCase) -> GpType {
-}
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
