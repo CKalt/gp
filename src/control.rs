@@ -41,10 +41,10 @@ pub const CONTROL: Control = Control {
     Pc:                 0.90,       // Probability of cross over
     Pr:                 0.10,       // Probability of reproduction
     Pip:                0.90,       // Probability of cross over internal point
-    num_functions_rpb0: 5,          // num functions result producing branch 0
-    num_terminals_rpb0: 6,          // num terminals result producing branch 0
-    num_functions_fdb0: 4,          // num functions function defining branch 0
-    num_terminals_fdb0: 3,          // num terminals function defining branch 0
+    num_functions_result_branch: 5,          // num functions result producing branch 0
+    num_terminals_result_branch: 6,          // num terminals result producing branch 0
+    num_functions_func_def_branch: 4,          // num functions function defining branch 0
+    num_terminals_func_def_branch: 3,          // num terminals function defining branch 0
     GRc:                0.16,
     R:                  0,
     no_fitness_cases:   0,

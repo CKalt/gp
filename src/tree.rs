@@ -235,9 +235,9 @@ pub struct Terminal {
 }
 impl Terminal {
     /// (Formerly called getRndTNode() in gp.c)
-    pub fn get_rnd_ref(rng: &mut GpRng) -> & 'static Terminal {
-        let t_id: u8 = rng.gen_range(0..CONTROL.num_terminals as i32) as u8;
-        &TERMINAL[t_id as usize]
+    pub fn get_rnd_ref(rng: &mut GpRng, terms: &[Terminal]) -> & 'static Terminal {
+        let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
+        terms[t_id as usize]
     }
 }
 
@@ -247,9 +247,9 @@ pub struct FunctionNode {
     pub branch: Vec<Node>, 
 }
 impl FunctionNode {
-    fn new(fid: u8) -> FunctionNode {
+    fn new(fid: u8, funcs: &[Function]) -> FunctionNode {
         // fid maps to index into function array
-        let fref = &FUNCTION[fid as usize];
+        let fref = funcs[fid as usize];
         FunctionNode {
             fid:    fid,
             fnc:    fref,
@@ -268,8 +268,8 @@ impl FunctionNode {
 
     /// create a new FunctionNode choosing which one at random.
     /// (formerly called newRndFNode() in gp.c)
-    pub fn new_rnd(rng: &mut GpRng) -> FunctionNode {
-        let rand_fid: u8 = rng.gen_range(0..CONTROL.num_functions as i32) as u8;
+    pub fn new_rnd(rng: &mut GpRng, funcs: &[Function]) -> FunctionNode {
+        let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
         FunctionNode::new(rand_fid)
     }
 
@@ -450,17 +450,17 @@ pub struct Tree {
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
     pub hits: GpHits,
-    pub rpb0_branch: TreeBranch,
-    pub fdb0_branch: TreeBranch,
+    pub result_branch_branch: TreeBranch,
+    pub func_def_branch_branch: TreeBranch,
 }
 impl Tree {
-    pub fn new(rpb0_root: FunctionNode, fdb0_root: FunctionNode) -> Tree {
+    pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
         Tree { 
             tfid: None,
             tcid: 0,
             fitness: Fitness::new(),
-            rpb0_branch: TreeBranch::new(rpb0_root),
-            fdb0_branch: TreeBranch::new(rdb0_root),
+            result_branch_branch: TreeBranch::new(result_branch_root),
+            func_def_branch_branch: TreeBranch::new(func_def_branch_root),
             hits: 0,
         }
     }
@@ -470,17 +470,17 @@ impl Tree {
             tcid: 0,
             fitness: self.Fitness::clone(),
             hits: 0,
-            rpb0_branch: self.rpb0_branch.clone(),
-            fdb0_branch: self.fdb0_branch.clone(),
+            result_branch_branch: self.result_branch_branch.clone(),
+            func_def_branch_branch: self.func_def_branch_branch.clone(),
         }
     }
     pub fn clear_node_counts(&mut self) {
-        self.rpb0_branch.clear_node_counts();
-        self.fdb0_branch.clear_node_counts();
+        self.result_branch_branch.clear_node_counts();
+        self.func_def_branch_branch.clear_node_counts();
     }
     pub fn count_nodes(&mut self) {
-        self.rpb0_branch.count_nodes();
-        self.fdb0_branch.count_nodes();
+        self.result_branch_branch.count_nodes();
+        self.func_def_branch_branch.count_nodes();
     }
 
     pub fn print(&self) {

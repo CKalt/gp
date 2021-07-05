@@ -38,12 +38,21 @@ impl TreeSet {
         return false;
     }
     fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
-        let mut root = FunctionNode::new_rnd(rng);
-        Self::gen_tree_full_method_r(rng, &mut root, 2, depth);
-        Tree::new(root)
+        let mut result_branch_root =
+            FunctionNode::new_rnd(rng, &FUNCTIONS_RESULT_BRANCH);
+        Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
+                &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
+
+        let mut func_def_branch_root =
+            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+        Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
+                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+
+        Tree::new(result_branch_root, func_def_branch_root)
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
-            func_node: &mut FunctionNode, level: u16, depth: u16) {
+            func_node: &mut FunctionNode, level: u16, depth: u16,
+            funcs: &[Function], terms: &[Terminal]) {
         if level >= depth {
             for i in 0..func_node.fnc.arity {
                 let rnd_tref = Terminal::get_rnd_ref(rng); // Always a Terminal Node
@@ -119,7 +128,6 @@ impl TreeSet {
 
         return t;
     }
-
     pub fn create_initial_population(rng: &mut GpRng) -> TreeSet {
         // Following Koza's recipe, he calls "ramped half-and-half",
         // we will evenly produce population segments starting with 2

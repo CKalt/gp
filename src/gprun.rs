@@ -85,7 +85,7 @@ fn terminal_arg1(fc: &FitnessCase) -> GpType {
 fn terminal_arg2(fc: &FitnessCase) -> GpType {
 }
 
-pub static FUNCTION_RPB0: [Function; CONTROL.num_functions_rpb0 as usize] = [
+pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
     Function {
         fid:  0u8,
         name: "+",
@@ -118,7 +118,7 @@ pub static FUNCTION_RPB0: [Function; CONTROL.num_functions_rpb0 as usize] = [
     },
 ];
 
-pub static FUNCTION_FDB0: [Function; CONTROL.num_functions_fdb0 as usize] = [
+pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
     Function {
         fid:  0u8,
         name: "+",
@@ -145,8 +145,8 @@ pub static FUNCTION_FDB0: [Function; CONTROL.num_functions_fdb0 as usize] = [
     },
 ];
 
-// TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - rpb0
-pub static TERMINAL_RPB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
+// TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
+pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_branch as usize] = [
     Terminal {
         tid:  0u8,
         name: "L0",
@@ -179,8 +179,8 @@ pub static TERMINAL_RPB0: [Terminal; CONTROL.num_terminals_rpb0 as usize] = [
     },
 ];
 
-// TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - fdb0
-pub static TERMINAL_FDB0: [Terminal; CONTROL.num_terminals_fdb0 as usize] = [
+// TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
+pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
