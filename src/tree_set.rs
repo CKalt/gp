@@ -293,7 +293,7 @@ impl TreeSet {
                 let mut sum_error: GpRaw = 0.0;
                 let f = &rc.fitness_cases;
                 for fc in f.iter() {
-                    let result = exec_node(fc, &mut tree.root);
+                    let result = exec_node(fc, &mut tree.result_branch.root);
                     let error = fc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
@@ -311,7 +311,6 @@ impl TreeSet {
         }
         rc.hits
     }
-
     //fn use_reproduction(index: usize ) -> bool {
     //    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
     //    let int_index_ratio = Fitness::float_to_int(
