@@ -450,7 +450,7 @@ impl TreeBranch {
     }
 }
 
-pub struct Tree {
+pub struct Tree<'a> {
     pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
                       // based index within TreeSet.tree_vec after sorting for
                       // fitness (least fit are lower valued)
@@ -460,7 +460,7 @@ pub struct Tree {
     pub result_branch: TreeBranch,
     pub func_def_branch: TreeBranch,
 }
-impl Tree {
+impl Tree<'a> {
     pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
         Tree { 
             tfid: None,

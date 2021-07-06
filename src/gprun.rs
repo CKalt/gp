@@ -201,7 +201,7 @@ pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 10;
 
 // Fitness
-pub struct FitnessCase {
+pub struct FitnessCase<'a> {
     l0: GpRaw,
     w0: GpRaw,
     h0: GpRaw,
@@ -209,8 +209,9 @@ pub struct FitnessCase {
     w1: GpRaw,
     h1: GpRaw,
     pub d:  GpRaw,
+    exec_tree: Option<&'a Tree>,
 }
-impl FitnessCase {
+impl FitnessCase<'_> {
     #[cfg(gpopt_exec_criteria="each_fitness_case")]
     pub fn compute_error(&self, result: GpType) -> GpRaw {
         (result- self.d).abs()
