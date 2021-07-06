@@ -294,7 +294,7 @@ impl TreeSet {
                 let mut f = &rc.fitness_cases;
                 for fc in f.iter_mut() {
                     fc.exec_tree = Some(&mut tree);
-                    let result = exec_node(fc, &mut tree.result_branch.root);
+                    let result = exec_node(fc, &tree.result_branch.root);
                     let error = fc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {

@@ -77,12 +77,18 @@ fn terminal_h1(fc: &FitnessCase) -> GpType {
 }
 
 fn terminal_arg0(fc: &FitnessCase) -> GpType {
+    assert_eq!(self.adf0_args.len, 3);
+    fc.adf0_args[0]
 }
 
 fn terminal_arg1(fc: &FitnessCase) -> GpType {
+    assert_eq!(self.adf0_args.len, 3);
+    fc.adf0_args[1]
 }
 
 fn terminal_arg2(fc: &FitnessCase) -> GpType {
+    assert_eq!(self.adf0_args.len, 3);
+    fc.adf0_args[2]
 }
 
 pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
@@ -209,12 +215,22 @@ pub struct FitnessCase<'a> {
     w1: GpRaw,
     h1: GpRaw,
     pub d:  GpRaw,
-    exec_tree: Option<&'a Tree>,
+    adf0_branch: Option<&'a TreeBranch>,
+    adf0_args: Vec<GpType>,
 }
 impl FitnessCase<'_> {
     #[cfg(gpopt_exec_criteria="each_fitness_case")]
     pub fn compute_error(&self, result: GpType) -> GpRaw {
         (result- self.d).abs()
+    }
+    pub fn exec_adf0(&self, arg1: GpType, arg2: GpType, arg3: GpType) -> GpType {
+        assert_eq!(self.adf0_args.len, 0);
+        self.adf0_args.push(arg1);
+        self.adf0_args.push(arg2);
+        self.adf0_args.push(arg3);
+        let result = Tree::exec_node(self, self.adf_branch.root);
+        self.adf0_args.clear();
+        result
     }
 }
 
