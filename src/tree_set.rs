@@ -281,7 +281,7 @@ impl TreeSet {
                 let mut sum_error: GpRaw = 0.0;
                 let f = &rc.fitness_cases;
                 for fc in f.iter() {
-                    let result = exec_node(fc, &mut tree.root);
+                    let result = exec_node(fc, &tree.root);
                     let error = fc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
