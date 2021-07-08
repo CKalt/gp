@@ -11,10 +11,10 @@ use rand::Rng;
 
 use Node::*;
 
-pub struct TreeSet {
+pub struct TreeSet<'a> {
     pub winning_index:  Option<usize>,
     pub avg_raw_f:      GpFloat,
-    pub tree_vec:       Vec<Tree>,
+    pub tree_vec:       Vec<Tree<'a>>,
     pub gen: u16,       // current generation for treeset
 }
 impl TreeSet {
@@ -77,12 +77,12 @@ impl TreeSet {
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         let mut result_branch_root =
             FunctionNode::new_rnd(rng, &FUNCTIONS_RESULT_BRANCH);
-        Self::gen_tree_grow_method_r(rng, &mut root, 2, depth,
+        Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
         let mut func_def_branch_root =
             FunctionNode::new_rnd(rng, &FUNCTIONS_RESULT_BRANCH);
-        Self::gen_tree_grow_method_r(rng, &mut root, 2, depth,
+        Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
         Tree::new(result_branch_root, func_def_branch_root);
@@ -293,8 +293,9 @@ impl TreeSet {
                 let mut sum_error: GpRaw = 0.0;
                 let mut f = &rc.fitness_cases;
                 for fc in f.iter_mut() {
-                    fc.exec_tree = Some(&mut tree);
+                    fc.func_def_branch = Some(&tree.func_def_branch);
                     let result = exec_node(fc, &tree.result_branch.root);
+                    fc.func_def_branch = None;
                     let error = fc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
@@ -351,10 +352,14 @@ impl TreeSet {
 
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
-                (b_type, node) = t1.get_rnd_function_node_ref(rng);
+                let nref_pair = t1.get_rnd_function_node_ref(rng);
+                b_type = nref_pair.0;
+                node = nref_pair.1;
                 node
             } else {
-                (b_type, node) = t1.get_rnd_terminal_node_ref(rng);
+                let nref_pair = t1.get_rnd_terminal_node_ref(rng);
+                b_type = nref_pair.0;
+                node = nref_pair.1;
                 node
             };
 

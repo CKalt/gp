@@ -40,7 +40,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
     }
 }
 
-fn run(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner> {
+fn run<'a>(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner<'a>> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }

@@ -14,12 +14,12 @@ use Node::*;
 type FuncNodeCode = fn (fc: &FitnessCase, fnc: &FunctionNode) -> GpType;
 pub type TermNodeCode = fn (fc: &FitnessCase) -> GpType;
 
-pub struct Winner {
-    pub tree: Tree,
+pub struct Winner<'a> {
+    pub tree: Tree<'a>,
     pub run: i32,
     pub gen: u16,
 }
-impl Winner {
+impl Winner<'_> {
     pub fn print_result(&self) {
         Tree::print_result_header(None, &self.tree.hits);
         self.tree.print_result(None, -1.0);
@@ -403,7 +403,7 @@ impl Fitness {
         Fitness {
             nfr: self.nfr,
             n:   self.n,
-            a:   self.a
+            a:   self.a,
             raw: self.raw,
 
             r: self.r,
@@ -412,13 +412,13 @@ impl Fitness {
     }
 }
 
-enum BranchType {
+pub enum BranchType {
     Result0,
     FunctionDef0,
 }
 use BranchType::*;
 
-struct TreeBranch {
+pub struct TreeBranch {
     pub root: Node,
     pub num_function_nodes: Option<TreeNodeIndex>,
     pub num_terminal_nodes: Option<TreeNodeIndex>,
@@ -450,7 +450,7 @@ impl TreeBranch {
     }
 }
 
-pub struct Tree<'a> {
+pub struct Tree {
     pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
                       // based index within TreeSet.tree_vec after sorting for
                       // fitness (least fit are lower valued)
@@ -460,7 +460,7 @@ pub struct Tree<'a> {
     pub result_branch: TreeBranch,
     pub func_def_branch: TreeBranch,
 }
-impl Tree<'a> {
+impl Tree {
     pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
         Tree { 
             tfid: None,
@@ -475,7 +475,7 @@ impl Tree<'a> {
         Tree { 
             tfid: None,
             tcid: 0,
-            fitness: self.Fitness::clone(),
+            fitness: self.fitness.clone(),
             hits: 0,
             result_branch: self.result_branch.clone(),
             func_def_branch: self.func_def_branch.clone(),
@@ -540,18 +540,18 @@ impl Tree<'a> {
         } else {
             (Result0,
                 self.result_branch.root.find_function_node_ref(
-                        fi - num_fd__branch_fnodes))
+                        fi - num_fd_branch_fnodes))
         }
     }
     pub fn get_rnd_function_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: BranchType) -> &mut Node {
         let fi = self.get_rnd_function_index_bt(rng, b_type);
         match b_type {
-            Result0 => self.result_branch.root.find_function_node_ref(fi)),
-            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi)),
+            Result0 => self.result_branch.root.find_function_node_ref(fi),
+            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi),
         }
     }
-    fn get_rnd_function_index_bt(&self, rng: &mut GpRng, b_type BranchType)
+    fn get_rnd_function_index_bt(&self, rng: &mut GpRng, b_type: BranchType)
             -> TreeNodeIndex {
         let num_fnodes = self
             .get_num_function_nodes_bt(b_type)
@@ -578,7 +578,7 @@ impl Tree<'a> {
         } else {
             (Result0,
                 self.result_branch.root.find_terminal_node_ref(
-                        ti - num_fd__branch_tnodes))
+                        ti - num_fd_branch_tnodes))
         }
     }
     #[allow(dead_code)]

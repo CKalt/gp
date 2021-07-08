@@ -3,6 +3,7 @@ use crate::tree::exec_node;
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
+use crate::tree::TreeBranch;
 use crate::control::CONTROL;
 
 use crate::tree::GpFloat;
@@ -77,17 +78,17 @@ fn terminal_h1(fc: &FitnessCase) -> GpType {
 }
 
 fn terminal_arg0(fc: &FitnessCase) -> GpType {
-    assert_eq!(self.adf0_args.len, 3);
+    assert_eq!(fc.adf0_args.len(), 3);
     fc.adf0_args[0]
 }
 
 fn terminal_arg1(fc: &FitnessCase) -> GpType {
-    assert_eq!(self.adf0_args.len, 3);
+    assert_eq!(fc.adf0_args.len(), 3);
     fc.adf0_args[1]
 }
 
 fn terminal_arg2(fc: &FitnessCase) -> GpType {
-    assert_eq!(self.adf0_args.len, 3);
+    assert_eq!(fc.adf0_args.len(), 3);
     fc.adf0_args[2]
 }
 
@@ -215,7 +216,7 @@ pub struct FitnessCase<'a> {
     w1: GpRaw,
     h1: GpRaw,
     pub d:  GpRaw,
-    adf0_branch: Option<&'a TreeBranch>,
+    func_def_branch: Option<&'a TreeBranch>, // used for calling adf0
     adf0_args: Vec<GpType>,
 }
 impl FitnessCase<'_> {
@@ -224,11 +225,13 @@ impl FitnessCase<'_> {
         (result- self.d).abs()
     }
     pub fn exec_adf0(&self, arg1: GpType, arg2: GpType, arg3: GpType) -> GpType {
+        let func_def_branch = self.func_def_branch.expect("branch not assigned for exec_adf0");
+
         assert_eq!(self.adf0_args.len, 0);
         self.adf0_args.push(arg1);
         self.adf0_args.push(arg2);
         self.adf0_args.push(arg3);
-        let result = Tree::exec_node(self, self.adf_branch.root);
+        let result = Tree::exec_node(self, func_def_branch);
         self.adf0_args.clear();
         result
     }
@@ -237,12 +240,12 @@ impl FitnessCase<'_> {
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
 /// where it can then access it's fitness case data and currency values.
-pub struct RunContext {
-    pub fitness_cases: [FitnessCase; RUN_CONTROL_NUM_FITNESS_CASES],
+pub struct RunContext<'a> {
+    pub fitness_cases: [FitnessCase<'a>; RUN_CONTROL_NUM_FITNESS_CASES],
     pub hits: GpHits,
     pub error: GpRaw,
 }
-impl RunContext {
+impl RunContext<'_> {
     pub fn new() -> RunContext {
         let rc = RunContext {
             fitness_cases:
