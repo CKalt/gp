@@ -40,7 +40,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
     }
 }
 
-fn run<'a>(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner<'a>> {
+fn run(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
@@ -96,11 +96,16 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
         let t = trees.get_rnd_tree(rng);
         t.print();
 
-        let (fi, fnode) = t.get_rnd_function_node_ref_i(rng);
-        println!("\n--------\nRnd fi={} Subtree -->\n", fi);
+        let (fi, bt, fnode) = t.get_rnd_function_node_ref_i(rng);
+
+        println!("\n--------\nRnd fi={} Subtree of {} Branch Type -->\n", fi,
+            match bt {
+                Result0 => "Result",
+                FunctionDef0 => "Function Def",
+            });
         fnode.print();
 
-        let tnode = t.get_rnd_terminal_node_ref(rng);
+        let (_, tnode) = t.get_rnd_terminal_node_ref(rng);
         tnode.print();
         println!("\n--------");
     }

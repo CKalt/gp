@@ -14,12 +14,12 @@ use Node::*;
 type FuncNodeCode = fn (fc: &FitnessCase, fnc: &FunctionNode) -> GpType;
 pub type TermNodeCode = fn (fc: &FitnessCase) -> GpType;
 
-pub struct Winner<'a> {
-    pub tree: Tree<'a>,
+pub struct Winner {
+    pub tree: Tree,
     pub run: i32,
     pub gen: u16,
 }
-impl Winner<'_> {
+impl Winner {
     pub fn print_result(&self) {
         Tree::print_result_header(None, &self.tree.hits);
         self.tree.print_result(None, -1.0);
@@ -32,15 +32,15 @@ pub enum Node {
 }
 impl Node {
     pub fn new_rnd(rng: &mut GpRng,
-            funcs: &[Function], terms: &[Terminal]) -> Node {
+            funcs: &'static [Function], terms: &'static [Terminal]) -> Node {
         let num_ft = funcs.len() + terms.len();
         let r = rng.gen_range(0..num_ft as i32) as u8;
-        if r < terms.len() {
-            TNode(terms[r as usize])
+        if r < terms.len() as u8 {
+            TNode(&terms[r as usize])
         }
         else {
-            let rand_fid = r - terms.len();
-            FNode(FunctionNode::new(rand_fid))
+            let rand_fid = r - terms.len() as u8;
+            FNode(FunctionNode::new(rand_fid, funcs))
         }
     }
     fn clone(&self) -> Node {
@@ -163,15 +163,15 @@ impl Node {
             panic!("expected function node");
         }
     }
-    /// always performed against a Tree.root node
+    /// always performed against a TreeBranch::root node
     /// which is why a tree is used instead of a Node here.
     /// It sets up the recursive call to find_terminal_node_ref_r.
-    fn find_terminal_node_ref(tree: &mut Tree, ti: TreeNodeIndex) -> &mut Node {
-        match tree.root {
-            TNode(_) => &mut tree.root,  // tree is just a node
+    fn find_terminal_node_ref(&mut self, ti: TreeNodeIndex) -> &mut Node {
+        match self {
+            TNode(_) => self,  // tree is just a node
             FNode(_) => {
                 let mut cur_ti: TreeNodeIndex = 0;
-                tree.root.find_terminal_node_ref_r(ti, &mut cur_ti).unwrap()
+                self.find_terminal_node_ref_r(ti, &mut cur_ti).unwrap()
             }
         }
     }
@@ -202,7 +202,7 @@ impl Node {
                 }
         }
     }
-    fn depth_gt(&self, d: TreeDepth, so_far: TreeDepth) -> bool {
+    fn node_depth_gt(&self, d: TreeDepth, so_far: TreeDepth) -> bool {
         if so_far > d {
             return true;
         }
@@ -211,7 +211,7 @@ impl Node {
             TNode(_) => false,
             FNode(func_node) => {
                 for node in func_node.branch.iter() {
-                    if node.depth_gt(d, so_far + 1) {
+                    if node.node_depth_gt(d, so_far + 1) {
                         return true;
                     }
                 }
@@ -236,9 +236,9 @@ pub struct Terminal {
 }
 impl Terminal {
     /// (Formerly called getRndTNode() in gp.c)
-    pub fn get_rnd_ref(rng: &mut GpRng, terms: &[Terminal]) -> & 'static Terminal {
+    pub fn get_rnd_ref(rng: &mut GpRng, terms: &'static [Terminal]) -> &'static Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
-        terms[t_id as usize]
+        &terms[t_id as usize]
     }
 }
 
@@ -248,9 +248,9 @@ pub struct FunctionNode {
     pub branch: Vec<Node>, 
 }
 impl FunctionNode {
-    fn new(fid: u8, funcs: &[Function]) -> FunctionNode {
+    fn new(fid: u8, funcs: &'static [Function]) -> FunctionNode {
         // fid maps to index into function array
-        let fref = funcs[fid as usize];
+        let fref = &funcs[fid as usize];
         FunctionNode {
             fid:    fid,
             fnc:    fref,
@@ -259,7 +259,11 @@ impl FunctionNode {
     }
 
     fn clone(&self) -> FunctionNode {
-        let mut new_func_node = FunctionNode::new(self.fid);
+        let mut new_func_node = FunctionNode {
+                fid: self.fid,
+                fnc: self.fnc,
+                branch: Vec::new(),
+            };
         for i in 0..self.fnc.arity {
             new_func_node.set_arg(i, self.branch[i as usize].clone());
         }
@@ -269,9 +273,9 @@ impl FunctionNode {
 
     /// create a new FunctionNode choosing which one at random.
     /// (formerly called newRndFNode() in gp.c)
-    pub fn new_rnd(rng: &mut GpRng, funcs: &[Function]) -> FunctionNode {
+    pub fn new_rnd(rng: &mut GpRng, funcs: &'static [Function]) -> FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
-        FunctionNode::new(rand_fid)
+        FunctionNode::new(rand_fid, funcs)
     }
 
     /// index - 0 based arg index, node ownership is moved here
@@ -488,13 +492,24 @@ impl Tree {
         }
     }
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_fnodes1 = self.func_def_branch.num_function_nodes.unwrap();
-        let num_fnodes2 = self.result_branch.num_function_nodes.unwrap();
-        Some(num_fnodes1 + num_fnodes2)
+        if self.func_def_branch.num_function_nodes == None &&
+            self.result_branch.num_function_nodes == None {
+            None
+        } else {
+            let num_fnodes1 = self.func_def_branch.num_function_nodes.unwrap();
+            let num_fnodes2 = self.result_branch.num_function_nodes.unwrap();
+            Some(num_fnodes1 + num_fnodes2)
+        }
+    }
+    pub fn get_num_terminal_nodes_bt(&self, b_type: BranchType) -> Option<TreeNodeIndex> {
+        match b_type {
+            Result0     =>  self.result_branch.num_terminal_nodes,
+            FunctionDef =>  self.func_def_branch.num_terminal_nodes,
+        }
     }
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_tnodes1 = self.func_def_branch.num_terminal_nodes;
-        let num_tnodes2 = self.result_branch.num_terminal_nodes;
+        let num_tnodes1 = self.func_def_branch.num_terminal_nodes.unwrap();
+        let num_tnodes2 = self.result_branch.num_terminal_nodes.unwrap();
         Some(num_tnodes1 + num_tnodes2)
     }
     pub fn clear_node_counts(&mut self) {
@@ -518,16 +533,28 @@ impl Tree {
         println!("-------------tree ({:?}/{})----------------",
             self.tfid, self.tcid);
 
-        println!("nFunctions = {:?}\nnTerminals= {:?}", self.num_function_nodes,
-            self.num_terminal_nodes);
-        self.root.print();
+        println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
+            self.get_num_terminal_nodes());
+        println!("Function Def Branch0:");
+        self.func_def_branch.root.print();
+        println!("\nResult Branch0:");
+        self.result_branch.root.print();
         println!("");
     }
     pub fn get_rnd_function_node_ref_i(&mut self,
             rng: &mut GpRng)
-        -> (TreeNodeIndex, &mut Node) {
+        -> (TreeNodeIndex, BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
-        (fi, Node::find_function_node_ref(self, fi))
+        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
+
+        if fi < num_fd_branch_fnodes {
+            (fi,FunctionDef0, 
+                self.func_def_branch.root.find_function_node_ref(fi))
+        } else {
+            let adj_fi = fi - num_fd_branch_fnodes;
+            (adj_fi, Result0,
+                self.result_branch.root.find_function_node_ref(adj_fi))
+        }
     }
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
@@ -581,12 +608,37 @@ impl Tree {
                         ti - num_fd_branch_tnodes))
         }
     }
+    pub fn get_rnd_terminal_node_ref_bt(&mut self,
+            rng: &mut GpRng, b_type: BranchType) -> &mut Node {
+        let ti = self.get_rnd_terminal_index_bt(rng, b_type);
+        match b_type {
+            Result0 => self.result_branch.root.find_terminal_node_ref(ti),
+            FunctionDef0 => self.func_def_branch.root.find_terminal_node_ref(ti),
+        }
+    }
     #[allow(dead_code)]
     pub fn get_rnd_terminal_node_ref_i(&mut self,
             rng: &mut GpRng)
-        -> (TreeNodeIndex, &mut Node) {
+        -> (TreeNodeIndex,  BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        (ti, Node::find_terminal_node_ref(self, ti))
+        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
+
+        if ti < num_fd_branch_tnodes {
+            (ti, FunctionDef0, 
+                self.func_def_branch.root.find_terminal_node_ref(ti))
+        } else {
+            let adj_ti = ti - num_fd_branch_tnodes;
+            (adj_ti, Result0,
+                self.result_branch.root.find_terminal_node_ref(adj_ti))
+        }
+    }
+    fn get_rnd_terminal_index_bt(&self, rng: &mut GpRng, b_type: BranchType)
+            -> TreeNodeIndex {
+        let num_tnodes = self
+            .get_num_terminal_nodes_bt(b_type)
+            .expect("Tree does not have count of terminal nodes.");
+
+        rng.gen_range(0..num_tnodes)
     }
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
@@ -596,11 +648,12 @@ impl Tree {
 
         rng.gen_range(0..num_tnodes)
     }
-    fn depth_gt(&self, d: TreeDepth) -> bool {
-        self.root.depth_gt(d, 1)
+    fn tree_depth_gt(&self, d: TreeDepth) -> bool {
+        self.result_branch.root.node_depth_gt(d, 1) ||
+            self.func_def_branch.root.node_depth_gt(d, 1)
     }
     pub fn qualifies(&self) -> bool {
-        !self.depth_gt(CONTROL.Dc)
+        !self.tree_depth_gt(CONTROL.Dc)
     }
     pub fn print_exec_one(&mut self) {
         self.print();
@@ -618,7 +671,10 @@ impl Tree {
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0.0;
             for (i, fc) in rc.fitness_cases.iter().enumerate() {
-                let result = exec_node(fc, &self.root);
+                fc.func_def_branch = Some(&self.func_def_branch);
+                let result = Tree::exec_node(fc, &self.result_branch.root);
+                fc.func_def_branch = None;
+
                 let error = fc.compute_error(result);
                 let hit = error < 0.01;
                 sum_error += error;
@@ -668,16 +724,15 @@ impl Tree {
                 "---", "---", "-----", "---", "---", "------", "------", "------");
         }
     }
-}
+    pub fn exec_node(fc: &FitnessCase, node: &Node) -> GpType {
+        match node {
+            TNode(t) => {
+                (t.code)(fc)
+            }
 
-pub fn exec_node(fc: &FitnessCase, node: &Node) -> GpType {
-    match node {
-        TNode(t) => {
-            (t.code)(fc)
-        }
-
-        FNode(f) => {
-            (f.fnc.code)(fc, &f)
+            FNode(f) => {
+                (f.fnc.code)(fc, &f)
+            }
         }
     }
 }

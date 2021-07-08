@@ -13,8 +13,10 @@ pub struct Control {
     pub Pc:  GpFloat,               // Probability of cross over
     pub Pr:  GpFloat,               // Probability of reproduction
     pub Pip:  GpFloat,              // Probability of cross over internal point
-    pub num_functions:  u8,
-    pub num_terminals:  u8,
+    pub num_functions_result_branch: u8,          // num functions result producing branch 0
+    pub num_terminals_result_branch: u8,          // num terminals result producing branch 0
+    pub num_functions_func_def_branch: u8,          // num functions function defining branch 0
+    pub num_terminals_func_def_branch: u8,          // num terminals function defining branch 0
     pub GRc:  GpFloat,              // Greedy C Value (Function of M)
                             // n   M     C   GRc 
                             // 0  <1000  -    -

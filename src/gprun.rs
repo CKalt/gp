@@ -1,5 +1,4 @@
 use crate::tree::Tree;
-use crate::tree::exec_node;
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
@@ -22,33 +21,33 @@ use crate::Fitness;
 pub type GpType = GpRaw;
 
 fn function_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
+    let val1 = Tree::exec_node(fc, &func.branch[0]);
+    let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 + val2
 }
 
 fn function_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
+    let val1 = Tree::exec_node(fc, &func.branch[0]);
+    let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 - val2
 }
 
 fn function_mult(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
+    let val1 = Tree::exec_node(fc, &func.branch[0]);
+    let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 * val2
 }
 
 fn function_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let val1 = exec_node(fc, &func.branch[0]);
-    let val2 = exec_node(fc, &func.branch[1]);
+    let val1 = Tree::exec_node(fc, &func.branch[0]);
+    let val2 = Tree::exec_node(fc, &func.branch[1]);
     if val2 == 0.0 {1.0} else {val1/val2}
 }
 
 fn function_adf0(fc: &FitnessCase, func: &FunctionNode) -> GpType {
-    let arg1 = exec_node(fc, &func.branch[0]);
-    let arg2 = exec_node(fc, &func.branch[1]);
-    let arg3 = exec_node(fc, &func.branch[2]);
+    let arg1 = Tree::exec_node(fc, &func.branch[0]);
+    let arg2 = Tree::exec_node(fc, &func.branch[1]);
+    let arg3 = Tree::exec_node(fc, &func.branch[2]);
 
     fc.exec_adf0(arg1, arg2, arg3)
 }
@@ -78,18 +77,24 @@ fn terminal_h1(fc: &FitnessCase) -> GpType {
 }
 
 fn terminal_arg0(fc: &FitnessCase) -> GpType {
-    assert_eq!(fc.adf0_args.len(), 3);
-    fc.adf0_args[0]
+    match fc.adf0_args {
+        None => panic!("terminal arg access with empty args list"),
+        Some(ref args) => args[0],
+    }
 }
 
 fn terminal_arg1(fc: &FitnessCase) -> GpType {
-    assert_eq!(fc.adf0_args.len(), 3);
-    fc.adf0_args[1]
+    match fc.adf0_args {
+        None => panic!("terminal arg access with empty args list"),
+        Some(ref args) => args[1],
+    }
 }
 
 fn terminal_arg2(fc: &FitnessCase) -> GpType {
-    assert_eq!(fc.adf0_args.len(), 3);
-    fc.adf0_args[2]
+    match fc.adf0_args {
+        None => panic!("terminal arg access with empty args list"),
+        Some(ref args) => args[2],
+    }
 }
 
 pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
@@ -216,8 +221,8 @@ pub struct FitnessCase<'a> {
     w1: GpRaw,
     h1: GpRaw,
     pub d:  GpRaw,
-    func_def_branch: Option<&'a TreeBranch>, // used for calling adf0
-    adf0_args: Vec<GpType>,
+    pub func_def_branch: Option<&'a TreeBranch>, // used for calling adf0
+    adf0_args: Option<Vec<GpType>>,
 }
 impl FitnessCase<'_> {
     #[cfg(gpopt_exec_criteria="each_fitness_case")]
@@ -227,12 +232,13 @@ impl FitnessCase<'_> {
     pub fn exec_adf0(&self, arg1: GpType, arg2: GpType, arg3: GpType) -> GpType {
         let func_def_branch = self.func_def_branch.expect("branch not assigned for exec_adf0");
 
-        assert_eq!(self.adf0_args.len, 0);
-        self.adf0_args.push(arg1);
-        self.adf0_args.push(arg2);
-        self.adf0_args.push(arg3);
-        let result = Tree::exec_node(self, func_def_branch);
-        self.adf0_args.clear();
+        match self.adf0_args {
+            None    => self.adf0_args = Some(vec![ arg1, arg2, arg3 ]),
+            Some(_) => panic!("exec_adf0 with non empty as args list"),
+        }
+
+        let result = Tree::exec_node(self, &func_def_branch.root);
+        self.adf0_args = None;
         result
     }
 }
@@ -246,7 +252,7 @@ pub struct RunContext<'a> {
     pub error: GpRaw,
 }
 impl RunContext<'_> {
-    pub fn new() -> RunContext {
+    pub fn new() -> RunContext<'static> {
         let rc = RunContext {
             fitness_cases:
                 [
@@ -258,6 +264,8 @@ impl RunContext<'_> {
                         w1:   5.0,
                         h1:   3.0,
                         d:   54.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0:   7.0,
@@ -267,6 +275,8 @@ impl RunContext<'_> {
                         w1:   3.0,
                         h1:   1.0,
                         d:  600.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0: 10.0,
@@ -276,6 +286,8 @@ impl RunContext<'_> {
                         w1: 1.0,
                         h1: 6.0,
                         d:  312.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0: 3.0,
@@ -284,6 +296,8 @@ impl RunContext<'_> {
                         l1: 1.0,
                         w1: 6.0,
                         h1: 4.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                         d:  111.0,
                     },
                     FitnessCase{
@@ -294,6 +308,8 @@ impl RunContext<'_> {
                         w1: 6.0,
                         h1: 1.0,
                         d: -18.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0:   3.0,
@@ -303,6 +319,8 @@ impl RunContext<'_> {
                         w1:   5.0,
                         h1:   4.0,
                         d: -171.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0:   5.0,
@@ -312,6 +330,8 @@ impl RunContext<'_> {
                         w1:   7.0,
                         h1:   6.0,
                         d:  363.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0:   1.0,
@@ -321,6 +341,8 @@ impl RunContext<'_> {
                         w1:   9.0,
                         h1:   2.0,
                         d:  -36.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0: 2.0,
@@ -330,6 +352,8 @@ impl RunContext<'_> {
                         w1: 6.0,
                         h1: 10.0,
                         d: -24.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                     FitnessCase{
                         l0:  8.0,
@@ -339,6 +363,8 @@ impl RunContext<'_> {
                         w1:  5.0,
                         h1:  1.0,
                         d:  45.0,
+                        func_def_branch: None,
+                        adf0_args: None,
                     },
                 ],
             hits: 0,
