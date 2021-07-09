@@ -100,8 +100,8 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 
         println!("\n--------\nRnd fi={} Subtree of {} Branch Type -->\n", fi,
             match bt {
-                Result0 => "Result",
-                FunctionDef0 => "Function Def",
+                BranchType::Result0 => "Result",
+                BranchType::FunctionDef0 => "Function Def",
             });
         fnode.print();
 

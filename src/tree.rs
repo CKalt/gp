@@ -487,8 +487,8 @@ impl Tree {
     }
     pub fn get_num_function_nodes_bt(&self, b_type: BranchType) -> Option<TreeNodeIndex> {
         match b_type {
-            Result0     =>  self.result_branch.num_function_nodes,
-            FunctionDef =>  self.func_def_branch.num_function_nodes,
+            Result0      =>  self.result_branch.num_function_nodes,
+            FunctionDef0 =>  self.func_def_branch.num_function_nodes,
         }
     }
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
@@ -503,8 +503,8 @@ impl Tree {
     }
     pub fn get_num_terminal_nodes_bt(&self, b_type: BranchType) -> Option<TreeNodeIndex> {
         match b_type {
-            Result0     =>  self.result_branch.num_terminal_nodes,
-            FunctionDef =>  self.func_def_branch.num_terminal_nodes,
+            Result0      =>  self.result_branch.num_terminal_nodes,
+            FunctionDef0 =>  self.func_def_branch.num_terminal_nodes,
         }
     }
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {

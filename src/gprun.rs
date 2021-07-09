@@ -44,7 +44,7 @@ fn function_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
     if val2 == 0.0 {1.0} else {val1/val2}
 }
 
-fn function_adf0(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+fn function_adf0(fc: &mut FitnessCase, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(fc, &func.branch[0]);
     let arg2 = Tree::exec_node(fc, &func.branch[1]);
     let arg3 = Tree::exec_node(fc, &func.branch[2]);
@@ -229,7 +229,7 @@ impl FitnessCase<'_> {
     pub fn compute_error(&self, result: GpType) -> GpRaw {
         (result- self.d).abs()
     }
-    pub fn exec_adf0(&self, arg1: GpType, arg2: GpType, arg3: GpType) -> GpType {
+    pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType, arg3: GpType) -> GpType {
         let func_def_branch = self.func_def_branch.expect("branch not assigned for exec_adf0");
 
         match self.adf0_args {

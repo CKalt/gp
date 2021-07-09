@@ -349,7 +349,7 @@ impl TreeSet {
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
-        let node:   &Node;
+        let node:  &mut Node;
         let b_type: BranchType;
 
         let swap_target1 =
