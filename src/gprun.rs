@@ -20,25 +20,25 @@ use crate::Fitness;
 #[cfg(gpopt_exec_criteria="each_fitness_case")]
 pub type GpType = GpRaw;
 
-fn function_add(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+fn function_add(fc: &mut FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(fc, &func.branch[0]);
     let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 + val2
 }
 
-fn function_sub(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+fn function_sub(fc: &mut FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(fc, &func.branch[0]);
     let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 - val2
 }
 
-fn function_mult(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+fn function_mult(fc: &mut FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(fc, &func.branch[0]);
     let val2 = Tree::exec_node(fc, &func.branch[1]);
     val1 * val2
 }
 
-fn function_prot_div(fc: &FitnessCase, func: &FunctionNode) -> GpType {
+fn function_prot_div(fc: &mut FitnessCase, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(fc, &func.branch[0]);
     let val2 = Tree::exec_node(fc, &func.branch[1]);
     if val2 == 0.0 {1.0} else {val1/val2}

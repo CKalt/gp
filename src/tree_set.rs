@@ -367,9 +367,9 @@ impl TreeSet {
 
         let swap_target2 =
             if t2.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
-                t2.get_rnd_function_node_ref_bt(rng, b_type)
+                t2.get_rnd_function_node_ref_bt(rng, &b_type)
             } else {
-                t2.get_rnd_terminal_node_ref_bt(rng, b_type)
+                t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
             };
 
         mem::swap(swap_target1, swap_target2);
