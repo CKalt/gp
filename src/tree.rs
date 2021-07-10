@@ -11,8 +11,8 @@ use rand::Rng;
 
 use Node::*;
 
-type FuncNodeCode = fn (fc: &mut FitnessCase, fnc: &FunctionNode) -> GpType;
-pub type TermNodeCode = fn (fc: &FitnessCase) -> GpType;
+type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
+pub type TermNodeCode = fn (rc: &RunContext) -> GpType;
 
 pub struct Winner {
     pub tree: Tree,
@@ -21,7 +21,7 @@ pub struct Winner {
 }
 impl Winner {
     pub fn print_result(&self) {
-        Tree::print_result_header(None, &self.tree.hits);
+        Tree::print_result_header(None, &self.tree.fitness.hits);
         self.tree.print_result(None, -1.0);
     }
 }
@@ -333,6 +333,7 @@ pub struct Fitness {
     pub raw: GpFitness,   // note that if run Fitness uses integer type
                           // and then this just contains a converted copy of r
 
+    pub hits: GpHits,
     pub r: GpRaw,
     pub s: GpStandardized,
 }
@@ -348,6 +349,7 @@ impl Fitness {
 
             r: 0,
             s: 0,
+            hits: 0,
         }
     }
     #[inline(always)]
@@ -377,7 +379,7 @@ impl Fitness {
 
 #[cfg(gpopt_fitness_type="float")]
 impl Fitness {
-    fn new() -> Fitness {
+    pub fn new() -> Fitness {
         Fitness {
             nfr: 0.0,
             n:   0.0,
@@ -386,6 +388,7 @@ impl Fitness {
 
             r: 0.0,
             s: 0.0,
+            hits: 0,
         }
     }
     #[inline(always)]
@@ -400,9 +403,6 @@ impl Fitness {
     pub fn a(&self) -> GpFloat {
         self.a
     }
-}
-
-impl Fitness {
     fn clone(&self) -> Fitness {
         Fitness {
             nfr: self.nfr,
@@ -412,6 +412,7 @@ impl Fitness {
 
             r: self.r,
             s: self.s,
+            hits: self.hits,
         }
     }
 }
@@ -460,7 +461,6 @@ pub struct Tree {
                       // fitness (least fit are lower valued)
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
-    pub hits: GpHits,
     pub result_branch: TreeBranch,
     pub func_def_branch: TreeBranch,
 }
@@ -472,7 +472,6 @@ impl Tree {
             fitness: Fitness::new(),
             result_branch: TreeBranch::new(result_branch_root),
             func_def_branch: TreeBranch::new(func_def_branch_root),
-            hits: 0,
         }
     }
     pub fn clone(&self) -> Tree {
@@ -480,7 +479,6 @@ impl Tree {
             tfid: None,
             tcid: 0,
             fitness: self.fitness.clone(),
-            hits: 0,
             result_branch: self.result_branch.clone(),
             func_def_branch: self.func_def_branch.clone(),
         }
@@ -670,12 +668,12 @@ impl Tree {
         {
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0.0;
-            for (i, fc) in rc.fitness_cases.iter_mut().enumerate() {
-                fc.func_def_branch = Some(&self.func_def_branch);
-                let result = Tree::exec_node(fc, &self.result_branch.root);
-                fc.func_def_branch = None;
 
-                let error = fc.compute_error(result);
+            rc.func_def_branch = Some(&self.func_def_branch);
+            for i in 0..rc.fitness_cases.len() {
+                let result = Tree::exec_node(&mut rc, &self.result_branch.root);
+
+                let error = rc.compute_error(result);
                 let hit = error < 0.01;
                 sum_error += error;
                 if hit {
@@ -684,17 +682,21 @@ impl Tree {
 
                 println!("i={},d={},result={},error={},hit?={},sum_hits={}",
                     num.format("2d", i as f64),
-                    num.format("10.5f", fc.d),
+                    num.format("10.5f", rc.get_cur_fc().d),
                     num.format("10.5f", result),
                     num.format("10.5f", error),
                     num.format("1d", hit as u8),
                     num.format("2d", sum_hits as f64));
             }
+            rc.func_def_branch = None;
+
             rc.hits = sum_hits;
             rc.error = sum_error;
         }
 
-        if rc.compute_fitness(self) {
+        let (f, is_winner) = rc.compute_fitness();
+        self.fitness = f;
+        if is_winner {
             println!("Have Winner");
         }
         rc.print_run_illustration("After Run");
@@ -704,10 +706,10 @@ impl Tree {
         let tfid = if let Some(num) = self.tfid { num } else { 0 };
         if let Some(gen) = opt_gen {
             println!("{:6} {:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                     gen, tfid, self.tcid, self.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
+                     gen, tfid, self.tcid, self.fitness.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
         } else {
             println!("{:4} {:4} {:6} {:6} {:6} {:6.6} {:6.6} {:6.6} {:6.2}", 
-                    tfid, self.tcid, self.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
+                    tfid, self.tcid, self.fitness.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
         }
     }
     pub fn print_result_header(opt_gen: Option<u16>, hits: &u16) {
@@ -724,14 +726,14 @@ impl Tree {
                 "---", "---", "-----", "---", "---", "------", "------", "------");
         }
     }
-    pub fn exec_node(fc: &mut FitnessCase, node: &Node) -> GpType {
+    pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {
         match node {
             TNode(t) => {
-                (t.code)(fc)
+                (t.code)(rc)
             }
 
             FNode(f) => {
-                (f.fnc.code)(fc, &f)
+                (f.fnc.code)(rc, &f)
             }
         }
     }

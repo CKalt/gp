@@ -281,7 +281,8 @@ impl TreeSet {
         }
         self
     }
-    pub fn exec_all(&mut self, rc: &mut RunContext) -> u16 {
+    pub fn exec_all(&mut self) -> u16 {
+        let mut rc = RunContext::new();
         for (i, tree) in self.tree_vec.iter_mut().enumerate() {
             rc.prepare_run();
 
@@ -292,23 +293,25 @@ impl TreeSet {
                 // init accumulators
                 let mut sum_hits: GpHits = 0;
                 let mut sum_error: GpRaw = 0.0;
-                let mut f = &rc.fitness_cases;
-                for fc in f.iter_mut() {
-                    fc.func_def_branch = Some(&tree.func_def_branch);
-                    let result = Tree::exec_node(fc, &tree.result_branch.root);
-                    fc.func_def_branch = None;
+                rc.func_def_branch = Some(&tree.func_def_branch);
+                for i in 0..rc.fitness_cases.len() {
+                    rc.cur_fc = i;
+                    let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
 
-                    let error = fc.compute_error(result);
+                    let error = rc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
                         sum_hits += 1;
                     }
                 }
+                rc.func_def_branch = None;
                 rc.hits = sum_hits;
                 rc.error = sum_error;
             }
 
-            if rc.compute_fitness(tree) {
+            let (f, is_winner) = rc.compute_fitness();
+            tree.fitness = f;
+            if is_winner {
                 self.winning_index = Some(i);
                 break;
             }

@@ -40,7 +40,7 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
     }
 }
 
-fn run(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner> {
+fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
@@ -51,7 +51,7 @@ fn run(rc: &mut RunContext, rng: &mut GpRng, run_number: i32) -> Option<Winner> 
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-        let hits = trees.exec_all(rc);
+        let hits = trees.exec_all();
         if trees.winning_index != None {
             break;
         }
@@ -116,12 +116,11 @@ fn main() {
 
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
-    let mut rc = RunContext::new();
 
     let opt_winner = loop { // go until we have a winner
         run_number += 1;
         println!("Run #{}", run_number);
-        if let Some(winner) = run(&mut rc, &mut rng, run_number) {
+        if let Some(winner) = run(&mut rng, run_number) {
             break Some(winner);
         }
         else if run_number == CONTROL.R && CONTROL.R != 0 {
@@ -130,6 +129,7 @@ fn main() {
     };
         
     if let Some(mut winner) = opt_winner {
+        let rc = RunContext::new();
         println!("run={}, gen={}", winner.run, winner.gen);
         winner.print_result();
         rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
