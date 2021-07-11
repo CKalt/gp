@@ -389,13 +389,20 @@ impl RunContext<'_> {
             self.func_def_branch.expect("branch not assigned for exec_adf0");
 
         match self.adf0_args {
-            None    => self.adf0_args = Some(vec![ arg1, arg2, arg3 ]),
-            Some(_) => panic!("exec_adf0 with non empty as args list"),
+            None    => {
+                self.adf0_args = Some(vec![ arg1, arg2, arg3 ]);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.adf0_args = None;
+                result
+            }
+            Some(ref args) => {
+                let (a,b,c) = (args[0], args[1], args[2]);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.adf0_args = Some(vec![ a, b, c ]);
+                result
+            }
         }
 
-        let result = Tree::exec_node(self, &func_def_branch.root);
-        self.adf0_args = None;
-        result
     }
     #[cfg(gpopt_exec_criteria="each_fitness_case")]
     pub fn compute_error(&self, result: GpType) -> GpRaw {
