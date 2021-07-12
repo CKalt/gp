@@ -6,7 +6,7 @@
 [build]
 rustflags = """
     --cfg gpopt_select_method="fpb"
-    --cfg gpopt_rng="seedable"
+    --cfg gpopt_rng="thread"
     --cfg gpopt_trace="off"
     --cfg gpopt_fitness_type="float"
     --cfg gpopt_exec_criteria="each_fitness_case"
