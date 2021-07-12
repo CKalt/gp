@@ -69,7 +69,8 @@ impl GpRngFactory {
 
         #[cfg(gpopt_fitness_type="float")]
         let seed: [u8; 32] = [73; 32];      // Ant Winner during Run# 3 Gen# 48
-                                            // two-boxes-adf winner during run=23, gen=13
+                                            // two-boxes-adf winner during run=8, gen=23
+                                            //   w/Computational effort (e) = 1524000
 
         SeedableRng::from_seed(seed)
     }
