@@ -41,6 +41,7 @@ impl FileStreamRng {
         }
     }
     pub fn gen_range(&mut self, r: Range<i32>) -> i32 {
+        assert_ne!(r.start, r.end);
         let result = rnd(r.end as i16 - 1, &mut self.fbuf_rdr) as i32;
         if (result < r.start) || (result >= r.end) {
             panic!("value ({}) from input stream out of range [{}..{}]",

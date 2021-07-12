@@ -231,9 +231,8 @@ impl TreeSet {
         let mut sum_a: GpFloat = 0.0;
         let mut sum_raw: GpFloat = 0.0;
 
-        for (i,t) in self.tree_vec.iter().enumerate() {
+        for t in self.tree_vec.iter() {
             sum_a += t.fitness.a;
-println!("tpd001: i={}, a={}, sum_a={}", i, t.fitness.a, sum_a);
             sum_raw += t.fitness.raw;
         }
 
@@ -250,25 +249,12 @@ println!("tpd001: i={}, a={}, sum_a={}", i, t.fitness.a, sum_a);
             t.fitness.n = t.fitness.a() / sum_a;
         }
 
-if true {
-    panic!("pause");
-}
-
-
         self
     }
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
         #[cfg(gpopt_fitness_type="int")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
-
-
-
-for (i,t) in self.tree_vec.iter().enumerate() {
-    println!("tpc001: i={},n={}", i, t.fitness.n);
-}
-
-
 
         #[cfg(gpopt_fitness_type="float")]
         self.tree_vec
@@ -299,10 +285,6 @@ for (i,t) in self.tree_vec.iter().enumerate() {
     pub fn exec_all(&mut self) -> u16 {
         let mut rc = RunContext::new();
         for (t_i, tree) in self.tree_vec.iter_mut().enumerate() {
-if t_i == 1624 {
-    println!("tpe001: oh no!");
-    tree.print();
-}
             rc.prepare_run();
 
             #[cfg(gpopt_exec_criteria="clock")]
@@ -368,9 +350,11 @@ if t_i == 1624 {
 
         num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
+
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
+
         let node:  &mut Node;
         let b_type: BranchType;
 
@@ -388,7 +372,7 @@ if t_i == 1624 {
             };
 
         let swap_target2 =
-            if t2.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
+            if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_internal_point(rng) {
                 t2.get_rnd_function_node_ref_bt(rng, &b_type)
             } else {
                 t2.get_rnd_terminal_node_ref_bt(rng, &b_type)

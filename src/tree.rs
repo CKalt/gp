@@ -274,6 +274,7 @@ impl FunctionNode {
     /// create a new FunctionNode choosing which one at random.
     /// (formerly called newRndFNode() in gp.c)
     pub fn new_rnd(rng: &mut GpRng, funcs: &'static [Function]) -> FunctionNode {
+        assert_ne!(funcs.len(), 0);
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
         FunctionNode::new(rand_fid, funcs)
     }
@@ -582,7 +583,7 @@ impl Tree {
         let num_fnodes = self
             .get_num_function_nodes_bt(b_type)
             .expect("Tree does not have count of function nodes.");
-
+        assert_ne!(num_fnodes, 0);
         rng.gen_range(0..num_fnodes)
     }
     fn get_rnd_function_index(&self, rng: &mut GpRng)
@@ -671,7 +672,8 @@ impl Tree {
             let mut sum_error: GpRaw = 0.0;
 
             rc.func_def_branch = Some(&self.func_def_branch);
-            for i in 0..rc.fitness_cases.len() {
+            for fc_i in 0..rc.fitness_cases.len() {
+                rc.cur_fc = fc_i;
                 let result = Tree::exec_node(&mut rc, &self.result_branch.root);
 
                 let error = rc.compute_error(result);
@@ -681,8 +683,8 @@ impl Tree {
                     sum_hits += 1;
                 }
 
-                println!("i={},d={},result={},error={},hit?={},sum_hits={}",
-                    num.format("2d", i as f64),
+                println!("fc_i={},d={},result={},error={},hit?={},sum_hits={}",
+                    num.format("2d", fc_i as f64),
                     num.format("10.5f", rc.get_cur_fc().d),
                     num.format("10.5f", result),
                     num.format("10.5f", error),

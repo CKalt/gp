@@ -44,17 +44,13 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     if CONTROL.show_controls {
         println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
-println!("tpa001");
     let mut trees = TreeSet::create_initial_population(rng);
-println!("tpa002");
 
     trees.count_nodes();
     trees.gen = 0u16;
     let mut header_need: bool = true;
     while trees.gen <= CONTROL.G && trees.winning_index == None {
-println!("tpa003");
         let hits = trees.exec_all();
-println!("tpa004");
         if trees.winning_index != None {
             break;
         }
@@ -62,22 +58,16 @@ println!("tpa004");
         #[cfg(gpopt_trace="on")]
         println!("TP0:trace log for gen={}", trees.gen);
 
-println!("tpa005");
         trees.compute_normalized_fitness();
-println!("tpa005.5");
         trees.sort_by_normalized_fitness();
-println!("tpa006");
         report_results(rng, &mut trees, &mut header_need, &hits);
-println!("tpa007");
 
         if trees.gen >= CONTROL.G {
             break;
         }
 
-println!("tpa008");
         let trees2 = trees.breed_new_generation(rng);
 
-println!("tpa009");
         trees = trees2;
         trees.gen += 1;
     }
