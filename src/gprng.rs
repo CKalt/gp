@@ -65,10 +65,11 @@ impl GpRngFactory {
     #[cfg(gpopt_rng="seedable")]
     pub fn new() -> rand::rngs::StdRng {
         #[cfg(gpopt_fitness_type="int")]
-        let seed: [u8; 32] = [151; 32];     // Winner during Run# 6 Gen# 24
+        let seed: [u8; 32] = [151; 32];     // Ant Winner during Run# 6 Gen# 24
 
         #[cfg(gpopt_fitness_type="float")]
-        let seed: [u8; 32] = [73; 32];      // Winner during Run# 3 Gen# 48
+        let seed: [u8; 32] = [73; 32];      // Ant Winner during Run# 3 Gen# 48
+                                            // two-boxes-adf winner during run=23, gen=13
 
         SeedableRng::from_seed(seed)
     }
