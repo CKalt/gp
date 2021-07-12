@@ -1,8 +1,5 @@
 use format_num::NumberFormat;
 
-#[cfg(gpopt_select_method="tournament")]
-use std::collections::HashMap;
-
 use crate::gprun::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
@@ -316,18 +313,8 @@ pub type GpStandardized = f32;
 
 pub type GpFloat = f32;
 
-#[cfg(gpopt_fitness_type="int")]
-pub type GpInt = i64;
-
-#[cfg(gpopt_fitness_type="int")]
-pub type GpFitness = GpInt;
-
-#[cfg(gpopt_fitness_type="float")]
 pub type GpFitness = GpFloat;
 
-#[cfg(gpopt_fitness_type="int")]
-pub const DL_SHIFT: GpFloat = 1000000000.0;
-        
 pub struct Fitness {
     // Base values - real values are stored after multiplying by DL_SHIFT
     pub nfr: GpFitness,
@@ -341,46 +328,6 @@ pub struct Fitness {
     pub s: GpStandardized,
 }
 
-#[cfg(gpopt_fitness_type="int")]
-impl Fitness {
-    fn new() -> Fitness {
-        Fitness {
-            nfr: 0,
-            n:   0,
-            a:   0,
-            raw: 0,
-
-            r: 0,
-            s: 0,
-            hits: 0,
-        }
-    }
-    #[inline(always)]
-    pub fn int_to_float(val: GpInt) -> GpFloat {
-        (val as GpFloat) / DL_SHIFT
-    }
-    #[inline(always)]
-    pub fn float_to_int(fval: GpFloat) -> GpInt {
-        let fval: GpFloat = DL_SHIFT * fval;
-        let r_fval = if fval > 0.0 { fval + 0.5 } else { fval - 0.5 };
-
-        r_fval as GpInt
-    }
-    #[inline(always)]
-    pub fn nfr(&self) -> GpFloat {
-        Self::int_to_float(self.nfr)
-    }
-    #[inline(always)]
-    pub fn n(&self) -> GpFloat {
-        Self::int_to_float(self.n)
-    }
-    #[inline(always)]
-    pub fn a(&self) -> GpFloat {
-        Self::int_to_float(self.a)
-    }
-}
-
-#[cfg(gpopt_fitness_type="float")]
 impl Fitness {
     pub fn new() -> Fitness {
         Fitness {

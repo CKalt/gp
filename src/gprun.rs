@@ -10,14 +10,6 @@ use crate::tree::GpFloat;
 use crate::tree::GpHits;
 use crate::tree::GpRaw;
 
-#[cfg(gpopt_fitness_type="int")]
-use crate::tree::GpInt;
-#[cfg(gpopt_fitness_type="int")]
-use crate::tree::DL_SHIFT;
-
-#[cfg(gpopt_fitness_type="int")]
-use crate::Fitness;
-
 #[cfg(gpopt_exec_criteria="each_fitness_case")]
 pub type GpType = GpRaw;
 
@@ -368,7 +360,6 @@ impl RunContext<'_> {
         "num cases w/error lt 0.01"
     }
     /// computes fitness returns true if winner
-    #[cfg(gpopt_fitness_type="float")]
     pub fn compute_fitness(&self) -> (Fitness, bool) {
         let mut f = Fitness::new();
 
@@ -385,10 +376,6 @@ impl RunContext<'_> {
         let max_possible_hits = self.fitness_cases.len() as GpHits;
         let is_winner = self.hits == max_possible_hits;
         (f, is_winner)
-    }
-    #[cfg(gpopt_fitness_type="int")]
-    pub fn compute_fitness(&self, tree: &mut Tree) -> (Fitness, bool) {
-        panic!("int fitness_type is not implemented.");
     }
     pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType, arg3: GpType)
             -> GpType {

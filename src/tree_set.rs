@@ -195,38 +195,6 @@ impl TreeSet {
             tree.count_nodes();
         }
     }
-    #[cfg(gpopt_fitness_type="int")]
-    pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
-        let mut sum_a: GpInt = 0;
-        let mut sum_raw: GpInt = 0;
-
-        for t in self.tree_vec.iter() {
-            sum_a += t.fitness.a;
-            sum_raw += t.fitness.raw;
-        }
-
-        let int_avg_raw_f: GpInt = sum_raw / (self.tree_vec.len() as GpInt);
-        self.avg_raw_f = Fitness::int_to_float(int_avg_raw_f);
-        let flt_sum_a = Fitness::int_to_float(sum_a);
-            
-        #[cfg(gpopt_trace="on")]
-        for (i,t) in self.tree_vec.iter_mut().enumerate() {
-            let dbl_n = t.fitness.a() / flt_sum_a;
-
-            t.fitness.n = Fitness::float_to_int(dbl_n);
-            println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
-                i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), flt_sum_a);
-
-        }
-        #[cfg(gpopt_trace="off")]
-        for t in self.tree_vec.iter_mut() {
-            let dbl_n = t.fitness.a() / flt_sum_a;
-            t.fitness.n = Fitness::float_to_int(dbl_n);
-        }
-
-        self
-    }
-    #[cfg(gpopt_fitness_type="float")]
     pub fn compute_normalized_fitness(&mut self) -> &mut TreeSet {
         let mut sum_a: GpFloat = 0.0;
         let mut sum_raw: GpFloat = 0.0;
@@ -252,27 +220,11 @@ impl TreeSet {
         self
     }
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
-        #[cfg(gpopt_fitness_type="int")]
-        self.tree_vec
-            .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
-
-        #[cfg(gpopt_fitness_type="float")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
             
         self.assign_nfr_rankings()
     }
-    #[cfg(gpopt_fitness_type="int")]
-    fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
-        let mut nfr: GpInt = 0;
-        for (i, t) in self.tree_vec.iter_mut().enumerate() {
-            nfr += t.fitness.n;
-            t.fitness.nfr = nfr;
-            t.tfid = Some(i);
-        }
-        self
-    }
-    #[cfg(gpopt_fitness_type="float")]
     fn assign_nfr_rankings(&mut self) -> &mut TreeSet {
         let mut nfr: GpFloat = 0.0;
         for (i, t) in self.tree_vec.iter_mut().enumerate() {
@@ -445,15 +397,6 @@ impl TreeSet {
 }
 
 #[cfg(gpopt_select_method="fpb")]
-#[cfg(gpopt_fitness_type="int")]
-pub trait SelectMethod {
-    fn select_ind_bin_r(&self, r: GpInt, lo: usize, hi: usize) -> usize;
-    fn select_ind_bin(&self, r: GpInt) -> usize;
-    fn select_tree(&self, rng: &mut GpRng) -> &Tree;
-    fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat;
-}
-#[cfg(gpopt_select_method="fpb")]
-#[cfg(gpopt_fitness_type="float")]
 pub trait SelectMethod {
     fn select_ind_bin_r(&self, r: GpFloat, lo: usize, hi: usize) -> usize;
     fn select_ind_bin(&self, r: GpFloat) -> usize;
@@ -462,32 +405,12 @@ pub trait SelectMethod {
 }
 
 #[cfg(gpopt_select_method="tournament")]
-#[cfg(gpopt_fitness_type="float")]
 pub trait SelectMethod {
     fn select_tree(&self, rng: &mut GpRng) -> &Tree;
 }
 
 #[cfg(gpopt_select_method="fpb")]
 impl SelectMethod for TreeSet {
-    #[cfg(gpopt_fitness_type="int")]
-    fn select_ind_bin_r(&self, level: GpInt, lo: usize, hi: usize) -> usize {
-        let gap = ((hi - lo) / 2) as usize;
-        let guess = lo + gap + 1;
-
-        if self.tree_vec[guess-1].fitness.nfr < level &&
-                self.tree_vec[guess].fitness.nfr >= level {
-            guess
-        }
-        else if self.tree_vec[guess].fitness.nfr < level {
-            // new_lo = guess
-            self.select_ind_bin_r(level, guess, hi)
-        }
-        else {
-            // new_hi = guess
-            self.select_ind_bin_r(level, lo, guess-1)
-        }
-    }
-    #[cfg(gpopt_fitness_type="float")]
     fn select_ind_bin_r(&self, level: GpFloat, lo: usize, hi: usize) -> usize {
         let gap = ((hi - lo) / 2) as usize;
         let guess = lo + gap + 1;
@@ -505,23 +428,6 @@ impl SelectMethod for TreeSet {
             self.select_ind_bin_r(level, lo, guess-1)
         }
     }
-
-    #[cfg(gpopt_fitness_type="int")]
-    fn select_ind_bin(&self, level: GpInt) -> usize {
-        assert_ne!(self.tree_vec.len(),0);
-        let result = 
-            if self.tree_vec[0].fitness.nfr >= level ||
-                    self.tree_vec.len() == 1 {
-                0
-            } else if level >
-                    self.tree_vec[self.tree_vec.len() - 2].fitness.nfr {
-                self.tree_vec.len() - 1
-            } else {
-                self.select_ind_bin_r(level, 0, self.tree_vec.len() - 1)
-            };
-        result
-    }
-    #[cfg(gpopt_fitness_type="float")]
     fn select_ind_bin(&self, level: GpFloat) -> usize {
         assert_ne!(self.tree_vec.len(),0);
         let result = 
@@ -536,7 +442,6 @@ impl SelectMethod for TreeSet {
             };
         result
     }
-
     fn select_tree(&self, rng: &mut GpRng) -> &Tree {
         let greedy_val = Self::rnd_greedy_val(rng);
         let i = self.select_ind_bin(greedy_val);
@@ -544,32 +449,6 @@ impl SelectMethod for TreeSet {
     }
 
     #[cfg(gpopt_select_method="fpb")]
-    #[cfg(gpopt_fitness_type="int")]
-    fn rnd_greedy_val(rng: &mut GpRng) -> GpInt {
-        #[cfg(not(gpopt_rng="file_stream"))]
-        let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
-                                   // done in TreeSet::select_tree, which is
-                                   // the only function that calls here. This allows
-                                   // integer logging thereby removing floating point variences.
-
-        #[cfg(gpopt_rng="file_stream")]
-        let r = rng.gen_float();
-
-        let dbl_val: GpFloat = 
-            if CONTROL.GRc < 0.0001 {
-                r
-            } else if rng.gen_range(0..10) > 1 {
-                // select from top set
-                1.0 - (CONTROL.GRc * r)
-            } else {
-                // select from lower set
-                (1.0 - CONTROL.GRc) * r
-            };
-        Fitness::float_to_int(dbl_val)
-    }
-
-    #[cfg(gpopt_select_method="fpb")]
-    #[cfg(gpopt_fitness_type="float")]
     fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
         #[cfg(not(gpopt_rng="file_stream"))]
         let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
