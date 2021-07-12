@@ -33,6 +33,13 @@ pub struct Control {
     pub show_controls: bool,
     pub run_tests: bool,
 }
+impl Control {
+    pub fn computational_effort(&self, runs: i32, gen: u16) -> i64 {
+        self.M as i64 * (
+            (self.G as i64 * (runs-1) as i64) + (gen+1) as i64
+        )
+    }
+}
 
 #[warn(non_snake_case)]
 pub const CONTROL: Control = Control {

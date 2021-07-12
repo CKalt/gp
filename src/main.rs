@@ -49,7 +49,9 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     trees.count_nodes();
     trees.gen = 0u16;
     let mut header_need: bool = true;
-    while trees.gen <= CONTROL.G && trees.winning_index == None {
+    // when gen == CONTROL.G we are done because gen starts with 0
+    // ie. we do not process gen == 51 if G==51
+    while trees.gen < CONTROL.G && trees.winning_index == None {
         let hits = trees.exec_all();
         if trees.winning_index != None {
             break;
@@ -78,7 +80,8 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
             let winner = Winner{
                 tree: trees.tree_vec[i].clone(),
                 run: run_number,
-                gen: trees.gen
+                gen: trees.gen,
+                e: CONTROL.computational_effort(run_number, trees.gen),
             };
             Some(winner)
         },
@@ -129,6 +132,7 @@ fn main() {
     if let Some(mut winner) = opt_winner {
         let rc = RunContext::new();
         println!("run={}, gen={}", winner.run, winner.gen);
+        println!("Computational effort (e) = {}", winner.e);
         winner.print_result();
         rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
             winner.gen));

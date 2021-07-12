@@ -18,6 +18,7 @@ pub struct Winner {
     pub tree: Tree,
     pub run: i32,
     pub gen: u16,
+    pub e: i64,    // computational effort
 }
 impl Winner {
     pub fn print_result(&self) {
