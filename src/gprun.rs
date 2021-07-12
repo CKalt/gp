@@ -10,7 +10,6 @@ use crate::tree::GpFloat;
 use crate::tree::GpHits;
 use crate::tree::GpRaw;
 
-
 #[cfg(gpopt_fitness_type="int")]
 use crate::tree::GpInt;
 #[cfg(gpopt_fitness_type="int")]
@@ -22,28 +21,36 @@ use crate::Fitness;
 #[cfg(gpopt_exec_criteria="each_fitness_case")]
 pub type GpType = GpRaw;
 
+fn fix_nan(num: GpType) -> GpType {
+    if num.is_nan() {
+        0.0
+    } else {
+        num
+    }
+}
+
 fn function_add(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(rc, &func.branch[0]);
     let val2 = Tree::exec_node(rc, &func.branch[1]);
-    val1 + val2
+    fix_nan(val1 + val2)
 }
 
 fn function_sub(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(rc, &func.branch[0]);
     let val2 = Tree::exec_node(rc, &func.branch[1]);
-    val1 - val2
+    fix_nan(val1 - val2)
 }
 
 fn function_mult(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(rc, &func.branch[0]);
     let val2 = Tree::exec_node(rc, &func.branch[1]);
-    val1 * val2
+    fix_nan(val1 * val2)
 }
 
 fn function_prot_div(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(rc, &func.branch[0]);
     let val2 = Tree::exec_node(rc, &func.branch[1]);
-    if val2 == 0.0 {1.0} else {val1/val2}
+    if val2 == 0.0 {1.0} else {fix_nan(val1/val2)}
 }
 
 fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {

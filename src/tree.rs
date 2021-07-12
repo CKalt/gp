@@ -312,9 +312,10 @@ pub type GpHits = u16;
 pub type GpRaw = f32;
 pub type GpStandardized = f32;
 
+pub type GpFloat = f32;
+
 #[cfg(gpopt_fitness_type="int")]
 pub type GpInt = i64;
-pub type GpFloat = f32;
 
 #[cfg(gpopt_fitness_type="int")]
 pub type GpFitness = GpInt;

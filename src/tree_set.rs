@@ -231,8 +231,9 @@ impl TreeSet {
         let mut sum_a: GpFloat = 0.0;
         let mut sum_raw: GpFloat = 0.0;
 
-        for t in self.tree_vec.iter() {
+        for (i,t) in self.tree_vec.iter().enumerate() {
             sum_a += t.fitness.a;
+println!("tpd001: i={}, a={}, sum_a={}", i, t.fitness.a, sum_a);
             sum_raw += t.fitness.raw;
         }
 
@@ -249,12 +250,26 @@ impl TreeSet {
             t.fitness.n = t.fitness.a() / sum_a;
         }
 
+if true {
+    panic!("pause");
+}
+
+
         self
     }
     pub fn sort_by_normalized_fitness(&mut self) -> &mut TreeSet {
         #[cfg(gpopt_fitness_type="int")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
+
+
+
+for (i,t) in self.tree_vec.iter().enumerate() {
+    println!("tpc001: i={},n={}", i, t.fitness.n);
+}
+
+
+
         #[cfg(gpopt_fitness_type="float")]
         self.tree_vec
             .sort_by(|a, b| a.fitness.n.partial_cmp(&b.fitness.n).unwrap());
@@ -284,6 +299,10 @@ impl TreeSet {
     pub fn exec_all(&mut self) -> u16 {
         let mut rc = RunContext::new();
         for (t_i, tree) in self.tree_vec.iter_mut().enumerate() {
+if t_i == 1624 {
+    println!("tpe001: oh no!");
+    tree.print();
+}
             rc.prepare_run();
 
             #[cfg(gpopt_exec_criteria="clock")]
@@ -297,6 +316,7 @@ impl TreeSet {
                 for fc_i in 0..rc.fitness_cases.len() {
                     rc.cur_fc = fc_i;
                     let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
+
                     let error = rc.compute_error(result);
                     sum_error += error;
                     if error < 0.01 {
