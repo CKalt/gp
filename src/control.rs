@@ -1,7 +1,5 @@
 use crate::tree::GpFloat;
 
-const CONTROL_M: usize = 2000;
-
 pub type TreeDepth = u16;
 
 #[allow(non_snake_case)]
@@ -43,7 +41,7 @@ impl Control {
 
 #[warn(non_snake_case)]
 pub const CONTROL: Control = Control {
-    M:                  CONTROL_M,  // Number of individuals in each generation
+    M:                  4000,       // Number of individuals in each generation
     G:                  51,         // Number of generations to run
     Di:                 6,          // Maximum depth of S Expressions for an initial tree
     Dc:                 17,         // Maximum depth of S Expressions for a created tree
