@@ -68,6 +68,8 @@ impl GpRngFactory {
                                        // two-boxes-adf winner during 
                                        //     using fpd run=8, gen=23
                                        //       (e) = 1524000
+                                       //     using tourn run=5, gen=16
+                                       //       (e) = 884000
 
         SeedableRng::from_seed(seed)
     }
