@@ -1,11 +1,9 @@
 # gpopt_select_method := fpb | tournament
 # gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
-# gpopt_exec_criteria := each_fitness_case | clock
 [build]
 rustflags = """
     --cfg gpopt_select_method="tournament"
     --cfg gpopt_rng="seedable"
     --cfg gpopt_trace="off"
-    --cfg gpopt_exec_criteria="each_fitness_case"
 """

@@ -307,12 +307,10 @@ pub enum GenerateMethod {
 
 type TreeNodeIndex = i32;
 
-pub type GpHits = u16;
-pub type GpRaw = f32;
-pub type GpStandardized = f32;
-
+pub type GpHits = u8;
+pub type GpRaw = u8;
+pub type GpStandardized = u8;
 pub type GpFloat = f32;
-
 pub type GpFitness = GpFloat;
 
 pub struct Fitness {
@@ -336,8 +334,8 @@ impl Fitness {
             a:   0.0,
             raw: 0.0,
 
-            r: 0.0,
-            s: 0.0,
+            r: 0,
+            s: 0,
             hits: 0,
         }
     }
@@ -369,7 +367,7 @@ impl Fitness {
 
 pub enum BranchType {
     Result0,
-    FunctionDef0,
+//    FunctionDef0,
 }
 use BranchType::*;
 
@@ -412,16 +410,17 @@ pub struct Tree {
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
     pub result_branch: TreeBranch,
-    pub func_def_branch: TreeBranch,
+//    pub func_def_branch: TreeBranch,
 }
 impl Tree {
-    pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
+    //pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
+    pub fn new(result_branch_root: FunctionNode) -> Tree {
         Tree { 
             tfid: None,
             tcid: 0,
             fitness: Fitness::new(),
             result_branch: TreeBranch::new(result_branch_root),
-            func_def_branch: TreeBranch::new(func_def_branch_root),
+//            func_def_branch: TreeBranch::new(func_def_branch_root),
         }
     }
     pub fn clone(&self) -> Tree {
@@ -430,43 +429,46 @@ impl Tree {
             tcid: 0,
             fitness: self.fitness.clone(),
             result_branch: self.result_branch.clone(),
-            func_def_branch: self.func_def_branch.clone(),
+//            func_def_branch: self.func_def_branch.clone(),
         }
     }
     pub fn get_num_function_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_function_nodes,
-            FunctionDef0 =>  self.func_def_branch.num_function_nodes,
+//            FunctionDef0 =>  self.func_def_branch.num_function_nodes,
         }
     }
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        if self.func_def_branch.num_function_nodes == None &&
-            self.result_branch.num_function_nodes == None {
+        if  self.result_branch.num_function_nodes == None
+//             && self.func_def_branch.num_function_nodes == None
+        {
             None
         } else {
-            let num_fnodes1 = self.func_def_branch.num_function_nodes.unwrap();
-            let num_fnodes2 = self.result_branch.num_function_nodes.unwrap();
-            Some(num_fnodes1 + num_fnodes2)
+            let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
+//            let num_fnodes2 = self.func_def_branch.num_function_nodes.unwrap();
+//            Some(num_fnodes1 + num_fnodes2)
+            Some(num_fnodes1)
         }
     }
     pub fn get_num_terminal_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_terminal_nodes,
-            FunctionDef0 =>  self.func_def_branch.num_terminal_nodes,
+//            FunctionDef0 =>  self.func_def_branch.num_terminal_nodes,
         }
     }
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_tnodes1 = self.func_def_branch.num_terminal_nodes.unwrap();
-        let num_tnodes2 = self.result_branch.num_terminal_nodes.unwrap();
-        Some(num_tnodes1 + num_tnodes2)
+        let num_tnodes1 = self.result_branch.num_terminal_nodes.unwrap();
+//        let num_tnodes2 = self.func_def_branch.num_terminal_nodes.unwrap();
+//        Some(num_tnodes1 + num_tnodes2)
+        Some(num_tnodes1)
     }
     pub fn clear_node_counts(&mut self) {
         self.result_branch.clear_node_counts();
-        self.func_def_branch.clear_node_counts();
+//        self.func_def_branch.clear_node_counts();
     }
     pub fn count_nodes(&mut self) {
         self.result_branch.count_nodes();
-        self.func_def_branch.count_nodes();
+//        self.func_def_branch.count_nodes();
     }
 
     pub fn print(&self) {
@@ -483,8 +485,8 @@ impl Tree {
 
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
             self.get_num_terminal_nodes());
-        println!("Function Def Branch0:");
-        self.func_def_branch.root.print();
+//        println!("Function Def Branch0:");
+//        self.func_def_branch.root.print();
         println!("\nResult Branch0:");
         self.result_branch.root.print();
         println!("");
@@ -493,37 +495,47 @@ impl Tree {
             rng: &mut GpRng)
         -> (TreeNodeIndex, BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
-        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
 
-        if fi < num_fd_branch_fnodes {
-            (fi,FunctionDef0, 
-                self.func_def_branch.root.find_function_node_ref(fi))
-        } else {
-            let adj_fi = fi - num_fd_branch_fnodes;
-            (adj_fi, Result0,
-                self.result_branch.root.find_function_node_ref(adj_fi))
-        }
+        // when no func def branches
+        (fi, Result0,
+            self.result_branch.root.find_function_node_ref(fi))
+
+//        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
+//
+//        if fi < num_fd_branch_fnodes {
+//            (fi,FunctionDef0, 
+//                self.func_def_branch.root.find_function_node_ref(fi))
+//        } else {
+//            let adj_fi = fi - num_fd_branch_fnodes;
+//            (adj_fi, Result0,
+//                self.result_branch.root.find_function_node_ref(adj_fi))
+//        }
     }
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
-        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
 
-        if fi < num_fd_branch_fnodes {
-            (FunctionDef0, 
-                self.func_def_branch.root.find_function_node_ref(fi))
-        } else {
-            (Result0,
-                self.result_branch.root.find_function_node_ref(
-                        fi - num_fd_branch_fnodes))
-        }
+        // when no func def branches
+        (Result0,
+            self.result_branch.root.find_function_node_ref(fi))
+
+//        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
+//
+//        if fi < num_fd_branch_fnodes {
+//            (FunctionDef0, 
+//                self.func_def_branch.root.find_function_node_ref(fi))
+//        } else {
+//            (Result0,
+//                self.result_branch.root.find_function_node_ref(
+//                        fi - num_fd_branch_fnodes))
+//        }
     }
     pub fn get_rnd_function_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let fi = self.get_rnd_function_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_function_node_ref(fi),
-            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi),
+//            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi),
         }
     }
     fn get_rnd_function_index_bt(&self, rng: &mut GpRng, b_type: &BranchType)
@@ -545,23 +557,27 @@ impl Tree {
     pub fn get_rnd_terminal_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
 
-        if ti < num_fd_branch_tnodes {
-            (FunctionDef0, 
-                self.func_def_branch.root.find_terminal_node_ref(ti))
-        } else {
-            (Result0,
-                self.result_branch.root.find_terminal_node_ref(
-                        ti - num_fd_branch_tnodes))
-        }
+        (Result0,
+            self.result_branch.root.find_terminal_node_ref(ti))
+
+//        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
+
+//        if ti < num_fd_branch_tnodes {
+//            (FunctionDef0, 
+//                self.func_def_branch.root.find_terminal_node_ref(ti))
+//        } else {
+//            (Result0,
+//                self.result_branch.root.find_terminal_node_ref(
+//                        ti - num_fd_branch_tnodes))
+//        }
     }
     pub fn get_rnd_terminal_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let ti = self.get_rnd_terminal_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_terminal_node_ref(ti),
-            FunctionDef0 => self.func_def_branch.root.find_terminal_node_ref(ti),
+            //FunctionDef0 => self.func_def_branch.root.find_terminal_node_ref(ti),
         }
     }
     #[allow(dead_code)]
@@ -569,16 +585,20 @@ impl Tree {
             rng: &mut GpRng)
         -> (TreeNodeIndex,  BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
 
-        if ti < num_fd_branch_tnodes {
-            (ti, FunctionDef0, 
-                self.func_def_branch.root.find_terminal_node_ref(ti))
-        } else {
-            let adj_ti = ti - num_fd_branch_tnodes;
-            (adj_ti, Result0,
-                self.result_branch.root.find_terminal_node_ref(adj_ti))
-        }
+         (ti, Result0,
+              self.result_branch.root.find_terminal_node_ref(ti))
+
+//        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
+//
+//        if ti < num_fd_branch_tnodes {
+//            (ti, FunctionDef0, 
+//                self.func_def_branch.root.find_terminal_node_ref(ti))
+//        } else {
+//            let adj_ti = ti - num_fd_branch_tnodes;
+//            (adj_ti, Result0,
+//                self.result_branch.root.find_terminal_node_ref(adj_ti))
+//        }
     }
     fn get_rnd_terminal_index_bt(&self, rng: &mut GpRng, b_type: &BranchType)
             -> TreeNodeIndex {
@@ -597,8 +617,8 @@ impl Tree {
         rng.gen_range(0..num_tnodes)
     }
     fn tree_depth_gt(&self, d: TreeDepth) -> bool {
-        self.result_branch.root.node_depth_gt(d, 1) ||
-            self.func_def_branch.root.node_depth_gt(d, 1)
+        self.result_branch.root.node_depth_gt(d, 1)
+//            || self.func_def_branch.root.node_depth_gt(d, 1)
     }
     pub fn qualifies(&self) -> bool {
         !self.tree_depth_gt(CONTROL.Dc)
@@ -609,41 +629,26 @@ impl Tree {
         rc.prepare_run();
         rc.print_run_illustration("Before Run");
             
-        #[cfg(gpopt_exec_criteria="clock")]
-        panic!("clock exec not used this problem.");
-
-        #[cfg(gpopt_exec_criteria="each_fitness_case")]
         let num = NumberFormat::new();
-        #[cfg(gpopt_exec_criteria="each_fitness_case")]
-        {
-            let mut sum_hits: GpHits = 0;
-            let mut sum_error: GpRaw = 0.0;
+        let mut sum_hits: GpHits = 0;
+        let mut sum_error: GpRaw = 0;
 
-            rc.func_def_branch = Some(&self.func_def_branch);
-            for fc_i in 0..rc.fitness_cases.len() {
-                rc.cur_fc = fc_i;
-                let result = Tree::exec_node(&mut rc, &self.result_branch.root);
+//        rc.func_def_branch = Some(&self.func_def_branch);
+        for fc_i in 0..rc.fitness_cases.len() {
+            rc.cur_fc = fc_i;
+            let result = Tree::exec_node(&mut rc, &self.result_branch.root);
 
-                let error = rc.compute_error(result);
-                let hit = error < 0.01;
-                sum_error += error;
-                if hit {
-                    sum_hits += 1;
-                }
-
-                println!("fc_i={},d={},result={},error={},hit?={},sum_hits={}",
-                    num.format("2d", fc_i as f64),
-                    num.format("10.5f", rc.get_cur_fc().d),
-                    num.format("10.5f", result),
-                    num.format("10.5f", error),
-                    num.format("1d", hit as u8),
-                    num.format("2d", sum_hits as f64));
+            let error = rc.compute_error(result);
+            let hit = error == 0;
+            sum_error += error;
+            if hit {
+                sum_hits += 1;
             }
-            rc.func_def_branch = None;
-
-            rc.hits = sum_hits;
-            rc.error = sum_error;
         }
+//        rc.func_def_branch = None;
+
+        rc.hits = sum_hits;
+        rc.error = sum_error;
 
         let (f, is_winner) = rc.compute_fitness();
         self.fitness = f;
@@ -663,7 +668,7 @@ impl Tree {
                     tfid, self.tcid, self.fitness.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
         }
     }
-    pub fn print_result_header(opt_gen: Option<u16>, hits: &u16) {
+    pub fn print_result_header(opt_gen: Option<u16>, hits: &GpHits) {
         println!("{}={}", RunContext::get_hits_label(), *hits);
         if let Some(_) = opt_gen {
             println!("{:>6} {:>4} {:>4} {:>6} {:>6} {:>6} {:>8} {:>8} {:>8} {:>6}", 

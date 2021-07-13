@@ -44,12 +44,13 @@ impl TreeSet {
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-        let mut func_def_branch_root =
-            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
-        Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
-                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+//        let mut func_def_branch_root =
+//            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+//        Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
+//                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
 
-        Tree::new(result_branch_root, func_def_branch_root)
+//        Tree::new(result_branch_root, func_def_branch_root)
+        Tree::new(result_branch_root)
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
@@ -81,12 +82,13 @@ impl TreeSet {
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-        let mut func_def_branch_root =
-            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
-        Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
-                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+//        let mut func_def_branch_root =
+//            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+//        Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
+//                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
 
-        Tree::new(result_branch_root, func_def_branch_root)
+//        Tree::new(result_branch_root, func_def_branch_root)
+        Tree::new(result_branch_root);
     }
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
@@ -234,33 +236,28 @@ impl TreeSet {
         }
         self
     }
-    pub fn exec_all(&mut self) -> u16 {
+    pub fn exec_all(&mut self) -> GpHits {
         let mut rc = RunContext::new();
         for (t_i, tree) in self.tree_vec.iter_mut().enumerate() {
             rc.prepare_run();
 
-            #[cfg(gpopt_exec_criteria="clock")]
-            panic!("clock exec not used this problem.");
-            #[cfg(gpopt_exec_criteria="each_fitness_case")]
-            {
-                // init accumulators
-                let mut sum_hits: GpHits = 0;
-                let mut sum_error: GpRaw = 0.0;
-                rc.func_def_branch = Some(&tree.func_def_branch);
-                for fc_i in 0..rc.fitness_cases.len() {
-                    rc.cur_fc = fc_i;
-                    let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
+            // init accumulators
+            let mut sum_hits: GpHits = 0;
+            let mut sum_error: GpRaw = 0;
+            rc.func_def_branch = Some(&tree.func_def_branch);
+            for fc_i in 0..rc.fitness_cases.len() {
+                rc.cur_fc = fc_i;
+                let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
 
-                    let error = rc.compute_error(result);
-                    sum_error += error;
-                    if error < 0.01 {
-                        sum_hits += 1;
-                    }
+                let error = rc.compute_error(result);
+                sum_error += error;
+                if error == 0 {
+                    sum_hits += 1;
                 }
-                rc.func_def_branch = None;
-                rc.hits = sum_hits;
-                rc.error = sum_error;
             }
+            rc.func_def_branch = None;
+            rc.hits = sum_hits;
+            rc.error = sum_error;
 
             let (f, is_winner) = rc.compute_fitness();
             tree.fitness = f;

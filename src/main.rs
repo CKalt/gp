@@ -14,7 +14,7 @@ use gprng::GpRng;
 use gprng::GpRngFactory;
 
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
-        hits: &u16) -> () {
+        hits: &GpHits) -> () {
     if CONTROL.show_all_trees {
         println!("Generation {}", trees.gen);
         trees.print();
@@ -102,7 +102,7 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
         println!("\n--------\nRnd fi={} Subtree of {} Branch Type -->\n", fi,
             match bt {
                 BranchType::Result0 => "Result",
-                BranchType::FunctionDef0 => "Function Def",
+//                BranchType::FunctionDef0 => "Function Def",
             });
         fnode.print();
 
