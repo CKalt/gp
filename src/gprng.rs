@@ -70,6 +70,9 @@ impl GpRngFactory {
                                        //       (e) = 1524000
                                        //     using tourn run=5, gen=16
                                        //       (e) = 884000
+                                       // bool6-sym-no-adf
+                                       //    run=1, gen=25
+                                       //    Computational effort (e) = 416000
 
         SeedableRng::from_seed(seed)
     }

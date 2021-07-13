@@ -1,5 +1,3 @@
-use format_num::NumberFormat;
-
 use crate::gprun::*;
 use crate::control::CONTROL;
 use crate::control::TreeDepth;
@@ -629,7 +627,6 @@ impl Tree {
         rc.prepare_run();
         rc.print_run_illustration("Before Run");
             
-        let num = NumberFormat::new();
         let mut sum_hits: GpHits = 0;
         let mut sum_error: GpRaw = 0;
 

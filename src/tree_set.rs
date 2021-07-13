@@ -27,8 +27,8 @@ impl TreeSet {
         }
     }
     fn tree_match(t1: &Tree, t2: &Tree) -> bool {
-        t1.result_branch.root.deep_match(&t2.result_branch.root) &&
-            t1.func_def_branch.root.deep_match(&t2.func_def_branch.root)
+        t1.result_branch.root.deep_match(&t2.result_branch.root) 
+//            && t1.func_def_branch.root.deep_match(&t2.func_def_branch.root)
     }
     fn tree_match_exists(&self, target_tree: &Tree) -> bool {
         for tree in self.tree_vec.iter() {
@@ -88,7 +88,7 @@ impl TreeSet {
 //                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
 
 //        Tree::new(result_branch_root, func_def_branch_root)
-        Tree::new(result_branch_root);
+        Tree::new(result_branch_root)
     }
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
@@ -244,7 +244,7 @@ impl TreeSet {
             // init accumulators
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0;
-            rc.func_def_branch = Some(&tree.func_def_branch);
+//            rc.func_def_branch = Some(&tree.func_def_branch);
             for fc_i in 0..rc.fitness_cases.len() {
                 rc.cur_fc = fc_i;
                 let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
@@ -255,7 +255,7 @@ impl TreeSet {
                     sum_hits += 1;
                 }
             }
-            rc.func_def_branch = None;
+//            rc.func_def_branch = None;
             rc.hits = sum_hits;
             rc.error = sum_error;
 
