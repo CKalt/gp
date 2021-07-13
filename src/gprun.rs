@@ -1,15 +1,15 @@
+use crate::fitness::Fitness;
 use crate::tree::Tree;
-use crate::tree::Fitness;
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 //use crate::tree::TreeBranch;
 use crate::control::CONTROL;
 
-use crate::tree::GpFloat;
-use crate::tree::GpFitness;
-use crate::tree::GpHits;
-use crate::tree::GpRaw;
+use crate::fitness::GpFloat;
+use crate::fitness::GpFitness;
+use crate::fitness::GpHits;
+use crate::fitness::GpRaw;
 
 pub type GpType = bool;
 

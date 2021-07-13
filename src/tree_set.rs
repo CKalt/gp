@@ -1,4 +1,5 @@
 use std::mem;
+use rand::Rng;
 
 #[cfg(gpopt_select_method="tournament")]
 use std::collections::HashMap;
@@ -7,7 +8,9 @@ use crate::gprun::*;
 use crate::tree::*;
 use crate::control::CONTROL;
 use crate::gprng::GpRng;
-use rand::Rng;
+use crate::fitness::GpFloat;
+use crate::fitness::GpHits;
+use crate::fitness::GpRaw;
 
 use Node::*;
 

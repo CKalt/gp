@@ -1,4 +1,4 @@
-use crate::tree::GpFloat;
+use crate::fitness::GpFloat;
 
 pub type TreeDepth = u16;
 

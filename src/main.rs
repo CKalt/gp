@@ -1,4 +1,5 @@
 mod gprun;
+mod fitness;
 mod tree;
 mod tree_set;
 mod control;
@@ -12,6 +13,7 @@ use control::*;
 
 use gprng::GpRng;
 use gprng::GpRngFactory;
+use fitness::GpHits;
 
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         hits: &GpHits) -> () {
