@@ -13,8 +13,8 @@ pub struct Control {
     pub Pip:  GpFloat,              // Probability of cross over internal point
     pub num_functions_result_branch: u8,          // num functions result producing branch 0
     pub num_terminals_result_branch: u8,          // num terminals result producing branch 0
-//    pub num_functions_func_def_branch: u8,          // num functions function defining branch 0
-//    pub num_terminals_func_def_branch: u8,          // num terminals function defining branch 0
+    pub num_functions_func_def_branch: u8,          // num functions function defining branch 0
+    pub num_terminals_func_def_branch: u8,          // num terminals function defining branch 0
     pub GRc:  GpFloat,              // Greedy C Value (Function of M)
                             // n   M     C   GRc 
                             // 0  <1000  -    -
@@ -50,8 +50,8 @@ pub const CONTROL: Control = Control {
     Pip:                0.90,       // Probability of cross over internal point
     num_functions_result_branch: 4,          // num functions result producing branch 0
     num_terminals_result_branch: 6,          // num terminals result producing branch 0
-//    num_functions_func_def_branch: 4,          // num functions function defining branch 0
-//    num_terminals_func_def_branch: 3,          // num terminals function defining branch 0
+    num_functions_func_def_branch: 0,          // num functions function defining branch 0
+    num_terminals_func_def_branch: 0,          // num terminals function defining branch 0
     GRc:                0.16,
     R:                  0,
     no_fitness_cases:   0,

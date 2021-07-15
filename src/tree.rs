@@ -311,7 +311,7 @@ type TreeNodeIndex = i32;
 
 pub enum BranchType {
     Result0,
-//    FunctionDef0,
+    FunctionDef0,
 }
 use BranchType::*;
 
@@ -354,67 +354,118 @@ pub struct Tree {
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
     pub result_branch: TreeBranch,
-//    pub func_def_branch: TreeBranch,
+    pub opt_func_def_branch: Option<TreeBranch>, // If None no-adf, else adf.
 }
 impl Tree {
-    //pub fn new(result_branch_root: FunctionNode, func_def_branch_root: FunctionNode) -> Tree {
-    pub fn new(result_branch_root: FunctionNode) -> Tree {
-        Tree { 
-            tfid: None,
-            tcid: 0,
-            fitness: Fitness::new(),
-            result_branch: TreeBranch::new(result_branch_root),
-//            func_def_branch: TreeBranch::new(func_def_branch_root),
+    /// new Tree is constructed with an optional func def branch. 
+    pub fn new(result_branch_root: FunctionNode,
+            opt_func_def_branch_root: Option<FunctionNode>) -> Tree {
+        match opt_func_def_branch_root {
+            // no adf case
+            None =>
+                Tree { 
+                    tfid: None,
+                    tcid: 0,
+                    fitness: Fitness::new(),
+                    result_branch: TreeBranch::new(result_branch_root),
+                    opt_func_def_branch: None,  // i.e. no-adf
+                },
+            // adf case
+            Some(func_def_branch_root) =>
+                Tree { 
+                    tfid: None,
+                    tcid: 0,
+                    fitness: Fitness::new(),
+                    result_branch: TreeBranch::new(result_branch_root),
+                    opt_func_def_branch: Some(TreeBranch::new(func_def_branch_root)),
+                },
         }
     }
     pub fn clone(&self) -> Tree {
-        Tree { 
-            tfid: None,
-            tcid: 0,
-            fitness: self.fitness.clone(),
-            result_branch: self.result_branch.clone(),
-//            func_def_branch: self.func_def_branch.clone(),
+        match self.opt_func_def_branch {
+            // no adf case
+            None =>
+                Tree { 
+                    tfid: None,
+                    tcid: 0,
+                    fitness: self.fitness.clone(),
+                    result_branch: self.result_branch.clone(),
+                    opt_func_def_branch: None,
+                },
+            // adf case
+            Some(func_def_branch) =>
+                Tree { 
+                    tfid: None,
+                    tcid: 0,
+                    fitness: self.fitness.clone(),
+                    result_branch: self.result_branch.clone(),
+                    opt_func_def_branch: Some(func_def_branch.clone()),
+                },
         }
     }
+    /// Get num function nodes for a specific branch 
     pub fn get_num_function_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_function_nodes,
-//            FunctionDef0 =>  self.func_def_branch.num_function_nodes,
+            FunctionDef0 =>  self.opt_func_def_branch.unwrap().num_function_nodes,
         }
     }
+    /// Get total num function nodes across all branches
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        if  self.result_branch.num_function_nodes == None
-//             && self.func_def_branch.num_function_nodes == None
-        {
-            None
-        } else {
-            let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
-//            let num_fnodes2 = self.func_def_branch.num_function_nodes.unwrap();
-//            Some(num_fnodes1 + num_fnodes2)
-            Some(num_fnodes1)
+        match self.opt_func_def_branch {
+            // no adf case
+            None =>
+                Some(self.result_branch.num_function_nodes),
+            // adf case
+            Some(func_def_branch) =>
+                if self.result_branch.num_function_nodes == None &&
+                   func_def_branch.num_function_nodes == None
+                {
+                    None
+                } else {
+                    let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
+                    let num_fnodes2 = func_def_branch.num_function_nodes.unwrap();
+                    Some(num_fnodes1 + num_fnodes2)
+                },
         }
     }
+    /// Get num terminal nodes for a specific branch 
     pub fn get_num_terminal_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_terminal_nodes,
-//            FunctionDef0 =>  self.func_def_branch.num_terminal_nodes,
+            FunctionDef0 =>  self.opt_func_def_branch.unwrap().num_terminal_nodes,
         }
     }
+    /// Get total num terminal nodes across all branches
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        let num_tnodes1 = self.result_branch.num_terminal_nodes.unwrap();
-//        let num_tnodes2 = self.func_def_branch.num_terminal_nodes.unwrap();
-//        Some(num_tnodes1 + num_tnodes2)
-        Some(num_tnodes1)
+        match self.opt_func_def_branch {
+            // no adf case
+            None => Some(self.result_branch.num_terminal_nodes.unwrap())
+            // adf case
+            Some(func_def_branch) => {
+                let num_tnodes1 = self.result_branch.num_terminal_nodes.unwrap();
+                let num_tnodes2 = func_def_branch.num_terminal_nodes.unwrap();
+                Some(num_tnodes1 + num_tnodes2)
+            },
+        }
     }
+    /// clear node counts across all branches
     pub fn clear_node_counts(&mut self) {
-        self.result_branch.clear_node_counts();
-//        self.func_def_branch.clear_node_counts();
+        self.result_branch.clear_node_counts(); // for adf and no-adf cases
+        if let self.opt_func_def_branch = Some(func_def_branch) {
+            // adf case only
+            func_def_branch.clear_node_counts();
+        }
     }
+    /// count nodes across all branches
     pub fn count_nodes(&mut self) {
-        self.result_branch.count_nodes();
-//        self.func_def_branch.count_nodes();
+        self.result_branch.count_nodes(); // for adf and no-adf cases
+        if let self.opt_func_def_branch = Some(func_def_branch) {
+            // adf case only
+            func_def_branch.count_nodes();
+        }
     }
-
+    /// print tree
     pub fn print(&self) {
         #[cfg(gpopt_trace="on")]
         {
@@ -429,50 +480,65 @@ impl Tree {
 
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
             self.get_num_terminal_nodes());
-//        println!("Function Def Branch0:");
-//        self.func_def_branch.root.print();
+        if let self.opt_func_def_branch = Some(func_def_branch) {
+            println!("Function Def Branch0:");
+            func_def_branch.root.print();
+        }
         println!("\nResult Branch0:");
         self.result_branch.root.print();
         println!("");
     }
+    /// get a random function node over all branches. return node index, branch
+    /// type and ref to node. Index sequence is in branch order major
+    /// adfN..adf0, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// first.
     pub fn get_rnd_function_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex, BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
 
-        // when no func def branches
-        (fi, Result0,
-            self.result_branch.root.find_function_node_ref(fi))
+        match self.opt_func_def_branch {
+            // no adf case
+            None =>
+                (fi, Result0,
+                    self.result_branch.root.find_function_node_ref(fi))
+            // adf case
+            Some(func_def_branch) => {
+                let num_fd_branch_fnodes =
+                    self.func_def_branch.num_function_nodes.unwrap();
 
-//        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
-//
-//        if fi < num_fd_branch_fnodes {
-//            (fi,FunctionDef0, 
-//                self.func_def_branch.root.find_function_node_ref(fi))
-//        } else {
-//            let adj_fi = fi - num_fd_branch_fnodes;
-//            (adj_fi, Result0,
-//                self.result_branch.root.find_function_node_ref(adj_fi))
-//        }
+                if fi < num_fd_branch_fnodes {
+                    (fi,FunctionDef0, 
+                        self.func_def_branch.root.find_function_node_ref(fi))
+                } else {
+                    let adj_fi = fi - num_fd_branch_fnodes;
+                    (adj_fi, Result0,
+                        self.result_branch.root.find_function_node_ref(adj_fi))
+                }
+            }
+        }
     }
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
+        match self.opt_func_def_branch {
+            // no adf case
+            None =>
+                (Result0, self.result_branch.root.find_function_node_ref(fi))
+            // adf case
+            Some(func_def_branch) => {
+                let num_fd_branch_fnodes =
+                    self.func_def_branch.num_function_nodes.unwrap();
 
-        // when no func def branches
-        (Result0,
-            self.result_branch.root.find_function_node_ref(fi))
-
-//        let num_fd_branch_fnodes = self.func_def_branch.num_function_nodes.unwrap();
-//
-//        if fi < num_fd_branch_fnodes {
-//            (FunctionDef0, 
-//                self.func_def_branch.root.find_function_node_ref(fi))
-//        } else {
-//            (Result0,
-//                self.result_branch.root.find_function_node_ref(
-//                        fi - num_fd_branch_fnodes))
-//        }
+                if fi < num_fd_branch_fnodes {
+                    (FunctionDef0, 
+                        self.func_def_branch.root.find_function_node_ref(fi))
+                } else {
+                    (Result0, self.result_branch.root.find_function_node_ref(
+                        fi - num_fd_branch_fnodes))
+                }
+            }
+        }
     }
     pub fn get_rnd_function_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
