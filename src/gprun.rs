@@ -45,13 +45,12 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     !(val1 | val2)
 }
 
-//fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-//    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-//    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-//    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-//
-//    rc.exec_adf0(arg1, arg2, arg3)
-//}
+fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    let arg1 = Tree::exec_node(rc, &func.branch[0]);
+    let arg2 = Tree::exec_node(rc, &func.branch[1]);
+
+    rc.exec_adf0(arg1, arg2)
+}
 
 fn terminal_d0(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[0]
@@ -77,28 +76,54 @@ fn terminal_d5(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[5]
 }
 
-// fn terminal_arg0(rc: &RunContext) -> GpType {
-//     match rc.adf0_args {
-//        None => panic!("terminal arg access with empty args list"),
-//        Some(ref args) => args[0],
-//    }
-//}
+fn terminal_arg0(rc: &RunContext) -> GpType {
+     match rc.adf0_args {
+        None => panic!("terminal arg access with empty args list"),
+        Some(ref args) => args[0],
+    }
+}
 
-//fn terminal_arg1(rc: &RunContext) -> GpType {
-//    match rc.adf0_args {
-//        None => panic!("terminal arg access with empty args list"),
-//        Some(ref args) => args[1],
-//    }
-//}
-
-//fn terminal_arg2(rc: &RunContext) -> GpType {
-//    match rc.adf0_args {
-//        None => panic!("terminal arg access with empty args list"),
-//        Some(ref args) => args[2],
-//    }
-//}
+fn terminal_arg1(rc: &RunContext) -> GpType {
+    match rc.adf0_args {
+        None => panic!("terminal arg access with empty args list"),
+        Some(ref args) => args[1],
+    }
+}
 
 pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
+    Function {
+        fid:  0u8,
+        name: "ADF0",
+        arity: 2,
+        code: function_adf0,
+    },
+    Function {
+        fid:  1u8,
+        name: "AND",
+        arity: 2,
+        code: function_and,
+    },
+    Function {
+        fid:  2u8,
+        name: "OR",
+        arity: 2,
+        code: function_or,
+    },
+    Function {
+        fid:  3u8,
+        name: "NAND",
+        arity: 2,
+        code: function_nand,
+    },
+    Function {
+        fid:  4u8,
+        name: "NOR",
+        arity: 2,
+        code: function_nor,
+    },
+];
+
+pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
     Function {
         fid:  0u8,
         name: "AND",
@@ -123,16 +148,6 @@ pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_bran
         arity: 2,
         code: function_nor,
     },
-];
-
-pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
-// Example:
-//    Function {
-//        fid:  0u8,
-//        name: "+",
-//        arity: 2,
-//        code: function_add,
-//    },
 ];
 
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
@@ -171,12 +186,16 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_bran
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
 pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
-// Example:
-//    Terminal {
-//        tid:  0u8,
-//        name: "ARG0",
-//        code: terminal_arg0,
-//    },
+    Terminal {
+        tid:  0u8,
+        name: "ARG0",
+        code: terminal_arg0,
+    },
+    Terminal {
+        tid:  1u8,
+        name: "ARG1",
+        code: terminal_arg1,
+    },
 ];
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 64;
@@ -263,27 +282,26 @@ impl RunContext<'_> {
         let is_winner = self.hits == max_possible_hits;
         (f, is_winner)
     }
-//    pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType, arg3: GpType)
-//            -> GpType {
-//        let func_def_branch =
-//            self.func_def_branch.expect("branch not assigned for exec_adf0");
-//
-//        match self.adf0_args {
-//            None    => {
-//                self.adf0_args = Some(vec![ arg1, arg2, arg3 ]);
-//                let result = Tree::exec_node(self, &func_def_branch.root);
-//                self.adf0_args = None;
-//                result
-//            }
-//            Some(ref args) => {
-//                let (a,b,c) = (args[0], args[1], args[2]);
-//                let result = Tree::exec_node(self, &func_def_branch.root);
-//                self.adf0_args = Some(vec![ a, b, c ]);
-//                result
-//            }
-//        }
-//
-//    }
+    pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType, arg3: GpType)
+            -> GpType {
+        let func_def_branch =
+            self.opt_func_def_branch.expect("branch not assigned for exec_adf0");
+
+        match self.adf0_args {
+            None    => {
+                self.adf0_args = Some(vec![ arg1, arg2 ]);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.adf0_args = None;
+                result
+            },
+            Some(ref args) => {
+                let (a,b) = (args[0], args[1]);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.adf0_args = Some(vec![ a, b ]);
+                result
+            }
+        }
+    }
 
     // compute error for a single fitness case
     pub fn compute_error(&self, result: GpType) -> GpRaw {
