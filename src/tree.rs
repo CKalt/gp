@@ -518,6 +518,8 @@ impl Tree {
             }
         }
     }
+    /// get a random function node over all branches. return branch type and
+    /// ref to node.
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
@@ -540,14 +542,17 @@ impl Tree {
             }
         }
     }
+    /// get a random function node for specific branch. return ref to node.
     pub fn get_rnd_function_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let fi = self.get_rnd_function_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_function_node_ref(fi),
-//            FunctionDef0 => self.func_def_branch.root.find_function_node_ref(fi),
+            FunctionDef0 =>
+             self.opt_func_def_branch.root.unwrap().find_function_node_ref(fi),
         }
     }
+    /// get a random function index for a specific branch type.
     fn get_rnd_function_index_bt(&self, rng: &mut GpRng, b_type: &BranchType)
             -> TreeNodeIndex {
         let num_fnodes = self
@@ -556,6 +561,7 @@ impl Tree {
         assert_ne!(num_fnodes, 0);
         rng.gen_range(0..num_fnodes)
     }
+    /// get a random function index across all nodes
     fn get_rnd_function_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_fnodes = self
@@ -564,52 +570,73 @@ impl Tree {
 
         rng.gen_range(0..num_fnodes)
     }
+    /// get a random terminal node over all branches. return node index, branch
+    /// type and ref to node. Index sequence is in branch order major
+    /// adfN..adf0, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// first.
     pub fn get_rnd_terminal_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
+        match self.opt_func_def_branch {
+            // no adf case
+            None => (Result0,
+                self.result_branch.root.find_terminal_node_ref(ti))
+            // adf case
+            Some(func_def_branch) => {
+                let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
 
-        (Result0,
-            self.result_branch.root.find_terminal_node_ref(ti))
-
-//        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
-
-//        if ti < num_fd_branch_tnodes {
-//            (FunctionDef0, 
-//                self.func_def_branch.root.find_terminal_node_ref(ti))
-//        } else {
-//            (Result0,
-//                self.result_branch.root.find_terminal_node_ref(
-//                        ti - num_fd_branch_tnodes))
-//        }
+                if ti < num_fd_branch_tnodes {
+                    (FunctionDef0, 
+                        self.func_def_branch.root.find_terminal_node_ref(ti))
+                } else {
+                    (Result0,
+                        self.result_branch.root.find_terminal_node_ref(
+                                ti - num_fd_branch_tnodes))
+                }
+            }
+        }
     }
+    /// get a random terminal node for specific branch. return ref to node.
     pub fn get_rnd_terminal_node_ref_bt(&mut self,
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let ti = self.get_rnd_terminal_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_terminal_node_ref(ti),
-            //FunctionDef0 => self.func_def_branch.root.find_terminal_node_ref(ti),
+            FunctionDef0 =>
+                self.opt_func_def_branch.unwrap().root.find_terminal_node_ref(ti),
         }
     }
+    /// get a random terminal node over all branches. return node index, branch
+    /// type and ref to node. Index sequence is in branch order major
+    /// adfN..adf0, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// first.
     #[allow(dead_code)]
     pub fn get_rnd_terminal_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex,  BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
+        match self.opt_func_def_branch {
+            // no adf case
+            None =>
+                 (ti, Result0,
+                      self.result_branch.root.find_terminal_node_ref(ti))
+            // adf case
+            Some(func_def_branch) => {
+                let num_fd_branch_tnodes =
+                    self.func_def_branch.num_terminal_nodes.unwrap();
 
-         (ti, Result0,
-              self.result_branch.root.find_terminal_node_ref(ti))
-
-//        let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
-//
-//        if ti < num_fd_branch_tnodes {
-//            (ti, FunctionDef0, 
-//                self.func_def_branch.root.find_terminal_node_ref(ti))
-//        } else {
-//            let adj_ti = ti - num_fd_branch_tnodes;
-//            (adj_ti, Result0,
-//                self.result_branch.root.find_terminal_node_ref(adj_ti))
-//        }
+                if ti < num_fd_branch_tnodes {
+                    (ti, FunctionDef0, 
+                        self.func_def_branch.root.find_terminal_node_ref(ti))
+                } else {
+                    let adj_ti = ti - num_fd_branch_tnodes;
+                    (adj_ti, Result0,
+                        self.result_branch.root.find_terminal_node_ref(adj_ti))
+                }
+            }
+        }
     }
+    /// get a random terminal index for a specific branch type.
     fn get_rnd_terminal_index_bt(&self, rng: &mut GpRng, b_type: &BranchType)
             -> TreeNodeIndex {
         let num_tnodes = self
@@ -618,6 +645,7 @@ impl Tree {
 
         rng.gen_range(0..num_tnodes)
     }
+    /// get a random function index across all nodes
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_tnodes = self
@@ -626,13 +654,25 @@ impl Tree {
 
         rng.gen_range(0..num_tnodes)
     }
+    /// return true if depth of any branch in tree is greater than d.
     fn tree_depth_gt(&self, d: TreeDepth) -> bool {
-        self.result_branch.root.node_depth_gt(d, 1)
-//            || self.func_def_branch.root.node_depth_gt(d, 1)
+        if self.result_branch.root.node_depth_gt(d, 1) {
+            true
+        } else {
+            if Some(func_def_branch) = self.opt_func_def_branch {
+                func_def_branch.node_depth_gt(d, 1)
+            }
+            else {
+                false
+            }
+        }
     }
+    /// return true tree qualifies in population based on local (self only)
+    /// metrics
     pub fn qualifies(&self) -> bool {
         !self.tree_depth_gt(CONTROL.Dc)
     }
+    /// execute a single tree and print results.
     pub fn print_exec_one(&mut self) {
         self.print();
         let mut rc = RunContext::new();
@@ -642,7 +682,9 @@ impl Tree {
         let mut sum_hits: GpHits = 0;
         let mut sum_error: GpRaw = 0;
 
-//        rc.func_def_branch = Some(&self.func_def_branch);
+        if self.opt_func_def_branch != None {
+            rc.func_def_branch = Some(&self.func_def_branch);
+        }
         for fc_i in 0..rc.fitness_cases.len() {
             rc.cur_fc = fc_i;
             let result = Tree::exec_node(&mut rc, &self.result_branch.root);
@@ -654,7 +696,9 @@ impl Tree {
                 sum_hits += 1;
             }
         }
-//        rc.func_def_branch = None;
+        if self.opt_func_def_branch != None {
+            rc.func_def_branch = None;
+        }
 
         rc.hits = sum_hits;
         rc.error = sum_error;
@@ -666,6 +710,7 @@ impl Tree {
         }
         rc.print_run_illustration("After Run");
     }
+    /// print results for a single tree.
     pub fn print_result(&self, opt_gen: Option<u16>, avg_raw_f: GpFloat) {
         let f = &self.fitness;
         let tfid = if let Some(num) = self.tfid { num } else { 0 };
@@ -677,6 +722,7 @@ impl Tree {
                     tfid, self.tcid, self.fitness.hits, f.r, f.s, f.a(), f.n(), f.nfr(), avg_raw_f);
         }
     }
+    /// print tree result header
     pub fn print_result_header(opt_gen: Option<u16>, hits: &GpHits) {
         println!("{}={}", RunContext::get_hits_label(), *hits);
         if let Some(_) = opt_gen {
