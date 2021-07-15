@@ -388,7 +388,7 @@ impl RunContext<'_> {
                 let result = Tree::exec_node(self, &func_def_branch.root);
                 self.adf0_args = None;
                 result
-            }
+            },
             Some(ref args) => {
                 let (a,b,c) = (args[0], args[1], args[2]);
                 let result = Tree::exec_node(self, &func_def_branch.root);
