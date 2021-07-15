@@ -382,7 +382,7 @@ impl Tree {
         }
     }
     pub fn clone(&self) -> Tree {
-        match self.opt_func_def_branch {
+        match &self.opt_func_def_branch {
             // no adf case
             None =>
                 Tree { 
@@ -407,12 +407,13 @@ impl Tree {
     pub fn get_num_function_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_function_nodes,
-            FunctionDef0 =>  self.opt_func_def_branch.unwrap().num_function_nodes,
+            FunctionDef0 =>  
+                self.opt_func_def_branch.as_ref().unwrap().num_function_nodes,
         }
     }
     /// Get total num function nodes across all branches
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        match self.opt_func_def_branch {
+        match &self.opt_func_def_branch {
             // no adf case (just pass through result branch node count)
             None => self.result_branch.num_function_nodes,
             // adf case - unwrap branches and reassemble optional (some) total
@@ -431,13 +432,14 @@ impl Tree {
     /// Get num terminal nodes for a specific branch 
     pub fn get_num_terminal_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
-            Result0      =>  self.result_branch.num_terminal_nodes,
-            FunctionDef0 =>  self.opt_func_def_branch.unwrap().num_terminal_nodes,
+            Result0      => self.result_branch.num_terminal_nodes,
+            FunctionDef0 => self.opt_func_def_branch.as_ref()
+                .unwrap().num_terminal_nodes,
         }
     }
     /// Get total num terminal nodes across all branches
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
-        match self.opt_func_def_branch {
+        match &self.opt_func_def_branch {
             // no adf case
             None => Some(self.result_branch.num_terminal_nodes.unwrap()),
             // adf case
@@ -451,7 +453,7 @@ impl Tree {
     /// clear node counts across all branches
     pub fn clear_node_counts(&mut self) {
         self.result_branch.clear_node_counts(); // for adf and no-adf cases
-        if let Some(func_def_branch) = self.opt_func_def_branch {
+        if let Some(func_def_branch) = &mut self.opt_func_def_branch {
             // adf case only
             func_def_branch.clear_node_counts();
         }
@@ -459,7 +461,7 @@ impl Tree {
     /// count nodes across all branches
     pub fn count_nodes(&mut self) {
         self.result_branch.count_nodes(); // for adf and no-adf cases
-        if let Some(func_def_branch) = self.opt_func_def_branch {
+        if let Some(func_def_branch) = &mut self.opt_func_def_branch {
             // adf case only
             func_def_branch.count_nodes();
         }
@@ -479,7 +481,7 @@ impl Tree {
 
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
             self.get_num_terminal_nodes());
-        if let Some(func_def_branch) = self.opt_func_def_branch {
+        if let Some(func_def_branch) = &self.opt_func_def_branch {
             println!("Function Def Branch0:");
             func_def_branch.root.print();
         }
@@ -496,7 +498,7 @@ impl Tree {
         -> (TreeNodeIndex, BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
 
-        match self.opt_func_def_branch {
+        match &mut self.opt_func_def_branch {
             // no adf case
             None =>
                 (fi, Result0,
@@ -522,7 +524,7 @@ impl Tree {
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
-        match self.opt_func_def_branch {
+        match &mut self.opt_func_def_branch {
             // no adf case
             None =>
                 (Result0, self.result_branch.root.find_function_node_ref(fi)),

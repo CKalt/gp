@@ -15,6 +15,8 @@ use gprng::GpRng;
 use gprng::GpRngFactory;
 use fitness::GpHits;
 
+use BranchType::*;
+
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         hits: &GpHits) -> () {
     if CONTROL.show_all_trees {
@@ -103,8 +105,8 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 
         println!("\n--------\nRnd fi={} Subtree of {} Branch Type -->\n", fi,
             match bt {
-                BranchType::Result0 => "Result",
-//                BranchType::FunctionDef0 => "Function Def",
+                Result0 => "Result",
+                FunctionDef0 => "Function Def",
             });
         fnode.print();
 
