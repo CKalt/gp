@@ -549,9 +549,8 @@ impl Tree {
         let fi = self.get_rnd_function_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_function_node_ref(fi),
-            FunctionDef0 =>
-                self.opt_func_def_branch.unwrap()
-                    .root.find_function_node_ref(fi),
+            FunctionDef0 => self.opt_func_def_branch
+                .as_mut().unwrap().root.find_function_node_ref(fi),
         }
     }
     /// get a random function index for a specific branch type.
@@ -579,7 +578,7 @@ impl Tree {
     pub fn get_rnd_terminal_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        match self.opt_func_def_branch {
+        match &mut self.opt_func_def_branch {
             // no adf case
             None => (Result0,
                 self.result_branch.root.find_terminal_node_ref(ti)),
@@ -605,8 +604,8 @@ impl Tree {
         let ti = self.get_rnd_terminal_index_bt(rng, b_type);
         match b_type {
             Result0 => self.result_branch.root.find_terminal_node_ref(ti),
-            FunctionDef0 =>
-                self.opt_func_def_branch.unwrap().root.find_terminal_node_ref(ti),
+            FunctionDef0 => self.opt_func_def_branch.as_mut().unwrap()
+                .root.find_terminal_node_ref(ti),
         }
     }
     /// get a random terminal node over all branches. return node index, branch
@@ -618,7 +617,7 @@ impl Tree {
             rng: &mut GpRng)
         -> (TreeNodeIndex,  BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        match self.opt_func_def_branch {
+        match &mut self.opt_func_def_branch {
             // no adf case
             None =>
                  (ti, Result0,
@@ -662,7 +661,7 @@ impl Tree {
         if self.result_branch.root.node_depth_gt(d, 1) {
             true
         } else {
-            if let Some(func_def_branch) = self.opt_func_def_branch {
+            if let Some(func_def_branch) = &self.opt_func_def_branch {
                 func_def_branch.root.node_depth_gt(d, 1)
             }
             else {
@@ -685,7 +684,7 @@ impl Tree {
         let mut sum_hits: GpHits = 0;
         let mut sum_error: GpRaw = 0;
 
-        if let Some(func_def_branch) = self.opt_func_def_branch {
+        if let Some(func_def_branch) = &self.opt_func_def_branch {
             rc.opt_func_def_branch = Some(&func_def_branch);
         }
         for fc_i in 0..rc.fitness_cases.len() {

@@ -31,13 +31,13 @@ impl TreeSet {
     }
     fn tree_match(t1: &Tree, t2: &Tree) -> bool {
         if t1.result_branch.root.deep_match(&t2.result_branch.root) {
-            match t1.opt_func_def_branch {
+            match &t1.opt_func_def_branch {
                 // no adf case
                 None => true,
                 // adf case
                 Some(func_def_branch) => {
                     func_def_branch.root.deep_match(
-                        &t2.opt_func_def_branch.unwrap().root
+                        &t2.opt_func_def_branch.as_ref().unwrap().root
                     )
                 },
             }
@@ -267,7 +267,7 @@ impl TreeSet {
             // init accumulators
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0;
-            if let Some(func_def_branch) = tree.opt_func_def_branch {
+            if let Some(func_def_branch) = &tree.opt_func_def_branch {
                 rc.opt_func_def_branch = Some(&func_def_branch);
             }
             for fc_i in 0..rc.fitness_cases.len() {
