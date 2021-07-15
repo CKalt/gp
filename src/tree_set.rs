@@ -25,13 +25,26 @@ impl TreeSet {
         TreeSet {
             winning_index:  None,
             avg_raw_f:      0.0,
-            tree_vec:       Vec::new(), // TODO: for better performance change to array (must find good init method)
+            tree_vec:       Vec::new(),
             gen:            gen
         }
     }
     fn tree_match(t1: &Tree, t2: &Tree) -> bool {
-        t1.result_branch.root.deep_match(&t2.result_branch.root) 
-//            && t1.func_def_branch.root.deep_match(&t2.func_def_branch.root)
+        if (t1.result_branch.root.deep_match(&t2.result_branch.root)) {
+            match t1.opt_func_def_branch {
+                // no adf case
+                None => true,
+                // adf case
+                Some(func_def_branch) => {
+                    func_def_branch.root.deep_match(
+                        &t2.opt_func_def_branch.unwrap().root)
+                    )
+                },
+            }
+        }
+        else {
+            false
+        }
     }
     fn tree_match_exists(&self, target_tree: &Tree) -> bool {
         for tree in self.tree_vec.iter() {
@@ -47,13 +60,16 @@ impl TreeSet {
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-//        let mut func_def_branch_root =
-//            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
-//        Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
-//                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
-
-//        Tree::new(result_branch_root, func_def_branch_root)
-        Tree::new(result_branch_root)
+        if CONTROL.num_terminals_func_def_branch > 0 {
+            let mut func_def_branch_root =
+                FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+            Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
+                    &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+            Tree::new(result_branch_root, Some(func_def_branch_root))
+        }
+        else {
+            Tree::new(result_branch_root, None)
+        }
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
@@ -85,13 +101,17 @@ impl TreeSet {
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-//        let mut func_def_branch_root =
-//            FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
-//        Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
-//                &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+        if CONTROL.num_terminals_func_def_branch > 0 {
+            let mut func_def_branch_root =
+                FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+            Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
+                    &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
 
-//        Tree::new(result_branch_root, func_def_branch_root)
-        Tree::new(result_branch_root)
+            Tree::new(result_branch_root, Some(func_def_branch_root))
+        }
+        else {
+            Tree::new(result_branch_root, None)
+        }
     }
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,

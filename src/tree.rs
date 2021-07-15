@@ -413,10 +413,9 @@ impl Tree {
     /// Get total num function nodes across all branches
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
         match self.opt_func_def_branch {
-            // no adf case
-            None =>
-                Some(self.result_branch.num_function_nodes),
-            // adf case
+            // no adf case (just pass through result branch node count)
+            None => self.result_branch.num_function_nodes,
+            // adf case - unwrap branches and reassemble optional (some) total
             Some(func_def_branch) =>
                 if self.result_branch.num_function_nodes == None &&
                    func_def_branch.num_function_nodes == None
@@ -440,7 +439,7 @@ impl Tree {
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
         match self.opt_func_def_branch {
             // no adf case
-            None => Some(self.result_branch.num_terminal_nodes.unwrap())
+            None => Some(self.result_branch.num_terminal_nodes.unwrap()),
             // adf case
             Some(func_def_branch) => {
                 let num_tnodes1 = self.result_branch.num_terminal_nodes.unwrap();
@@ -452,7 +451,7 @@ impl Tree {
     /// clear node counts across all branches
     pub fn clear_node_counts(&mut self) {
         self.result_branch.clear_node_counts(); // for adf and no-adf cases
-        if let self.opt_func_def_branch = Some(func_def_branch) {
+        if let Some(func_def_branch) = self.opt_func_def_branch {
             // adf case only
             func_def_branch.clear_node_counts();
         }
@@ -460,7 +459,7 @@ impl Tree {
     /// count nodes across all branches
     pub fn count_nodes(&mut self) {
         self.result_branch.count_nodes(); // for adf and no-adf cases
-        if let self.opt_func_def_branch = Some(func_def_branch) {
+        if let Some(func_def_branch) = self.opt_func_def_branch {
             // adf case only
             func_def_branch.count_nodes();
         }
@@ -480,7 +479,7 @@ impl Tree {
 
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
             self.get_num_terminal_nodes());
-        if let self.opt_func_def_branch = Some(func_def_branch) {
+        if let Some(func_def_branch) = self.opt_func_def_branch {
             println!("Function Def Branch0:");
             func_def_branch.root.print();
         }
@@ -501,15 +500,15 @@ impl Tree {
             // no adf case
             None =>
                 (fi, Result0,
-                    self.result_branch.root.find_function_node_ref(fi))
+                    self.result_branch.root.find_function_node_ref(fi)),
             // adf case
             Some(func_def_branch) => {
                 let num_fd_branch_fnodes =
-                    self.func_def_branch.num_function_nodes.unwrap();
+                    func_def_branch.num_function_nodes.unwrap();
 
                 if fi < num_fd_branch_fnodes {
                     (fi,FunctionDef0, 
-                        self.func_def_branch.root.find_function_node_ref(fi))
+                        func_def_branch.root.find_function_node_ref(fi))
                 } else {
                     let adj_fi = fi - num_fd_branch_fnodes;
                     (adj_fi, Result0,
@@ -526,15 +525,15 @@ impl Tree {
         match self.opt_func_def_branch {
             // no adf case
             None =>
-                (Result0, self.result_branch.root.find_function_node_ref(fi))
+                (Result0, self.result_branch.root.find_function_node_ref(fi)),
             // adf case
             Some(func_def_branch) => {
                 let num_fd_branch_fnodes =
-                    self.func_def_branch.num_function_nodes.unwrap();
+                    func_def_branch.num_function_nodes.unwrap();
 
                 if fi < num_fd_branch_fnodes {
                     (FunctionDef0, 
-                        self.func_def_branch.root.find_function_node_ref(fi))
+                        func_def_branch.root.find_function_node_ref(fi))
                 } else {
                     (Result0, self.result_branch.root.find_function_node_ref(
                         fi - num_fd_branch_fnodes))
@@ -549,7 +548,8 @@ impl Tree {
         match b_type {
             Result0 => self.result_branch.root.find_function_node_ref(fi),
             FunctionDef0 =>
-             self.opt_func_def_branch.root.unwrap().find_function_node_ref(fi),
+                self.opt_func_def_branch.unwrap()
+                    .root.find_function_node_ref(fi),
         }
     }
     /// get a random function index for a specific branch type.
@@ -580,14 +580,15 @@ impl Tree {
         match self.opt_func_def_branch {
             // no adf case
             None => (Result0,
-                self.result_branch.root.find_terminal_node_ref(ti))
+                self.result_branch.root.find_terminal_node_ref(ti)),
             // adf case
             Some(func_def_branch) => {
-                let num_fd_branch_tnodes = self.func_def_branch.num_terminal_nodes.unwrap();
+                let num_fd_branch_tnodes =
+                    func_def_branch.num_terminal_nodes.unwrap();
 
                 if ti < num_fd_branch_tnodes {
                     (FunctionDef0, 
-                        self.func_def_branch.root.find_terminal_node_ref(ti))
+                        func_def_branch.root.find_terminal_node_ref(ti))
                 } else {
                     (Result0,
                         self.result_branch.root.find_terminal_node_ref(
@@ -619,15 +620,15 @@ impl Tree {
             // no adf case
             None =>
                  (ti, Result0,
-                      self.result_branch.root.find_terminal_node_ref(ti))
+                      self.result_branch.root.find_terminal_node_ref(ti)),
             // adf case
             Some(func_def_branch) => {
                 let num_fd_branch_tnodes =
-                    self.func_def_branch.num_terminal_nodes.unwrap();
+                    func_def_branch.num_terminal_nodes.unwrap();
 
                 if ti < num_fd_branch_tnodes {
                     (ti, FunctionDef0, 
-                        self.func_def_branch.root.find_terminal_node_ref(ti))
+                        func_def_branch.root.find_terminal_node_ref(ti))
                 } else {
                     let adj_ti = ti - num_fd_branch_tnodes;
                     (adj_ti, Result0,
@@ -659,8 +660,8 @@ impl Tree {
         if self.result_branch.root.node_depth_gt(d, 1) {
             true
         } else {
-            if Some(func_def_branch) = self.opt_func_def_branch {
-                func_def_branch.node_depth_gt(d, 1)
+            if let Some(func_def_branch) = self.opt_func_def_branch {
+                func_def_branch.root.node_depth_gt(d, 1)
             }
             else {
                 false
@@ -682,8 +683,8 @@ impl Tree {
         let mut sum_hits: GpHits = 0;
         let mut sum_error: GpRaw = 0;
 
-        if self.opt_func_def_branch != None {
-            rc.func_def_branch = Some(&self.func_def_branch);
+        if let Some(func_def_branch) = self.opt_func_def_branch {
+            rc.opt_func_def_branch = Some(&func_def_branch);
         }
         for fc_i in 0..rc.fitness_cases.len() {
             rc.cur_fc = fc_i;
@@ -696,8 +697,8 @@ impl Tree {
                 sum_hits += 1;
             }
         }
-        if self.opt_func_def_branch != None {
-            rc.func_def_branch = None;
+        if let Some(_) = rc.opt_func_def_branch {
+            rc.opt_func_def_branch = None;
         }
 
         rc.hits = sum_hits;

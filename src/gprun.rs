@@ -3,7 +3,7 @@ use crate::tree::Tree;
 use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
-//use crate::tree::TreeBranch;
+use crate::tree::TreeBranch;
 use crate::control::CONTROL;
 
 use crate::fitness::GpFloat;
@@ -125,32 +125,15 @@ pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_bran
     },
 ];
 
-//pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
+pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
+// Example:
 //    Function {
 //        fid:  0u8,
 //        name: "+",
 //        arity: 2,
 //        code: function_add,
 //    },
-//    Function {
-//        fid:  1u8,
-//        name: "-",
-//        arity: 2,
-//        code: function_sub,
-//    },
-//    Function {
-//        fid:  2u8,
-//        name: "*",
-//        arity: 2,
-//        code: function_mult,
-//    },
-//    Function {
-//        fid:  3u8,
-//        name: "%",
-//        arity: 2,
-//        code: function_prot_div,
-//    },
-//];
+];
 
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
 pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_branch as usize] = [
@@ -187,23 +170,14 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_bran
 ];
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
-//pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
+pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
+// Example:
 //    Terminal {
 //        tid:  0u8,
 //        name: "ARG0",
 //        code: terminal_arg0,
 //    },
-//    Terminal {
-//        tid:  1u8,
-//        name: "ARG1",
-//        code: terminal_arg1,
-//    },
-//    Terminal {
-//        tid:  2u8,
-//        name: "ARG2",
-//        code: terminal_arg2,
-//    },
-//];
+];
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize = 64;
 
@@ -224,23 +198,20 @@ impl FitnessCase {
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
 /// where it can then access it's fitness case data and currency values.
-//pub struct RunContext<'a> {
-pub struct RunContext {
+pub struct RunContext<'a> {
     pub fitness_cases: Vec::<FitnessCase>,
-//    pub func_def_branch: Option<&'a TreeBranch>, // used for calling adf0
-//    pub adf0_args: Option<Vec<GpType>>,
+    pub opt_func_def_branch: Option<&'a TreeBranch>, // used for calling adf0
+    pub opt_adf0_args: Option<Vec<GpType>>,
     pub cur_fc: usize,
     pub hits: GpHits,
     pub error: GpRaw,
 }
-//impl RunContext<'_> {
-impl RunContext {
-//    pub fn new() -> RunContext<'static> {
-    pub fn new() -> RunContext {
+impl RunContext<'_> {
+    pub fn new() -> RunContext<'static> {
         let mut rc = RunContext {
             cur_fc: 0,
-//            func_def_branch: None,
-//            adf0_args: None,
+            opt_func_def_branch: None,
+            opt_adf0_args: None,
             fitness_cases: Vec::new(),
             hits: 0,
             error: 0
