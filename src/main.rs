@@ -6,6 +6,9 @@ mod control;
 mod gprng;
 mod util;
 
+#[cfg(test)]
+mod test;
+
 use gprun::*;
 use tree::*;
 use tree_set::*;

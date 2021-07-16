@@ -750,5 +750,9 @@ impl Tree {
             }
         }
     }
+    #[inline(always)]
+    pub fn exec_tree(&self, rc: &mut RunContext) -> GpType {
+        Self::exec_node(rc, &self.result_branch.root)
+    }
 }
 

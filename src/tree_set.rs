@@ -272,7 +272,8 @@ impl TreeSet {
             }
             for fc_i in 0..rc.fitness_cases.len() {
                 rc.cur_fc = fc_i;
-                let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
+//                let result = Tree::exec_node(&mut rc, &tree.result_branch.root);
+                let result = tree.exec_tree(&mut rc);
 
                 let error = rc.compute_error(result);
                 sum_error += error;
