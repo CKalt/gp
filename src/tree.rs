@@ -754,5 +754,18 @@ impl Tree {
     pub fn exec_tree(&self, rc: &mut RunContext) -> GpType {
         Self::exec_node(rc, &self.result_branch.root)
     }
+    #[cfg(test)]
+    pub fn parse(_rb0: &str, _fdb0: &str) -> Tree {
+        // just a stub for now. 
+        Tree {
+            tfid: None,
+            tcid: 0,
+            fitness: Fitness::new(),
+            result_branch: TreeBranch::new(
+                FunctionNode::new(0, &FUNCTIONS_RESULT_BRANCH)
+            ),
+            opt_func_def_branch: None,  // i.e. no-adf
+        }
+    }
 }
 

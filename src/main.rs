@@ -7,7 +7,7 @@ mod gprng;
 mod util;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 use gprun::*;
 use tree::*;
