@@ -77,14 +77,14 @@ fn terminal_d5(rc: &RunContext) -> GpType {
 }
 
 fn terminal_arg0(rc: &RunContext) -> GpType {
-     match rc.adf0_args {
+     match rc.opt_adf0_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[0],
     }
 }
 
 fn terminal_arg1(rc: &RunContext) -> GpType {
-    match rc.adf0_args {
+    match rc.opt_adf0_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[1],
     }
@@ -282,22 +282,23 @@ impl RunContext<'_> {
         let is_winner = self.hits == max_possible_hits;
         (f, is_winner)
     }
-    pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType, arg3: GpType)
+    pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType)
             -> GpType {
         let func_def_branch =
             self.opt_func_def_branch.expect("branch not assigned for exec_adf0");
 
-        match self.adf0_args {
+        match self.opt_adf0_args {
             None    => {
-                self.adf0_args = Some(vec![ arg1, arg2 ]);
+                self.opt_adf0_args = Some(vec![ arg1, arg2 ]);
                 let result = Tree::exec_node(self, &func_def_branch.root);
-                self.adf0_args = None;
+                self.opt_adf0_args = None;
                 result
             },
             Some(ref args) => {
                 let (a,b) = (args[0], args[1]);
+                self.opt_adf0_args = Some(vec![ arg1, arg2 ]);
                 let result = Tree::exec_node(self, &func_def_branch.root);
-                self.adf0_args = Some(vec![ a, b ]);
+                self.opt_adf0_args = Some(vec![ a, b ]);
                 result
             }
         }
