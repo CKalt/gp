@@ -1,3 +1,4 @@
+extern crate gp;
 mod gprun;
 mod fitness;
 mod tree;
