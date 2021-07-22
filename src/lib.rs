@@ -9,13 +9,13 @@ pub mod parsers {
     };
 
     #[derive(Debug)]
-    pub enum ParsedSNode {
-        Term(String),
-        Func(String, Vec<ParsedSNode>),
+    pub enum ParsedSNode<'a> {
+        Term(&'a str),
+        Func(&'a str, Vec<ParsedSNode<'a>>),
     }
     use ParsedSNode::*;
 
-    pub type ParsedArgs = Vec<ParsedSNode>;
+    pub type ParsedArgs<'a> = Vec<ParsedSNode<'a>>;
 
     pub fn parse_sexpr(input: &str) -> IResult<&str, ParsedSNode> {
         alt(
@@ -30,7 +30,7 @@ pub mod parsers {
         preceded(
             skip_spaces,
             alphanumeric1,
-        )(input).map(|(input, output)| (input, Term(output.to_string())))
+        )(input).map(|(input, output)| (input, Term(output)))
     }
 
     pub fn parse_func_node(input: &str) -> IResult<&str, ParsedSNode> {
@@ -49,14 +49,14 @@ pub mod parsers {
 
     pub fn parse_func_call(input: &str) -> IResult<&str, ParsedSNode> {
         pair(parse_func_name, parse_func_args)(input).map(|(input, output)|
-            (input, Func(output.0.to_string(), output.1)))
+            (input, Func(output.0, output.1)))
     }
 
-    pub fn parse_func_name(input: &str) -> IResult<&str, String> {
+    pub fn parse_func_name(input: &str) -> IResult<&str, &str> {
         preceded(
             skip_spaces,
             alphanumeric1,
-        )(input).map(|(input, output)| (input, output.to_string()))
+        )(input)
     }
 
     pub fn parse_func_args(input: &str) -> IResult<&str, ParsedArgs> {
