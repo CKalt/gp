@@ -332,8 +332,12 @@ mod tests {
         // result branch:
         //     (OR (ADF0 true true) false)
         // exec_tree s/b: true
-        let _tree = Tree::parse("(OR (ADF0 true true) false)",
-                               "(AND ARG0 ARG1)");
+        let tree = Tree::parse(("(OR (ADF0 true true) false)",
+                                    &FUNCTIONS_RESULT_BRANCH,
+                                    &TERMINALS_RESULT_BRANCH), // result branch 0
+                               ("(AND ARG0 ARG1)",
+                                    &FUNCTIONS_FUNC_DEF_BRANCH,
+                                    &TERMINALS_FUNC_DEF_BRANCH)); // func def branch 0
 
         let mut rc = RunContext::new();
         rc.cur_fc = 0;

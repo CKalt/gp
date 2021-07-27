@@ -8,6 +8,11 @@ use crate::control::TreeDepth;
 use crate::gprng::GpRng;
 use rand::Rng;
 
+#[cfg(test)]
+use gp::parsers::parse_sexpr;
+#[cfg(test)]
+use gp::parsers::ParsedNode::*;
+
 use Node::*;
 
 type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
@@ -27,7 +32,7 @@ impl Winner {
 }
 
 pub enum Node {
-    TNode(& 'static Terminal), // Terminal nodes are borrowed references
+    TNode(& 'static Terminal), // Terminal nodes are borrowed static references
     FNode(FunctionNode),  // Function nodes are not references, they are owners.
 }
 impl Node {
@@ -41,6 +46,29 @@ impl Node {
         else {
             let rand_fid = r - terms.len() as u8;
             FNode(FunctionNode::new(rand_fid, funcs))
+        }
+    }
+    #[cfg(test)]
+    // performs a deep (recusrive) build of node tree from parsed input.
+    pub fn deep_new_from_parse_tree(parsed_node: &ParsedNode,
+            funcs: &'static [Function], terms: &'static [Terminal]) -> Node {
+        match parsed_node {
+            Term(t_str) => {
+                TNode(Terminal::get_ref_by_name(t_str, terms))
+            },
+            Func(f_str, f_args) => {
+                let func_node = FunctionNode::new_by_name(f_str, funcs);
+                for (i, arg) in f_args.iter().enumerate() {
+                    if i > func_node.fnc.arity {
+                        panic!("More args parsed than function supports.",
+                            func_node.fnc.name);
+                    } else {
+                        func_node.set_arg(i, 
+                            Self::deep_new_from_parse_tree(arg, funcs, terms));
+                    }
+                }
+                FNode(func_node)
+            },
         }
     }
     fn clone(&self) -> Node {
@@ -240,6 +268,10 @@ impl Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
         &terms[t_id as usize]
     }
+    pub fn get_ref_by_name(t_name: &str, terms: &'static [Terminal])
+        -> &'static Terminal {
+        (UC)
+    }
 }
 
 pub struct FunctionNode {
@@ -256,6 +288,9 @@ impl FunctionNode {
             fnc:    fref,
             branch: Vec::new()
         }
+    }
+    fn new_by_name(f_name: &str, funcs: &'static [Function]) -> FunctionNode {
+        (UC)
     }
 
     fn clone(&self) -> FunctionNode {
@@ -754,8 +789,89 @@ impl Tree {
     pub fn exec_tree(&self, rc: &mut RunContext) -> GpType {
         Self::exec_node(rc, &self.result_branch.root)
     }
+
     #[cfg(test)]
-    pub fn parse(_rb0: &str, _fdb0: &str) -> Tree {
+    pub fn parse_node(node: ParsedNode) {
+        let mut result_branch_root =
+            match rb_node {
+                Term(t_str) => {
+                    TNode(Terminal::get_ref_by_name(t_str, rb0_terms))
+                },
+                Func(f_str, f_args) => {
+                    let root_node = FunctionNode::new_by_name(f_str, rb0_funcs);
+                    for arg in f_args.iter() {
+
+                    }
+                },
+            }
+
+    }
+
+
+    #[cfg(test)]
+    pub fn parse( rb0: (&str, &'static [Function], &'static [Terminal]),
+                 fdb0: (&str, &'static [Function], &'static [Terminal])) 
+            -> Tree {
+        // There always is a result branch and we parse that first.
+        let (rb0_s, rb0_funcs, rb0_terms) = rb0; // result branch 0
+        let rb_result = parse_sexpr(rb0_s);
+        let rb_node = match rb_result {
+            Ok(parsed_tuple) => parsed_tuple.1,
+            Err(error) => panic!("cannot parse result branch: {:?}", error),
+        }
+
+        let mut result_branch_root = 
+            Node::deep_new_from_parse_tree(&rb_node, rb0_terms, rb0_funcs);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        let (fd0_s, fd0_funcs, fd0_terms) = fd0; // func def branch 0
+        let fd_result = parse_sexpr(fd0_s);
+        let fd_node = match fd_result {
+            Ok(parsed_tuple) => parsed_tuple.1,
+            Err(error) => panic!("cannot parse result branch: {:?}", error),
+        }
+
+        match rb_node {
+            Term(t_str) => {
+                TNode(Terminal::get_ref_by_name(t_str, rb0_terms))
+            },
+            Func(f_str, f_args) => {
+                let root_node = FunctionNode::new_by_name(f_str, rb0_funcs);
+                parse_func_node(
+
+            },
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // just a stub for now. 
         Tree {
             tfid: None,
