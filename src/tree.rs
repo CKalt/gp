@@ -11,7 +11,9 @@ use rand::Rng;
 #[cfg(test)]
 use gp::parsers::parse_sexpr;
 #[cfg(test)]
-use gp::parsers::ParsedNode::*;
+use gp::parsers::ParsedSNode;
+#[cfg(test)]
+use gp::parsers::ParsedSNode::*;
 
 use Node::*;
 
@@ -50,20 +52,21 @@ impl Node {
     }
     #[cfg(test)]
     // performs a deep (recusrive) build of node tree from parsed input.
-    pub fn deep_new_from_parse_tree(parsed_node: &ParsedNode,
+    pub fn deep_new_from_parse_tree(parsed_node: &ParsedSNode,
             funcs: &'static [Function], terms: &'static [Terminal]) -> Node {
         match parsed_node {
             Term(t_str) => {
                 TNode(Terminal::get_ref_by_name(t_str, terms))
             },
             Func(f_str, f_args) => {
-                let func_node = FunctionNode::new_by_name(f_str, funcs);
+                let mut func_node = FunctionNode::new_by_name(f_str, funcs);
                 for (i, arg) in f_args.iter().enumerate() {
-                    if i > func_node.fnc.arity {
+                    if i > func_node.fnc.arity.into() {
                         panic!("More args parsed than function supports. fname={}",
                             func_node.fnc.name);
                     } else {
-                        func_node.set_arg(i, 
+                        use std::convert::TryInto;
+                        func_node.set_arg(i.try_into().unwrap(), 
                             Self::deep_new_from_parse_tree(arg, funcs, terms));
                     }
                 }
@@ -372,9 +375,9 @@ pub struct TreeBranch {
     pub num_terminal_nodes: Option<TreeNodeIndex>,
 }
 impl TreeBranch {
-    fn new(root: FunctionNode) -> TreeBranch {
+    fn new(root: Node) -> TreeBranch {
         TreeBranch{
-            root: FNode(root),
+            root: root,
             num_function_nodes: None,     // None until count_nodes is called
             num_terminal_nodes: None,     // None until count_nodes is called
         }
@@ -409,8 +412,8 @@ pub struct Tree {
 }
 impl Tree {
     /// new Tree is constructed with an optional func def branch. 
-    pub fn new(result_branch_root: FunctionNode,
-            opt_func_def_branch_root: Option<FunctionNode>) -> Tree {
+    pub fn new(result_branch_root: Node,
+            opt_func_def_branch_root: Option<Node>) -> Tree {
         match opt_func_def_branch_root {
             // no adf case
             None =>
@@ -819,11 +822,11 @@ impl Tree {
                 Err(error) => panic!("cannot parse result branch: {:?}", error),
             };
 
-        let mut result_branch_root = 
-            Node::deep_new_from_parse_tree(&rb_node, rb0_terms, rb0_funcs);
+        let result_branch_root = 
+            Node::deep_new_from_parse_tree(&rb_node, rb0_funcs, rb0_terms);
 
         // There may or may not be a func def branch 
-        let mut opt_func_def_branch_root = 
+        let opt_func_def_branch_root = 
             if CONTROL.num_terminals_func_def_branch > 0 {
                 let (fd0_s, fd0_funcs, fd0_terms) = opt_fdb0.unwrap(); // func def branch 0
                 let fd_result = parse_sexpr(fd0_s);
@@ -832,9 +835,9 @@ impl Tree {
                         Ok(parsed_tuple) => parsed_tuple.1,
                         Err(error) => panic!("cannot parse result branch: {:?}", error),
                     };
-                Some(Node::deep_new_from_parse_tree(&fd_node, fd0_terms, fd0_funcs))
+                Some(Node::deep_new_from_parse_tree(&fd_node, fd0_funcs, fd0_terms))
             } else {
-                assert_eq(opt_fdb0, None);
+                assert!(opt_fdb0.is_none());
                 None
             };
 

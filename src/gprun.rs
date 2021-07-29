@@ -324,6 +324,8 @@ pub fn init_run() { }
 mod tests {
     use crate::RunContext;
     use crate::Tree;
+    use super::*;
+
     #[test]
     fn test_exec_tree() {
         // first build this test tree:
@@ -341,6 +343,6 @@ mod tests {
 
         let mut rc = RunContext::new();
         rc.cur_fc = 0;
-        //assert_eq!(tree.exec_tree(&mut rc), true);
+        assert_eq!(tree.exec_tree(&mut rc), true);
     }
 }

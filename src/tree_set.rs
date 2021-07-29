@@ -65,10 +65,10 @@ impl TreeSet {
                 FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
             Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
                     &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
-            Tree::new(result_branch_root, Some(func_def_branch_root))
+            Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
         }
         else {
-            Tree::new(result_branch_root, None)
+            Tree::new(FNode(result_branch_root), None)
         }
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
@@ -107,10 +107,10 @@ impl TreeSet {
             Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
                     &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
 
-            Tree::new(result_branch_root, Some(func_def_branch_root))
+            Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
         }
         else {
-            Tree::new(result_branch_root, None)
+            Tree::new(FNode(result_branch_root), None)
         }
     }
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
