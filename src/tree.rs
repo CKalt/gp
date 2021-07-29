@@ -60,7 +60,7 @@ impl Node {
                 let func_node = FunctionNode::new_by_name(f_str, funcs);
                 for (i, arg) in f_args.iter().enumerate() {
                     if i > func_node.fnc.arity {
-                        panic!("More args parsed than function supports.",
+                        panic!("More args parsed than function supports. fname={}",
                             func_node.fnc.name);
                     } else {
                         func_node.set_arg(i, 
@@ -268,9 +268,15 @@ impl Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
         &terms[t_id as usize]
     }
+    #[cfg(test)]
     pub fn get_ref_by_name(t_name: &str, terms: &'static [Terminal])
         -> &'static Terminal {
-        (UC)
+        for t in terms.iter() {
+            if t.name.eq(t_name) {
+                return t
+            }
+        }
+        panic!("failed to get term ref by name={}", t_name);
     }
 }
 
@@ -289,10 +295,20 @@ impl FunctionNode {
             branch: Vec::new()
         }
     }
+    #[cfg(test)]
     fn new_by_name(f_name: &str, funcs: &'static [Function]) -> FunctionNode {
-        (UC)
+        for f in funcs {
+            if f.name.eq(f_name) {
+                return
+                    FunctionNode {
+                        fid:    f.fid,
+                        fnc:    f,
+                        branch: Vec::new()
+                    }
+            }
+        }
+        panic!("failed to get func by name={}", f_name);
     }
-
     fn clone(&self) -> FunctionNode {
         let mut new_func_node = FunctionNode {
                 fid: self.fid,
@@ -791,97 +807,37 @@ impl Tree {
     }
 
     #[cfg(test)]
-    pub fn parse_node(node: ParsedNode) {
-        let mut result_branch_root =
-            match rb_node {
-                Term(t_str) => {
-                    TNode(Terminal::get_ref_by_name(t_str, rb0_terms))
-                },
-                Func(f_str, f_args) => {
-                    let root_node = FunctionNode::new_by_name(f_str, rb0_funcs);
-                    for arg in f_args.iter() {
-
-                    }
-                },
-            }
-
-    }
-
-
-    #[cfg(test)]
     pub fn parse( rb0: (&str, &'static [Function], &'static [Terminal]),
-                 fdb0: (&str, &'static [Function], &'static [Terminal])) 
+           opt_fdb0: Option<(&str, &'static [Function], &'static [Terminal])>) 
             -> Tree {
         // There always is a result branch and we parse that first.
         let (rb0_s, rb0_funcs, rb0_terms) = rb0; // result branch 0
         let rb_result = parse_sexpr(rb0_s);
-        let rb_node = match rb_result {
-            Ok(parsed_tuple) => parsed_tuple.1,
-            Err(error) => panic!("cannot parse result branch: {:?}", error),
-        }
+        let rb_node =
+            match rb_result {
+                Ok(parsed_tuple) => parsed_tuple.1,
+                Err(error) => panic!("cannot parse result branch: {:?}", error),
+            };
 
         let mut result_branch_root = 
             Node::deep_new_from_parse_tree(&rb_node, rb0_terms, rb0_funcs);
 
+        // There may or may not be a func def branch 
+        let mut opt_func_def_branch_root = 
+            if CONTROL.num_terminals_func_def_branch > 0 {
+                let (fd0_s, fd0_funcs, fd0_terms) = opt_fdb0.unwrap(); // func def branch 0
+                let fd_result = parse_sexpr(fd0_s);
+                let fd_node = 
+                    match fd_result {
+                        Ok(parsed_tuple) => parsed_tuple.1,
+                        Err(error) => panic!("cannot parse result branch: {:?}", error),
+                    };
+                Some(Node::deep_new_from_parse_tree(&fd_node, fd0_terms, fd0_funcs))
+            } else {
+                assert_eq(opt_fdb0, None);
+                None
+            };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        let (fd0_s, fd0_funcs, fd0_terms) = fd0; // func def branch 0
-        let fd_result = parse_sexpr(fd0_s);
-        let fd_node = match fd_result {
-            Ok(parsed_tuple) => parsed_tuple.1,
-            Err(error) => panic!("cannot parse result branch: {:?}", error),
-        }
-
-        match rb_node {
-            Term(t_str) => {
-                TNode(Terminal::get_ref_by_name(t_str, rb0_terms))
-            },
-            Func(f_str, f_args) => {
-                let root_node = FunctionNode::new_by_name(f_str, rb0_funcs);
-                parse_func_node(
-
-            },
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // just a stub for now. 
-        Tree {
-            tfid: None,
-            tcid: 0,
-            fitness: Fitness::new(),
-            result_branch: TreeBranch::new(
-                FunctionNode::new(0, &FUNCTIONS_RESULT_BRANCH)
-            ),
-            opt_func_def_branch: None,  // i.e. no-adf
-        }
+        Tree::new(result_branch_root, opt_func_def_branch_root)
     }
 }
-
