@@ -320,12 +320,12 @@ impl RunContext<'_> {
 
 pub fn init_run() { }
 
-//#[cfg(test)]
+#[cfg(test)]
 pub mod tests {
     use crate::Tree;
     use super::*;
 
-//    #[test]
+    #[test]
     pub fn test_print_exec_one() {
         // first build this test tree:
         // func def branch:

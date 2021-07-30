@@ -120,25 +120,8 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
     }
 }
 
-use gp::parsers::parse_func_call;
-use gp::parsers::parse_sexpr;
-
 fn main() {
     init_run();
-
-    if true {
-        assert_eq!(
-            format!("{:?}", parse_sexpr("( ADD  X    Y )"
-                    )), 
-                    r#"Ok(("", Func("ADD", [Term("X"), Term("Y")])))"#);
-        assert_eq!(
-            format!("{:?}", parse_func_call("  ABCD123 X1 (Y 1) Z  ")),
-                    r#"Ok(("  ", Func("ABCD123", [Term("X1"), Func("Y", [Term("1")]), Term("Z")])))"#);
-
-
-        use gprun::tests::*;
-        test_print_exec_one();
-    }
 
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
