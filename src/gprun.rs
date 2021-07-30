@@ -322,28 +322,89 @@ pub fn init_run() { }
 
 //#[cfg(test)]
 pub mod tests {
-    use crate::RunContext;
     use crate::Tree;
     use super::*;
 
 //    #[test]
-    pub fn test_exec_tree() {
+    pub fn test_print_exec_one() {
         // first build this test tree:
         // func def branch:
         //     (AND ARG0 ARG1)
         // result branch:
         //     (OR (ADF0 true true) false)
         // exec_tree s/b: true
-        let tree = Tree::parse(("(OR (ADF0 D0 D1) D2)",
+        let mut tree = Tree::parse(("(OR (ADF0 D0 D1) D2)",
                                     &FUNCTIONS_RESULT_BRANCH,
                                     &TERMINALS_RESULT_BRANCH), // result branch 0
                                Some(("(AND ARG0 ARG1)",
                                     &FUNCTIONS_FUNC_DEF_BRANCH,
                                     &TERMINALS_FUNC_DEF_BRANCH))); // func def branch 0
-        tree.print();
+        assert_eq!(tree.print_exec_one(), false);
 
-        let mut rc = RunContext::new();
-        rc.cur_fc = 0;
-        assert_eq!(tree.exec_tree(&mut rc), true);
+        let rb0_s = r#"
+(AND
+  (NOR
+    (OR
+      (ADF0 D3 D2)
+      (ADF0 D4 D1))
+    (NOR D0
+      (NAND D0 D5)))
+  (NOR
+    (NOR
+      (NOR D0 D5)
+      (AND D0 D5))
+    (AND
+      (OR
+        (ADF0 D3 D2)
+        (ADF0 D4 D1))
+      (OR D3 D2)))
+)
+        "#;
+
+        let fd0_s = r#"
+(AND
+  (AND
+    (AND
+      (NAND ARG1 ARG0)
+      (OR ARG0 ARG1))
+    (OR
+      (NAND ARG1 ARG0)
+      (NOR ARG0 ARG0)))
+  (NAND
+    (OR
+      (NOR ARG1 ARG0)
+      (NOR
+        (NOR ARG0
+          (NAND
+            (OR ARG1 ARG1)
+            (NOR ARG0 ARG0)))
+        (OR
+          (NOR
+            (OR
+              (NOR
+                (OR ARG1 ARG1)
+                (NOR
+                  (OR
+                    (NAND ARG0 ARG0) ARG0)
+                  (NAND ARG0 ARG1)))
+              (NOR
+                (NAND ARG0 ARG1)
+                (NOR ARG0 ARG0)))
+            (NAND ARG1 ARG0))
+          (NAND
+            (AND ARG0 ARG0)
+            (NAND ARG1 ARG0)))))
+    (NOR ARG1 ARG0))
+)
+        "#;
+
+        let mut tree = Tree::parse((rb0_s,
+                                    &FUNCTIONS_RESULT_BRANCH,
+                                    &TERMINALS_RESULT_BRANCH), // result branch 0
+                               Some((fd0_s,
+                                    &FUNCTIONS_FUNC_DEF_BRANCH,
+                                    &TERMINALS_FUNC_DEF_BRANCH))); // func def branch 0
+        assert_eq!(tree.print_exec_one(), true);
+
     }
 }

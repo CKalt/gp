@@ -137,7 +137,7 @@ fn main() {
 
 
         use gprun::tests::*;
-        test_exec_tree();
+        test_print_exec_one();
     }
 
     let mut run_number = 0i32;

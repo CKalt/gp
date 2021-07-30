@@ -731,7 +731,7 @@ impl Tree {
         !self.tree_depth_gt(CONTROL.Dc)
     }
     /// execute a single tree and print results.
-    pub fn print_exec_one(&mut self) {
+    pub fn print_exec_one(&mut self) -> bool {
         self.print();
         let mut rc = RunContext::new();
         rc.prepare_run();
@@ -767,6 +767,7 @@ impl Tree {
             println!("Have Winner");
         }
         rc.print_run_illustration("After Run");
+        is_winner
     }
     /// print results for a single tree.
     pub fn print_result(&self, opt_gen: Option<u16>, avg_raw_f: GpFloat) {
@@ -843,6 +844,8 @@ impl Tree {
                 None
             };
 
-        Tree::new(result_branch_root, opt_func_def_branch_root)
+        let mut tree = Tree::new(result_branch_root, opt_func_def_branch_root);
+        tree.count_nodes();
+        tree
     }
 }
