@@ -8,11 +8,11 @@ use crate::control::TreeDepth;
 use crate::gprng::GpRng;
 use rand::Rng;
 
-#[cfg(test)]
+//#[cfg(test)]
 use gp::parsers::parse_sexpr;
-#[cfg(test)]
+//#[cfg(test)]
 use gp::parsers::ParsedSNode;
-#[cfg(test)]
+//#[cfg(test)]
 use gp::parsers::ParsedSNode::*;
 
 use Node::*;
@@ -50,7 +50,7 @@ impl Node {
             FNode(FunctionNode::new(rand_fid, funcs))
         }
     }
-    #[cfg(test)]
+//    #[cfg(test)]
     // performs a deep (recusrive) build of node tree from parsed input.
     pub fn deep_new_from_parse_tree(parsed_node: &ParsedSNode,
             funcs: &'static [Function], terms: &'static [Terminal]) -> Node {
@@ -271,7 +271,7 @@ impl Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
         &terms[t_id as usize]
     }
-    #[cfg(test)]
+//    #[cfg(test)]
     pub fn get_ref_by_name(t_name: &str, terms: &'static [Terminal])
         -> &'static Terminal {
         for t in terms.iter() {
@@ -298,10 +298,12 @@ impl FunctionNode {
             branch: Vec::new()
         }
     }
-    #[cfg(test)]
+//    #[cfg(test)]
     fn new_by_name(f_name: &str, funcs: &'static [Function]) -> FunctionNode {
-        for f in funcs {
+        for f in funcs.iter() {
+            println!("TP001: looking for f_name={}, checking f.name={}", f_name, f.name);
             if f.name.eq(f_name) {
+                println!("TP002: found f_name={}, with f.name={}", f_name, f.name);
                 return
                     FunctionNode {
                         fid:    f.fid,
@@ -809,7 +811,7 @@ impl Tree {
         Self::exec_node(rc, &self.result_branch.root)
     }
 
-    #[cfg(test)]
+//    #[cfg(test)]
     pub fn parse( rb0: (&str, &'static [Function], &'static [Terminal]),
            opt_fdb0: Option<(&str, &'static [Function], &'static [Terminal])>) 
             -> Tree {

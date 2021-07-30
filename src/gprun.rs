@@ -320,26 +320,27 @@ impl RunContext<'_> {
 
 pub fn init_run() { }
 
-#[cfg(test)]
-mod tests {
+//#[cfg(test)]
+pub mod tests {
     use crate::RunContext;
     use crate::Tree;
     use super::*;
 
-    #[test]
-    fn test_exec_tree() {
+//    #[test]
+    pub fn test_exec_tree() {
         // first build this test tree:
         // func def branch:
         //     (AND ARG0 ARG1)
         // result branch:
         //     (OR (ADF0 true true) false)
         // exec_tree s/b: true
-        let tree = Tree::parse(("(OR (ADF0 true true) false)",
+        let tree = Tree::parse(("(OR (ADF0 D0 D1) D2)",
                                     &FUNCTIONS_RESULT_BRANCH,
                                     &TERMINALS_RESULT_BRANCH), // result branch 0
                                Some(("(AND ARG0 ARG1)",
                                     &FUNCTIONS_FUNC_DEF_BRANCH,
                                     &TERMINALS_FUNC_DEF_BRANCH))); // func def branch 0
+        tree.print();
 
         let mut rc = RunContext::new();
         rc.cur_fc = 0;

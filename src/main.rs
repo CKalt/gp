@@ -134,6 +134,10 @@ fn main() {
         assert_eq!(
             format!("{:?}", parse_func_call("  ABCD123 X1 (Y 1) Z  ")),
                     r#"Ok(("  ", Func("ABCD123", [Term("X1"), Func("Y", [Term("1")]), Term("Z")])))"#);
+
+
+        use gprun::tests::*;
+        test_exec_tree();
     }
 
     let mut run_number = 0i32;
