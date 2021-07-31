@@ -40,11 +40,12 @@ fn test_tee_to_run_log() {
             panic!("failed remove file: {}", e);
         }
     }
+    let win: i32 = 5;
     let run: i32 = 10;
     let gen: u16 = 23;
     let e: i64 = 233235235;
 
-    tee_to_run_log(run, gen, e);
+    tee_to_run_log(win, run, gen, e);
 
     // Read
     let mut file = BufReader::new(File::open(CONTROL.run_log_file).unwrap());
@@ -53,14 +54,14 @@ fn test_tee_to_run_log() {
     let mut input = String::new();
     file.read_line(&mut input).unwrap();
     input.truncate(input.len() - 1);            // remove new line
-    let parsed = scanf!(input, "run={}, gen={}, effort={}",
-        i32, u16, i64);
+    let parsed = scanf!(input, "win={}, run={}, gen={}, effort={}",
+        i32, i32, u16, i64);
 
-    assert_eq!(parsed, Some((run, gen, e)));
+    assert_eq!(parsed, Some((win, run, gen, e)));
 }
 
-fn tee_to_run_log(run: i32, gen: u16, e: i64) {
-    let msg = format!("run={}, gen={}, effort={}", run, gen, e);
+fn tee_to_run_log(win: i32, run: i32, gen: u16, e: i64) {
+    let msg = format!("win={}, run={}, gen={}, effort={}", win, run, gen, e);
 
     let create_bool = !Path::new(CONTROL.run_log_file).exists();
     let mut file =
@@ -179,30 +180,39 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 fn main() {
     init_run();
 
+    let mut win_number = 0i32;
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
+    loop { // outer loop checks off winners until CONTROL.W 
+        let opt_winner = loop { // go until we have a winner
+            run_number += 1;
+            println!("Run #{}", run_number);
+            if let Some(winner) = run(&mut rng, run_number) {
+                break Some(winner);
+            }
+            else if run_number == CONTROL.R && CONTROL.R != 0 {
+                break None;
+            }
+        };
+            
+        if let Some(mut winner) = opt_winner {
+            win_number += 1;
+            let rc = RunContext::new();
+            tee_to_run_log(win_number, winner.run, winner.gen, winner.e);
 
-    let opt_winner = loop { // go until we have a winner
-        run_number += 1;
-        println!("Run #{}", run_number);
-        if let Some(winner) = run(&mut rng, run_number) {
-            break Some(winner);
+            winner.print_result();
+            rc.print_run_illustration(
+                &format!("Have Winner #{} - Run# {} Gen# {}",
+                    win_number, run_number, winner.gen));
+            winner.tree.print_exec_one();
+            assert!(CONTROL.W >= win_number);
+            if CONTROL.W > 0 && CONTROL.W == win_number {
+                println!("Win has reached max of {} runs ending.", CONTROL.W);
+                break;
+            }
+        } else {
+            println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
+                CONTROL.R);
         }
-        else if run_number == CONTROL.R && CONTROL.R != 0 {
-            break None;
-        }
-    };
-        
-    if let Some(mut winner) = opt_winner {
-        let rc = RunContext::new();
-        tee_to_run_log(winner.run, winner.gen, winner.e);
-
-        winner.print_result();
-        rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
-            winner.gen));
-        winner.tree.print_exec_one();
-    } else {
-        println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
-            CONTROL.R);
     }
 }

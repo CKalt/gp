@@ -23,7 +23,8 @@ pub struct Control {
                             // 2   4000  4   .08
                             // 3   8000  8   .04
                             // GRc = 32/2^n
-    pub R:  i32,            // stop after this many runs (0=no limit)
+    pub R:  i32,            // stop after this many runs (0=no limit) (inner loop)
+    pub W:  i32,            // stop after this many wins (0=no limit) (outer loop)
     pub no_fitness_cases:  u16,
     pub show_all_trees:    bool,
     pub show_all_tree_results: bool,
@@ -55,6 +56,7 @@ pub const CONTROL: Control = Control {
     num_terminals_func_def_branch: 2,          // num terminals function defining branch 0
     GRc:                0.16,
     R:                  0,
+    W:                  100,
     no_fitness_cases:   0,
     show_all_trees:     false,
     show_all_tree_results: false,
