@@ -1,4 +1,5 @@
 extern crate gp;
+
 mod gprun;
 mod fitness;
 mod tree;
@@ -20,6 +21,61 @@ use gprng::GpRngFactory;
 use fitness::GpHits;
 
 use BranchType::*;
+
+use std::fs::OpenOptions;
+use std::path::Path;
+use std::io::prelude::*;
+
+    
+#[test]
+fn test_tee_to_run_log() {
+    use std::fs::File;
+    use std::io::BufReader;
+    use std::fs::remove_file;
+    use sscanf::scanf;
+
+    // remove file if it already exists
+    if Path::new(CONTROL.run_log_file).exists() {
+        if let Err(e) = remove_file(CONTROL.run_log_file) {
+            panic!("failed remove file: {}", e);
+        }
+    }
+    let run: i32 = 10;
+    let gen: u16 = 23;
+    let e: i64 = 233235235;
+
+    tee_to_run_log(run, gen, e);
+
+    // Read
+    let mut file = BufReader::new(File::open(CONTROL.run_log_file).unwrap());
+
+    // read the first line and extract the number from it
+    let mut input = String::new();
+    file.read_line(&mut input).unwrap();
+    input.truncate(input.len() - 1);            // remove new line
+    let parsed = scanf!(input, "run={}, gen={}, effort={}",
+        i32, u16, i64);
+
+    assert_eq!(parsed, Some((run, gen, e)));
+}
+
+fn tee_to_run_log(run: i32, gen: u16, e: i64) {
+    let msg = format!("run={}, gen={}, effort={}", run, gen, e);
+
+    let create_bool = !Path::new(CONTROL.run_log_file).exists();
+    let mut file =
+         OpenOptions::new()
+            .write(true)
+            .create(create_bool)
+            .append(!create_bool)
+            .open(CONTROL.run_log_file)
+            .unwrap();
+
+    println!("{}", msg);
+    if let Err(_e) = writeln!(file, "{}", msg) {
+        panic!("Couldn't write to file");
+    }
+}
 
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         hits: &GpHits) -> () {
@@ -139,8 +195,8 @@ fn main() {
         
     if let Some(mut winner) = opt_winner {
         let rc = RunContext::new();
-        println!("run={}, gen={}", winner.run, winner.gen);
-        println!("Computational effort (e) = {}", winner.e);
+        tee_to_run_log(winner.run, winner.gen, winner.e);
+
         winner.print_result();
         rc.print_run_illustration(&format!("Have Winner! - Run# {} Gen# {}", run_number,
             winner.gen));

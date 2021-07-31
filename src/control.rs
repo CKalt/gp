@@ -30,6 +30,7 @@ pub struct Control {
     pub show_best_tree_results: bool,
     pub show_controls: bool,
     pub run_tests: bool,
+    pub run_log_file:       &'static str,
 }
 impl Control {
     pub fn computational_effort(&self, runs: i32, gen: u16) -> i64 {
@@ -57,7 +58,8 @@ pub const CONTROL: Control = Control {
     no_fitness_cases:   0,
     show_all_trees:     false,
     show_all_tree_results: false,
-    show_best_tree_results: true,
+    show_best_tree_results: false,
     show_controls: false,
     run_tests: false,
+    run_log_file:       "gp_run.log",
 };

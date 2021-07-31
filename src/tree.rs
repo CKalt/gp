@@ -301,9 +301,7 @@ impl FunctionNode {
     #[cfg(test)]
     fn new_by_name(f_name: &str, funcs: &'static [Function]) -> FunctionNode {
         for f in funcs.iter() {
-            println!("TP001: looking for f_name={}, checking f.name={}", f_name, f.name);
             if f.name.eq(f_name) {
-                println!("TP002: found f_name={}, with f.name={}", f_name, f.name);
                 return
                     FunctionNode {
                         fid:    f.fid,
