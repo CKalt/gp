@@ -1,3 +1,5 @@
+use mut_static::MutStatic;
+
 use crate::fitness::GpFloat;
 
 pub type TreeDepth = u16;
@@ -34,6 +36,38 @@ pub struct Control {
     pub run_log_file:       &'static str,
 }
 impl Control {
+    pub fn new() -> Self {
+        Control {
+            M:                  16000,      // Number of individuals in each generation
+            G:                  51,         // Number of generations to run
+            Di:                 6,          // Maximum depth of S Expressions for an initial tree
+            Dc:                 17,         // Maximum depth of S Expressions for a created tree
+            Pc:                 0.90,       // Probability of cross over
+            Pr:                 0.10,       // Probability of reproduction
+            Pip:                0.90,       // Probability of cross over internal point
+            num_functions_result_branch: 5,          // num functions result producing branch 0
+            num_terminals_result_branch: 6,          // num terminals result producing branch 0
+            num_functions_func_def_branch: 4,          // num functions function defining branch 0
+            num_terminals_func_def_branch: 2,          // num terminals function defining branch 0
+            GRc:                0.16,
+            R:                  0,
+            W:                  1,
+            no_fitness_cases:   0,
+            show_all_trees:     false,
+            show_all_tree_results: false,
+            show_best_tree_results: true,
+            show_controls: true,
+            run_tests: false,
+            run_log_file:       "gp_run.log",
+            // (UC)
+            // Result producing branch(es) function and terminal sets.
+//            funcs_rpb: &[Function],          // Min entries are 1.
+//            terms_rpb: &[Terminal],          // Min entries are 1.
+            // Function defining branch(es) function and terminal sets.
+//            opt_funcs_fdb: Option<&[Function]>,          // Min entries are 1.
+//            opt_terms_fdb: Option<&[Terminal]>,          // Min entries are 1.
+        }
+    }
     pub fn computational_effort(&self, runs: i32, gen: u16) -> i64 {
         self.M as i64 * (
             (self.G as i64 * (runs-1) as i64) + (gen+1) as i64
@@ -41,27 +75,6 @@ impl Control {
     }
 }
 
-#[warn(non_snake_case)]
-pub const CONTROL: Control = Control {
-    M:                  16000,      // Number of individuals in each generation
-    G:                  51,         // Number of generations to run
-    Di:                 6,          // Maximum depth of S Expressions for an initial tree
-    Dc:                 17,         // Maximum depth of S Expressions for a created tree
-    Pc:                 0.90,       // Probability of cross over
-    Pr:                 0.10,       // Probability of reproduction
-    Pip:                0.90,       // Probability of cross over internal point
-    num_functions_result_branch: 5,          // num functions result producing branch 0
-    num_terminals_result_branch: 6,          // num terminals result producing branch 0
-    num_functions_func_def_branch: 4,          // num functions function defining branch 0
-    num_terminals_func_def_branch: 2,          // num terminals function defining branch 0
-    GRc:                0.16,
-    R:                  0,
-    W:                  100,
-    no_fitness_cases:   0,
-    show_all_trees:     false,
-    show_all_tree_results: false,
-    show_best_tree_results: false,
-    show_controls: false,
-    run_tests: false,
-    run_log_file:       "gp_run.log",
-};
+lazy_static! {
+    pub static ref CONTROL: MutStatic<Control> = MutStatic::new();
+}

@@ -1,4 +1,4 @@
 #!/bin/sh
-cargo run --release 2>&1 | tee gp.out
+time cargo run --release 2>&1 | tee gp.out
 #cargo run --release > gp.out
 vi gp.out
