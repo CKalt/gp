@@ -1,11 +1,16 @@
 use mut_static::MutStatic;
 
 use crate::fitness::GpFloat;
+use crate::tree::*;
 
 pub type TreeDepth = u16;
 
 #[allow(non_snake_case)]
-pub struct Control {
+pub struct Control<'a> {
+    #[allow(dead_code)]
+    ftpair_rpb: FTSetPair<'a>,
+    #[allow(dead_code)]
+    opt_ftpair_fdb: Option<FTSetPair<'a>>,
     pub M:   usize,             // Number of individuals in each generation
     pub G:   u16,               // Number of generations to run
     pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
@@ -35,9 +40,12 @@ pub struct Control {
     pub run_tests: bool,
     pub run_log_file:       &'static str,
 }
-impl Control {
-    pub fn new() -> Self {
+impl Control<'_> {
+    pub fn new<'a>(ftpair_rpb: FTSetPair<'a>, 
+               opt_ftpair_fdb: Option<FTSetPair<'a>>) -> Control<'a> {
         Control {
+            ftpair_rpb,
+            opt_ftpair_fdb,
             M:                  16000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree
@@ -59,13 +67,6 @@ impl Control {
             show_controls: true,
             run_tests: false,
             run_log_file:       "gp_run.log",
-            // (UC)
-            // Result producing branch(es) function and terminal sets.
-//            funcs_rpb: &[Function],          // Min entries are 1.
-//            terms_rpb: &[Terminal],          // Min entries are 1.
-            // Function defining branch(es) function and terminal sets.
-//            opt_funcs_fdb: Option<&[Function]>,          // Min entries are 1.
-//            opt_terms_fdb: Option<&[Terminal]>,          // Min entries are 1.
         }
     }
     pub fn computational_effort(&self, runs: i32, gen: u16) -> i64 {
@@ -76,5 +77,5 @@ impl Control {
 }
 
 lazy_static! {
-    pub static ref CONTROL: MutStatic<Control> = MutStatic::new();
+    pub static ref CONTROL: MutStatic<Control<'static>> = MutStatic::new();
 }

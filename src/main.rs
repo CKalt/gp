@@ -189,9 +189,17 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
     }
 }
 
+pub static FUNCS_RPB: &[&[Function]] = &[&FUNCTIONS_RESULT_BRANCH];
+pub static TERMS_RPB: &[&[Terminal]] = &[&TERMINALS_RESULT_BRANCH];
+pub static FUNCS_FDB: &[&[Function]] = &[&FUNCTIONS_FUNC_DEF_BRANCH];
+pub static TERMS_FDB: &[&[Terminal]] = &[&TERMINALS_FUNC_DEF_BRANCH];
+
 fn main() {
-    CONTROL.set(Control::new()).expect("error during control/config setup.");
+    CONTROL.set(Control::new((&FUNCS_RPB, &TERMS_RPB),
+                              Some((&FUNCS_FDB, &TERMS_FDB))))
+                .expect("error during control/config setup.");
     let control = CONTROL.read().unwrap();
+
     init_run();
 
     let mut win_number = 0i32;

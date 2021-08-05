@@ -252,6 +252,10 @@ impl Node {
     }
 }
 
+type FSetType<'a> = &'a [&'a [Function]];
+type TSetType<'a> = &'a [&'a [Terminal]];
+pub type FTSetPair<'a> = (FSetType<'a>, TSetType<'a>);
+
 pub struct Function {
     #[allow(dead_code)]
     pub fid:    u8,
