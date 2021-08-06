@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-extern crate mut_static;
-
 extern crate gp;
 
 mod gprun;
@@ -39,11 +35,8 @@ fn test_tee_to_run_log() {
     use sscanf::scanf;
 
     // remove file if it already exists
-    let control = CONTROL.read().unwrap();
-    let log_file = control.run_log_file;
-
-    if Path::new(log_file).exists() {
-        if let Err(e) = remove_file(log_file) {
+    if Path::new(CONTROL.run_log_file).exists() {
+        if let Err(e) = remove_file(CONTROL.run_log_file) {
             panic!("failed remove file: {}", e);
         }
     }
@@ -55,7 +48,7 @@ fn test_tee_to_run_log() {
     tee_to_run_log(win, run, gen, e);
 
     // Read
-    let mut file = BufReader::new(File::open(log_file).unwrap());
+    let mut file = BufReader::new(File::open(CONTROL.run_log_file).unwrap());
 
     // read the first line and extract the number from it
     let mut input = String::new();
@@ -70,15 +63,13 @@ fn test_tee_to_run_log() {
 fn tee_to_run_log(win: i32, run: i32, gen: u16, e: i64) {
     let msg = format!("win={}, run={}, gen={}, effort={}", win, run, gen, e);
 
-    let control = CONTROL.read().unwrap();
-    let log_file = control.run_log_file;
-    let create_bool = !Path::new(log_file).exists();
+    let create_bool = !Path::new(CONTROL.run_log_file).exists();
     let mut file =
          OpenOptions::new()
             .write(true)
             .create(create_bool)
             .append(!create_bool)
-            .open(log_file)
+            .open(CONTROL.run_log_file)
             .unwrap();
 
     println!("{}", msg);
@@ -89,20 +80,18 @@ fn tee_to_run_log(win: i32, run: i32, gen: u16, e: i64) {
 
 fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         hits: &GpHits) -> () {
-    let control = CONTROL.read().unwrap();
-
-    if control.show_all_trees {
+    if CONTROL.show_all_trees {
         println!("Generation {}", trees.gen);
         trees.print();
     }
-    if control.show_all_tree_results {
+    if CONTROL.show_all_tree_results {
         println!("gen {}", trees.gen);
         Tree::print_result_header(None, hits);
         for t in trees.tree_vec.iter() {
             t.print_result(None, -1.0);
         }
     }
-    if control.show_best_tree_results {
+    if CONTROL.show_best_tree_results {
         if *header_need {
             Tree::print_result_header(Some(trees.gen), hits);
             *header_need = false;
@@ -111,24 +100,23 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         let best_tree = &trees.tree_vec[i];
         best_tree.print_result(Some(trees.gen), trees.avg_raw_f);
     }
-    if control.run_tests {
+    if CONTROL.run_tests {
         run_tests(rng, trees);
     }
 }
 
 fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
-    let control = CONTROL.read().unwrap();
-    if control.show_controls {
-        println!("M = {}, G = {}, D = {}", control.M, control.G, control.Di);
+    if CONTROL.show_controls {
+        println!("M = {}, G = {}, D = {}", CONTROL.M, CONTROL.G, CONTROL.Di);
     }
     let mut trees = TreeSet::create_initial_population(rng);
 
     trees.count_nodes();
     trees.gen = 0u16;
     let mut header_need: bool = true;
-    // when gen == control.G we are done because gen starts with 0
+    // when gen == CONTROL.G we are done because gen starts with 0
     // ie. we do not process gen == 51 if G==51
-    while trees.gen < control.G && trees.winning_index == None {
+    while trees.gen < CONTROL.G && trees.winning_index == None {
         let hits = trees.exec_all();
         if trees.winning_index != None {
             break;
@@ -141,7 +129,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
         trees.sort_by_normalized_fitness();
         report_results(rng, &mut trees, &mut header_need, &hits);
 
-        if trees.gen >= control.G {
+        if trees.gen >= CONTROL.G {
             break;
         }
 
@@ -158,7 +146,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
                 tree: trees.tree_vec[i].clone(),
                 run: run_number,
                 gen: trees.gen,
-                e: control.computational_effort(run_number, trees.gen),
+                e: CONTROL.computational_effort(run_number, trees.gen),
             };
             Some(winner)
         },
@@ -189,30 +177,20 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
     }
 }
 
-pub static FUNCS_RPB: &[&[Function]] = &[&FUNCTIONS_RESULT_BRANCH];
-pub static TERMS_RPB: &[&[Terminal]] = &[&TERMINALS_RESULT_BRANCH];
-pub static FUNCS_FDB: &[&[Function]] = &[&FUNCTIONS_FUNC_DEF_BRANCH];
-pub static TERMS_FDB: &[&[Terminal]] = &[&TERMINALS_FUNC_DEF_BRANCH];
-
 fn main() {
-    CONTROL.set(Control::new((&FUNCS_RPB, &TERMS_RPB),
-                              Some((&FUNCS_FDB, &TERMS_FDB))))
-                .expect("error during control/config setup.");
-    let control = CONTROL.read().unwrap();
-
     init_run();
 
     let mut win_number = 0i32;
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
-    loop { // outer loop checks off winners until control.W 
+    loop { // outer loop checks off winners until CONTROL.W 
         let opt_winner = loop { // go until we have a winner
             run_number += 1;
             println!("Run #{}", run_number);
             if let Some(winner) = run(&mut rng, run_number) {
                 break Some(winner);
             }
-            else if run_number == control.R && control.R != 0 {
+            else if run_number == CONTROL.R && CONTROL.R != 0 {
                 break None;
             }
         };
@@ -227,14 +205,14 @@ fn main() {
                 &format!("Have Winner #{} - Run# {} Gen# {}",
                     win_number, run_number, winner.gen));
             winner.tree.print_exec_one();
-            assert!(control.W >= win_number);
-            if control.W > 0 && control.W == win_number {
-                println!("Win has reached max of {} runs ending.", control.W);
+            assert!(CONTROL.W >= win_number);
+            if CONTROL.W > 0 && CONTROL.W == win_number {
+                println!("Win has reached max of {} runs ending.", CONTROL.W);
                 break;
             }
         } else {
-            println!("Exceeded control.R ({}) runs without finding a winner.",
-                control.R);
+            println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
+                CONTROL.R);
         }
     }
 }

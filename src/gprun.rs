@@ -4,6 +4,7 @@ use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
+use crate::control::CONTROL;
 
 use crate::fitness::GpFloat;
 use crate::fitness::GpFitness;
@@ -89,7 +90,7 @@ fn terminal_arg1(rc: &RunContext) -> GpType {
     }
 }
 
-pub static FUNCTIONS_RESULT_BRANCH: [Function; 5] = [
+pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
     Function {
         fid:  0u8,
         name: "ADF0",
@@ -122,7 +123,7 @@ pub static FUNCTIONS_RESULT_BRANCH: [Function; 5] = [
     },
 ];
 
-pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; 4] = [
+pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
     Function {
         fid:  0u8,
         name: "AND",
@@ -150,7 +151,7 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; 4] = [
 ];
 
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
-pub static TERMINALS_RESULT_BRANCH: [Terminal; 6] = [
+pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_branch as usize] = [
     Terminal {
         tid:  0u8,
         name: "D0",
@@ -184,7 +185,7 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; 6] = [
 ];
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
-pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; 2] = [
+pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",

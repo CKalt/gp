@@ -60,7 +60,7 @@ impl TreeSet {
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-        if CONTROL.read().unwrap().num_terminals_func_def_branch > 0 {
+        if CONTROL.num_terminals_func_def_branch > 0 {
             let mut func_def_branch_root =
                 FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
             Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
@@ -101,7 +101,7 @@ impl TreeSet {
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
 
-        if CONTROL.read().unwrap().num_terminals_func_def_branch > 0 {
+        if CONTROL.num_terminals_func_def_branch > 0 {
             let mut func_def_branch_root =
                 FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
             Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
@@ -167,19 +167,18 @@ impl TreeSet {
     pub fn create_initial_population(rng: &mut GpRng) -> TreeSet {
         // Following Koza's recipe, he calls "ramped half-and-half",
         // we will evenly produce population segments starting with 2
-        // up to the maxium depth (control.Di) and alternate
+        // up to the maxium depth (CONTROL.Di) and alternate
         // between Full Method and Grow Method for S Expressions.
-        let control = CONTROL.read().unwrap();
         let mut trees = Self::new(0);
-        let seg = control.M as GpFloat / (control.Di as GpFloat - 1.0);
+        let seg = CONTROL.M as GpFloat / (CONTROL.Di as GpFloat - 1.0);
         let mut bdr = 0.0;
 
         #[cfg(gpopt_trace="on")]
         println!("TP001:create_init_pop start");
-        for d in 2..=control.Di {
+        for d in 2..=CONTROL.Di {
             bdr += seg;
             while trees.tree_vec.len() < bdr as usize &&
-                  trees.tree_vec.len() < control.M {
+                  trees.tree_vec.len() < CONTROL.M {
                 let mut new_tree = trees.create_unique_tree(rng, d);
                 new_tree.count_nodes();
 
@@ -191,8 +190,8 @@ impl TreeSet {
         }
 
         // fill out to end in case there are "left-overs" due to rounding
-        while trees.tree_vec.len() < control.M {
-            let mut new_tree = trees.create_unique_tree(rng, control.Di);
+        while trees.tree_vec.len() < CONTROL.M {
+            let mut new_tree = trees.create_unique_tree(rng, CONTROL.Di);
             new_tree.count_nodes();
             trees.push_tree(new_tree);
                 
@@ -297,39 +296,35 @@ impl TreeSet {
         rc.hits
     }
     //fn use_reproduction(index: usize ) -> bool {
-    //    let float_index_ratio = index as GpFloat / control.M as GpFloat;
+    //    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
     //    let int_index_ratio = Fitness::float_to_int(
     //        float_index_ratio
     //    );
-    //    let int_control_ratio = Fitness::float_to_int(control.Pr);
+    //    let int_control_ratio = Fitness::float_to_int(CONTROL.Pr);
     //    let result = int_index_ratio < int_control_ratio;
     //    result
     //}
     fn use_reproduction(&self) -> bool {
-        let control = CONTROL.read().unwrap();
         let index = self.tree_vec.len();
-        let result = (index as GpFloat / control.M as GpFloat) < control.Pr;
+        let result = (index as GpFloat / CONTROL.M as GpFloat) < CONTROL.Pr;
         result
     }
     fn push_tree(&mut self, mut tree: Tree) {
-        let control = CONTROL.read().unwrap();
         let index = self.tree_vec.len();
-        assert!(index < control.M);
+        assert!(index < CONTROL.M);
         tree.tcid = index;
         self.tree_vec.push(tree);
     }
     // rnd_internal_point - randomly decides whether to do crossover at an
     // internal point (function) or terminal based on control Pip value.
     fn rnd_internal_point(rng: &mut GpRng) -> bool {
-        let control = CONTROL.read().unwrap();
-
         #[cfg(gpopt_rng="file_stream")]
         let num: GpFloat = rng.gen_float();
 
         #[cfg(not(gpopt_rng="file_stream"))]
         let num: GpFloat = rng.gen_range(0.0..1.0);
 
-        num < control.Pip // if Pip is .90 then true for all values less than .90.
+        num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
 
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
@@ -362,11 +357,10 @@ impl TreeSet {
         mem::swap(swap_target1, swap_target2);
     }
     pub fn breed_new_generation(&mut self, rng: &mut GpRng) -> TreeSet {
-        let control = CONTROL.read().unwrap();
         let mut new_trees = Self::new(self.gen);
         #[cfg(gpopt_trace="on")]
         println!("TP003:breed start");
-        while new_trees.tree_vec.len() < control.M {
+        while new_trees.tree_vec.len() < CONTROL.M {
             if new_trees.use_reproduction() {
                 // do reproduction
                 #[cfg(gpopt_trace="on")]
@@ -407,7 +401,7 @@ impl TreeSet {
                 #[cfg(gpopt_trace="on")]
                 new_trees.tree_vec[new_trees.tree_vec.len()-1].print();
 
-                if new_trees.tree_vec.len() < control.M {
+                if new_trees.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
                     nt2.count_nodes();
                     new_trees.push_tree(nt2);
@@ -420,7 +414,7 @@ impl TreeSet {
         #[cfg(gpopt_trace="on")]
         println!("TP004:breed done");
 
-        assert_eq!(new_trees.tree_vec.len(), control.M);
+        assert_eq!(new_trees.tree_vec.len(), CONTROL.M);
         new_trees
     }
 
@@ -480,7 +474,6 @@ impl SelectMethod for TreeSet {
 
     #[cfg(gpopt_select_method="fpb")]
     fn rnd_greedy_val(rng: &mut GpRng) -> GpFloat {
-        let control = CONTROL.read().unwrap();
         #[cfg(not(gpopt_rng="file_stream"))]
         let r = rng.gen::<GpFloat>();  // Note optional choice logging for this function
                                    // done in TreeSet::select_tree, which is
@@ -491,14 +484,14 @@ impl SelectMethod for TreeSet {
         let r = rng.gen_float();
 
         let dbl_val: GpFloat = 
-            if control.GRc < 0.0001 {
+            if CONTROL.GRc < 0.0001 {
                 r
             } else if rng.gen_range(0..10) > 1 {
                 // select from top set
-                1.0 - (control.GRc * r)
+                1.0 - (CONTROL.GRc * r)
             } else {
                 // select from lower set
-                (1.0 - control.GRc) * r
+                (1.0 - CONTROL.GRc) * r
             };
         dbl_val
     }

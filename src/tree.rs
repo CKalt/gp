@@ -252,10 +252,6 @@ impl Node {
     }
 }
 
-type FSetType<'a> = &'a [&'a [Function]];
-type TSetType<'a> = &'a [&'a [Terminal]];
-pub type FTSetPair<'a> = (FSetType<'a>, TSetType<'a>);
-
 pub struct Function {
     #[allow(dead_code)]
     pub fid:    u8,
@@ -730,7 +726,7 @@ impl Tree {
     /// return true tree qualifies in population based on local (self only)
     /// metrics
     pub fn qualifies(&self) -> bool {
-        !self.tree_depth_gt(CONTROL.read().unwrap().Dc)
+        !self.tree_depth_gt(CONTROL.Dc)
     }
     /// execute a single tree and print results.
     pub fn print_exec_one(&mut self) -> bool {
@@ -831,9 +827,8 @@ impl Tree {
             Node::deep_new_from_parse_tree(&rb_node, rb0_funcs, rb0_terms);
 
         // There may or may not be a func def branch 
-        let control = CONTROL.read().unwrap();
         let opt_func_def_branch_root = 
-            if control.num_terminals_func_def_branch > 0 {
+            if CONTROL.num_terminals_func_def_branch > 0 {
                 let (fd0_s, fd0_funcs, fd0_terms) = opt_fdb0.unwrap(); // func def branch 0
                 let fd_result = parse_sexpr(fd0_s);
                 let fd_node = 
