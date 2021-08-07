@@ -60,7 +60,7 @@ impl TreeSet {
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
-        if CONTROL.terms_rpb.len() > 0 {
+        if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branch_root =
                 FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
             Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
@@ -101,7 +101,7 @@ impl TreeSet {
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
-        if CONTROL.terms_rpb.len() > 0 {
+        if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branch_root =
                 FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
             Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
@@ -269,7 +269,10 @@ impl TreeSet {
             let mut sum_error: GpRaw = 0;
             if let Some(func_def_branch) = &tree.opt_func_def_branch {
                 rc.opt_func_def_branch = Some(&func_def_branch);
+            } else {
+                rc.opt_func_def_branch = None;
             }
+
             for fc_i in 0..rc.fitness_cases.len() {
                 rc.cur_fc = fc_i;
                 let result = tree.exec_tree(&mut rc);

@@ -44,6 +44,7 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     !(val1 | val2)
 }
 
+#[cfg(gpopt_adf="yes")]
 fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
@@ -75,6 +76,7 @@ fn terminal_d5(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[5]
 }
 
+#[cfg(gpopt_adf="yes")]
 fn terminal_arg0(rc: &RunContext) -> GpType {
      match rc.opt_adf0_args {
         None => panic!("terminal arg access with empty args list"),
@@ -82,6 +84,7 @@ fn terminal_arg0(rc: &RunContext) -> GpType {
     }
 }
 
+#[cfg(gpopt_adf="yes")]
 fn terminal_arg1(rc: &RunContext) -> GpType {
     match rc.opt_adf0_args {
         None => panic!("terminal arg access with empty args list"),
@@ -89,7 +92,8 @@ fn terminal_arg1(rc: &RunContext) -> GpType {
     }
 }
 
-#[allow(dead_code)]
+            
+#[cfg(gpopt_adf="no")]
 pub static FUNCTIONS_RESULT_BRANCH_NO_ADF: [Function; 4] = [
     Function {
         fid:  1u8,
@@ -117,6 +121,7 @@ pub static FUNCTIONS_RESULT_BRANCH_NO_ADF: [Function; 4] = [
     },
 ];
 
+#[cfg(gpopt_adf="yes")]
 pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 5] = [
     Function {
         fid:  0u8,
@@ -150,6 +155,7 @@ pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 5] = [
     },
 ];
 
+#[cfg(gpopt_adf="yes")]
 pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; 4] = [
     Function {
         fid:  0u8,
@@ -212,6 +218,7 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; 6] = [
 ];
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
+#[cfg(gpopt_adf="yes")]
 pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; 2] = [
     Terminal {
         tid:  0u8,
@@ -309,6 +316,8 @@ impl RunContext<'_> {
         let is_winner = self.hits == max_possible_hits;
         (f, is_winner)
     }
+
+    #[cfg(gpopt_adf="yes")]
     pub fn exec_adf0(&mut self, arg1: GpType, arg2: GpType)
             -> GpType {
         let func_def_branch =

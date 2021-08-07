@@ -48,10 +48,19 @@ lazy_static! {
 #[warn(non_snake_case)]
     pub static ref CONTROL: Control<'static> = {
         Control {
+            #[cfg(gpopt_adf="yes")]
             funcs_rpb:          Box::new([&FUNCTIONS_RESULT_BRANCH_ADF]),
+            #[cfg(gpopt_adf="no")]
+            funcs_rpb:          Box::new([&FUNCTIONS_RESULT_BRANCH_NO_ADF]),
             terms_rpb:          Box::new([&TERMINALS_RESULT_BRANCH]),
+            #[cfg(gpopt_adf="yes")]
             funcs_fdb:          Box::new([&FUNCTIONS_FUNC_DEF_BRANCH]),
+            #[cfg(gpopt_adf="yes")]
             terms_fdb:          Box::new([&TERMINALS_FUNC_DEF_BRANCH]),
+            #[cfg(gpopt_adf="no")]
+            funcs_fdb:          Box::new([]),
+            #[cfg(gpopt_adf="no")]
+            terms_fdb:          Box::new([]),
             M:                  16000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree

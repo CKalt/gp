@@ -1,9 +1,11 @@
 # gpopt_select_method := fpb | tournament
 # gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
+# gpopt_adf := yes | no
 [build]
 rustflags = """
     --cfg gpopt_select_method="tournament"
     --cfg gpopt_rng="seedable"
     --cfg gpopt_trace="off"
+    --cfg gpopt_adf="no"
 """
