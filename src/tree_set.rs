@@ -56,15 +56,15 @@ impl TreeSet {
     }
     fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
         let mut result_branch_root =
-            FunctionNode::new_rnd(rng, &FUNCTIONS_RESULT_BRANCH);
+            FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
-                &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
+                CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
-        if CONTROL.num_terminals_func_def_branch > 0 {
+        if CONTROL.terms_rpb.len() > 0 {
             let mut func_def_branch_root =
-                FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+                FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
             Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
-                    &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+                    CONTROL.funcs_fdb[0], CONTROL.terms_fdb[0]);
             Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
         }
         else {
@@ -97,15 +97,15 @@ impl TreeSet {
     }
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         let mut result_branch_root =
-            FunctionNode::new_rnd(rng, &FUNCTIONS_RESULT_BRANCH);
+            FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
-                &FUNCTIONS_RESULT_BRANCH, &TERMINALS_RESULT_BRANCH);
+                CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
-        if CONTROL.num_terminals_func_def_branch > 0 {
+        if CONTROL.terms_rpb.len() > 0 {
             let mut func_def_branch_root =
-                FunctionNode::new_rnd(rng, &FUNCTIONS_FUNC_DEF_BRANCH);
+                FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
             Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
-                    &FUNCTIONS_FUNC_DEF_BRANCH, &TERMINALS_FUNC_DEF_BRANCH);
+                    CONTROL.funcs_fdb[0], CONTROL.terms_fdb[0]);
 
             Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
         }

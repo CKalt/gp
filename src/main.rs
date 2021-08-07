@@ -1,4 +1,5 @@
 extern crate gp;
+extern crate lazy_static;
 
 mod gprun;
 mod fitness;

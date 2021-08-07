@@ -4,7 +4,6 @@ use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
-use crate::control::CONTROL;
 
 use crate::fitness::GpFloat;
 use crate::fitness::GpFitness;
@@ -90,7 +89,35 @@ fn terminal_arg1(rc: &RunContext) -> GpType {
     }
 }
 
-pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_branch as usize] = [
+#[allow(dead_code)]
+pub static FUNCTIONS_RESULT_BRANCH_NO_ADF: [Function; 4] = [
+    Function {
+        fid:  1u8,
+        name: "AND",
+        arity: 2,
+        code: function_and,
+    },
+    Function {
+        fid:  2u8,
+        name: "OR",
+        arity: 2,
+        code: function_or,
+    },
+    Function {
+        fid:  3u8,
+        name: "NAND",
+        arity: 2,
+        code: function_nand,
+    },
+    Function {
+        fid:  4u8,
+        name: "NOR",
+        arity: 2,
+        code: function_nor,
+    },
+];
+
+pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 5] = [
     Function {
         fid:  0u8,
         name: "ADF0",
@@ -123,7 +150,7 @@ pub static FUNCTIONS_RESULT_BRANCH: [Function; CONTROL.num_functions_result_bran
     },
 ];
 
-pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_branch as usize] = [
+pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; 4] = [
     Function {
         fid:  0u8,
         name: "AND",
@@ -151,7 +178,7 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH: [Function; CONTROL.num_functions_func_def_
 ];
 
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
-pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_branch as usize] = [
+pub static TERMINALS_RESULT_BRANCH: [Terminal; 6] = [
     Terminal {
         tid:  0u8,
         name: "D0",
@@ -185,7 +212,7 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; CONTROL.num_terminals_result_bran
 ];
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
-pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; CONTROL.num_terminals_func_def_branch as usize] = [
+pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; 2] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
@@ -334,11 +361,11 @@ pub mod tests {
         //     (OR (ADF0 true true) false)
         // exec_tree s/b: true
         let mut tree = Tree::parse(("(OR (ADF0 D0 D1) D2)",
-                                    &FUNCTIONS_RESULT_BRANCH,
-                                    &TERMINALS_RESULT_BRANCH), // result branch 0
+                                    CONTROL.funcs_rpb[0],
+                                    CONTROL.terms_rpb[0]), // result branch 0
                                Some(("(AND ARG0 ARG1)",
-                                    &FUNCTIONS_FUNC_DEF_BRANCH,
-                                    &TERMINALS_FUNC_DEF_BRANCH))); // func def branch 0
+                                    CONTROL.funcs_fdb[0],
+                                    CONTROL.terms_fdb[0]))); // func def branch 0
         assert_eq!(tree.print_exec_one(), false);
 
         let rb0_s = r#"
@@ -399,11 +426,11 @@ pub mod tests {
         "#;
 
         let mut tree = Tree::parse((rb0_s,
-                                    &FUNCTIONS_RESULT_BRANCH,
-                                    &TERMINALS_RESULT_BRANCH), // result branch 0
+                                    CONTROL.funcs_rpb[0],
+                                    CONTROL.terms_rpb[0]), // result branch 0
                                Some((fd0_s,
-                                    &FUNCTIONS_FUNC_DEF_BRANCH,
-                                    &TERMINALS_FUNC_DEF_BRANCH))); // func def branch 0
+                                    CONTROL.funcs_fdb[0],
+                                    CONTROL.terms_fdb[0]))); // func def branch 0
         assert_eq!(tree.print_exec_one(), true);
 
     }

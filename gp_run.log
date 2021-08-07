@@ -98,3 +98,6 @@ win=97, run=203, gen=17, effort=165120000
 win=98, run=206, gen=21, effort=167632000
 win=99, run=210, gen=29, effort=171024000
 win=100, run=212, gen=16, effort=172448000
+win=1, run=1, gen=40, effort=656000
+win=1, run=1, gen=40, effort=656000
+win=1, run=1, gen=40, effort=656000

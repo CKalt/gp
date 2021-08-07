@@ -92,6 +92,7 @@ name = "gp"
 version = "0.1.0"
 dependencies = [
  "format_num",
+ "lazy_static",
  "nom",
  "rand",
  "sscanf",

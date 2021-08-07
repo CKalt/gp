@@ -64,7 +64,7 @@ impl GpRngFactory {
 
     #[cfg(gpopt_rng="seedable")]
     pub fn new() -> rand::rngs::StdRng {
-        let seed: [u8; 32] = [73; 32]; // Ant Winner during Run# 3 Gen# 48
+        //let seed: [u8; 32] = [73; 32]; // Ant Winner during Run# 3 Gen# 48
                                        // two-boxes-adf winner during 
                                        //     using fpd run=8, gen=23
                                        //       (e) = 1524000
@@ -73,6 +73,10 @@ impl GpRngFactory {
                                        // bool6-sym-no-adf
                                        //    run=1, gen=25
                                        //    Computational effort (e) = 416000
+        let seed: [u8; 32] = [21; 32]; // Ant Winner during Run# 3 Gen# 48
+                                       // bool6-sym-opt-adf
+                                       // win=1, run=1, gen=40, effort=656000
+
 
         SeedableRng::from_seed(seed)
     }
