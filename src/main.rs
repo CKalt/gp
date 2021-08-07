@@ -198,6 +198,7 @@ fn main() {
             
         if let Some(mut winner) = opt_winner {
             win_number += 1;
+            run_number = 0i32;
             let rc = RunContext::new();
             tee_to_run_log(win_number, winner.run, winner.gen, winner.e);
 

@@ -70,14 +70,17 @@ lazy_static! {
             Pip:                0.90,       // Probability of cross over internal point
             GRc:                0.16,
             R:                  0,
-            W:                  1,
+            W:                  10,
             no_fitness_cases:   0,
             show_all_trees:     false,
             show_all_tree_results: false,
             show_best_tree_results: true,
             show_controls: false,
             run_tests: false,
-            run_log_file:       "gp_run.log",
+            #[cfg(gpopt_adf="yes")]
+            run_log_file:       "gp_run_adf.log",
+            #[cfg(gpopt_adf="no")]
+            run_log_file:       "gp_run_no_adf.log",
         }
     };
 }
