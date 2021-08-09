@@ -409,6 +409,7 @@ pub struct Tree {
     pub fitness: Fitness,
     pub result_branch: TreeBranch,
     pub opt_func_def_branch: Option<TreeBranch>, // If None no-adf, else adf.
+    pub is_winner: bool,        // true if known winner
 }
 impl Tree {
     /// new Tree is constructed with an optional func def branch. 
@@ -423,6 +424,7 @@ impl Tree {
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
                     opt_func_def_branch: None,  // i.e. no-adf
+                    is_winner: false,
                 },
             // adf case
             Some(func_def_branch_root) =>
@@ -432,6 +434,7 @@ impl Tree {
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
                     opt_func_def_branch: Some(TreeBranch::new(func_def_branch_root)),
+                    is_winner: false,
                 },
         }
     }
@@ -445,6 +448,7 @@ impl Tree {
                     fitness: self.fitness.clone(),
                     result_branch: self.result_branch.clone(),
                     opt_func_def_branch: None,
+                    is_winner: self.is_winner,
                 },
             // adf case
             Some(func_def_branch) =>
@@ -454,6 +458,7 @@ impl Tree {
                     fitness: self.fitness.clone(),
                     result_branch: self.result_branch.clone(),
                     opt_func_def_branch: Some(func_def_branch.clone()),
+                    is_winner: self.is_winner,
                 },
         }
     }

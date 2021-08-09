@@ -1,5 +1,8 @@
 use std::mem;
 use rand::Rng;
+    
+#[cfg(gpopt_mult_threaded="yes")]
+use rayon::prelude::*;
 
 #[cfg(gpopt_select_method="tournament")]
 use std::collections::HashMap;
@@ -20,6 +23,7 @@ pub struct TreeSet {
     pub tree_vec:       Vec<Tree>,
     pub gen: u16,       // current generation for treeset
 }
+
 impl TreeSet {
     pub fn new(gen: u16) -> TreeSet {
         TreeSet {
@@ -259,9 +263,9 @@ impl TreeSet {
         }
         self
     }
-    pub fn exec_all(&mut self) -> GpHits {
+    pub fn exec_slice(trees: &mut [Tree]) -> GpHits {
         let mut rc = RunContext::new();
-        for (t_i, tree) in self.tree_vec.iter_mut().enumerate() {
+        for tree in trees.iter_mut() {
             rc.prepare_run();
 
             // init accumulators
@@ -291,12 +295,43 @@ impl TreeSet {
 
             let (f, is_winner) = rc.compute_fitness();
             tree.fitness = f;
-            if is_winner {
-                self.winning_index = Some(t_i);
-                break;
-            }
+            tree.is_winner = is_winner;
         }
         rc.hits
+    }
+    #[cfg(gpopt_mult_threaded="no")]
+    fn exec_chunks(chunks: &mut [&mut [Tree]]) -> GpHits {
+        let mut total_hits: GpHits = 0;
+        for chunk in chunks {
+            total_hits += Self::exec_slice(chunk);
+        }
+        total_hits
+    }
+    #[cfg(gpopt_mult_threaded="yes")]
+    fn exec_chunks(chunks: &mut [&mut [Tree]]) -> GpHits {
+        chunks.par_iter_mut()
+            .map(|chunk| Self::exec_slice(chunk))
+            .sum()
+    }
+    pub fn exec_all(&mut self) -> GpHits {
+        let num_chunks: usize = 8;
+        let chunk_size: usize = (self.tree_vec.len() / num_chunks) + 1;
+
+        let mut chunks: Vec<&mut [Tree]> = Vec::new();
+        for chunk in self.tree_vec.chunks_mut(chunk_size) {
+            chunks.push(chunk);
+        }
+
+        let total_hits = Self::exec_chunks(&mut chunks);
+
+        self.winning_index = None;
+        for (t_i, t) in self.tree_vec.iter().enumerate() {
+            if t.is_winner {
+                self.winning_index = Some(t_i);
+            }
+        }
+
+        total_hits
     }
     //fn use_reproduction(index: usize ) -> bool {
     //    let float_index_ratio = index as GpFloat / CONTROL.M as GpFloat;
