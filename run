@@ -1,4 +1,5 @@
 #!/bin/sh
 cargo run --release 2>&1 | tee gp.out
+#export RAYON_NUM_THREADS=20; cargo run --release 2>&1 | tee gp.out
 #cargo run --release > gp.out
 vi gp.out

@@ -299,22 +299,15 @@ impl TreeSet {
         }
         rc.hits
     }
-    #[cfg(gpopt_mult_threaded="no")]
-    fn exec_chunks(chunks: &mut [&mut [Tree]]) -> GpHits {
-        let mut total_hits: GpHits = 0;
-        for chunk in chunks {
-            total_hits += Self::exec_slice(chunk);
-        }
-        total_hits
-    }
     #[cfg(gpopt_mult_threaded="yes")]
     fn exec_chunks(chunks: &mut [&mut [Tree]]) -> GpHits {
         chunks.par_iter_mut()
             .map(|chunk| Self::exec_slice(chunk))
             .sum()
     }
+    #[cfg(gpopt_mult_threaded="yes")]
     pub fn exec_all(&mut self) -> GpHits {
-        let num_chunks: usize = 8;
+        let num_chunks: usize = 50;
         let chunk_size: usize = (self.tree_vec.len() / num_chunks) + 1;
 
         let mut chunks: Vec<&mut [Tree]> = Vec::new();
@@ -323,6 +316,19 @@ impl TreeSet {
         }
 
         let total_hits = Self::exec_chunks(&mut chunks);
+
+        self.winning_index = None;
+        for (t_i, t) in self.tree_vec.iter().enumerate() {
+            if t.is_winner {
+                self.winning_index = Some(t_i);
+            }
+        }
+
+        total_hits
+    }
+    #[cfg(gpopt_mult_threaded="no")]
+    pub fn exec_all(&mut self) -> GpHits {
+        let total_hits = Self::exec_slice(&mut self.tree_vec);
 
         self.winning_index = None;
         for (t_i, t) in self.tree_vec.iter().enumerate() {

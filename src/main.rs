@@ -181,6 +181,9 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
 fn main() {
     init_run();
 
+    #[cfg(gpopt_mult_threaded="yes")]
+    println!("CURRENT NUM THREADS= {}", rayon::current_num_threads());
+
     let mut win_number = 0i32;
     let mut run_number = 0i32;
     let mut rng = GpRngFactory::new();
