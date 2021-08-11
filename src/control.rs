@@ -54,9 +54,11 @@ lazy_static! {
             funcs_rpb:          Box::new([&FUNCTIONS_RESULT_BRANCH_NO_ADF]),
             terms_rpb:          Box::new([&TERMINALS_RESULT_BRANCH]),
             #[cfg(gpopt_adf="yes")]
-            funcs_fdb:          Box::new([&FUNCTIONS_FUNC_DEF_BRANCH]),
+            funcs_fdb:          Box::new([&FUNCTIONS_FUNC_DEF_BRANCH_ADF0,
+                                          &FUNCTIONS_FUNC_DEF_BRANCH_ADF1,]),
             #[cfg(gpopt_adf="yes")]
-            terms_fdb:          Box::new([&TERMINALS_FUNC_DEF_BRANCH]),
+            terms_fdb:          Box::new([&TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,
+                                          &TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,]),
             #[cfg(gpopt_adf="no")]
             funcs_fdb:          Box::new([]),
             #[cfg(gpopt_adf="no")]

@@ -35,7 +35,9 @@ impl Winner {
 
 pub enum Node {
     TNode(& 'static Terminal), // Terminal nodes are borrowed static references
-    FNode(FunctionNode),  // Function nodes are not references, they are owners.
+    FNode(FunctionNode),  // FunctionNodes are not references, they are owners.
+                          // They contain borrowed static references to
+                          // Function structs
 }
 impl Node {
     pub fn new_rnd(rng: &mut GpRng,
@@ -258,6 +260,8 @@ pub struct Function {
     pub name:   & 'static str,
     pub arity:  u8,
     pub code:   FuncNodeCode,
+    pub opt_adf_num: Option<usize>, // if present, identifies adf number [0..n]
+                                    // index into RunContext::opt_func_def_branches
 }
 
 pub struct Terminal {
@@ -286,7 +290,7 @@ impl Terminal {
 pub struct FunctionNode {
     pub fid: u8,
     pub fnc: & 'static Function,
-    pub branch: Vec<Node>, 
+    pub branch: Vec<Node>,
 }
 impl FunctionNode {
     fn new(fid: u8, funcs: &'static [Function]) -> FunctionNode {
@@ -362,10 +366,11 @@ pub enum GenerateMethod {
 }
 
 type TreeNodeIndex = i32;
+type GpAdfNum = usize;
 
 pub enum BranchType {
-    Result0,
-    FunctionDef0,
+    ResultProducing,
+    FunctionDefining(GpAdfNum),
 }
 use BranchType::*;
 
@@ -427,10 +432,10 @@ pub struct Tree {
     pub is_winner: bool,        // true if known winner
 }
 impl Tree {
-    /// new Tree is constructed with an optional func def branch. 
+    /// new Tree is constructed with a optional set of func def branches. 
     pub fn new(result_branch_root: Node,
             opt_func_def_branch_roots: Option<Vec<Node>>) -> Tree {
-        match opt_func_def_branch_root {
+        match opt_func_def_branch_roots {
             // no adf case
             None =>
                 Tree { 
@@ -438,7 +443,7 @@ impl Tree {
                     tcid: 0,
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branch: None,  // i.e. no-adf(s)
+                    opt_func_def_branches: None,  // i.e. no-adf(s)
                     is_winner: false,
                 },
             // adf case
@@ -470,7 +475,7 @@ impl Tree {
                     tcid: 0,
                     fitness: self.fitness.clone(),
                     result_branch: self.result_branch.clone(),
-                    opt_func_def_branch: None,
+                    opt_func_def_branches: None,
                     is_winner: self.is_winner,
                 },
             // adf case
@@ -480,13 +485,13 @@ impl Tree {
                     tcid: 0,
                     fitness: self.fitness.clone(),
                     result_branch: self.result_branch.clone(),
-                    (UC)
                     opt_func_def_branches: Some(func_def_branches.clone()),
                     is_winner: self.is_winner,
                 },
         }
     }
     /// Get num function nodes for a specific branch 
+    (UC)
     pub fn get_num_function_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
             Result0      =>  self.result_branch.num_function_nodes,
@@ -496,30 +501,32 @@ impl Tree {
     }
     /// Get total num function nodes across all branches
     pub fn get_num_function_nodes(&self) -> Option<TreeNodeIndex> {
-        match &self.opt_func_def_branch {
+        match &self.opt_func_def_branches {
             // no adf case (just pass through result branch node count)
             None => self.result_branch.num_function_nodes,
             // adf case - unwrap branches and reassemble optional (some) total
-            Some(func_def_branch) =>
-                if self.result_branch.num_function_nodes == None &&
-                   func_def_branch.num_function_nodes == None
-                {
-                    None
+            Some(func_def_branches) =>
+                if self.result_branch.num_function_nodes == None {
+                    None // a pretty useless tree here.
                 } else {
-                    let num_fnodes1 = self.result_branch.num_function_nodes.unwrap();
-                    let num_fnodes2 = func_def_branch.num_function_nodes.unwrap();
-                    Some(num_fnodes1 + num_fnodes2)
+                    let mut num_fnodes_total: TreeNodeIndex =
+                            self.result_branch.num_function_nodes.unwrap();
+                    for func_def_branch in func_def_branches {
+                        num_fnodes_total += func_def_branch.num_function_nodes.unwrap();
+                    }
+                    Some(num_fnodes_total)
                 },
         }
     }
     /// Get num terminal nodes for a specific branch 
     pub fn get_num_terminal_nodes_bt(&self, b_type: &BranchType) -> Option<TreeNodeIndex> {
         match b_type {
-            Result0      => self.result_branch.num_terminal_nodes,
-            FunctionDef0 => self.opt_func_def_branch.as_ref()
-                .unwrap().num_terminal_nodes,
+            ResultProducing   => self.result_branch.num_terminal_nodes,
+            FunctionDefining(adf_num) => self.opt_func_def_branches.as_ref()
+                .unwrap()[adf_num].num_terminal_nodes,
         }
     }
+(UC)
     /// Get total num terminal nodes across all branches
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
         match &self.opt_func_def_branch {

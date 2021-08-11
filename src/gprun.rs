@@ -46,132 +46,56 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="3")]
-fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
 
-    let func_def_branch =
-        self.opt_func_def_branch_adf0
-            .expect("branch not assigned for exec_adf0");
+    let adf_num =
+        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
 
-    rc.exec_adf(func_def_branch, arg1, arg2)
+    rc.exec_adf(adf_num, arg1, arg2)
 }
 
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="4")]
-fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
     let arg3 = Tree::exec_node(rc, &func.branch[2]);
 
-    let func_def_branch =
-        self.opt_func_def_branch_adf0
-            .expect("branch not assigned for exec_adf0");
+    let adf_num =
+        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
 
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3)
+    rc.exec_adf(adf_num, arg1, arg2, arg3)
 }
 
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="5")]
-fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
     let arg3 = Tree::exec_node(rc, &func.branch[2]);
     let arg4 = Tree::exec_node(rc, &func.branch[3]);
 
-    let func_def_branch =
-        self.opt_func_def_branch_adf0
-            .expect("branch not assigned for exec_adf0");
+    let adf_num =
+        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
 
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3, arg4)
+    rc.exec_adf(adf_num, arg1, arg2, arg3, arg4)
 }
 
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="6")]
-fn function_adf0(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
     let arg3 = Tree::exec_node(rc, &func.branch[2]);
     let arg4 = Tree::exec_node(rc, &func.branch[3]);
     let arg5 = Tree::exec_node(rc, &func.branch[4]);
 
-    let func_def_branch =
-        self.opt_func_def_branch_adf0
-            .expect("branch not assigned for exec_adf0");
+    let adf_num =
+        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
 
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3, arg4, arg5)
-}
-
-
-
-///  
-///  Note that the following set of functions defined for adf1
-///  vary from the set defined for adf0 only by the fact that
-///  self.opt_func_def_branch_adf1 is used as the func_def_branch.
-///  An improved architecture being considered is to have the 
-///  func_def_branch made as an optional variable with the
-///  func FunctionNode struct, that way only one set will be 
-///  required.
-///  
-///  This almost certainly will be the architecture used for point
-///  typing when the number of args will also vary by individual tree.
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="3")]
-fn function_adf1(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-
-    let func_def_branch =
-        self.opt_func_def_branch_adf1
-            .expect("branch not assigned for exec_adf1");
-
-    rc.exec_adf(func_def_branch, arg1, arg2)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="4")]
-fn function_adf1(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-
-    let func_def_branch =
-        self.opt_func_def_branch_adf1
-            .expect("branch not assigned for exec_adf1");
-
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="5")]
-fn function_adf1(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-    let arg4 = Tree::exec_node(rc, &func.branch[3]);
-
-    let func_def_branch =
-        self.opt_func_def_branch_adf1
-            .expect("branch not assigned for exec_adf1");
-
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3, arg4)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="6")]
-fn function_adf1(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-    let arg4 = Tree::exec_node(rc, &func.branch[3]);
-    let arg5 = Tree::exec_node(rc, &func.branch[4]);
-
-    let func_def_branch =
-        self.opt_func_def_branch_adf1
-            .expect("branch not assigned for exec_adf1");
-
-    rc.exec_adf(func_def_branch, arg1, arg2, arg3, arg4, arg5)
+    rc.exec_adf(adf_num, arg1, arg2, arg3, arg4, arg5)
 }
 
 fn terminal_d0(rc: &RunContext) -> GpType {
@@ -262,24 +186,28 @@ pub static FUNCTIONS_RESULT_BRANCH_NO_ADF: [Function; 4] = [
         name: "AND",
         arity: 2,
         code: function_and,
+        opt_adf_num: None,
     },
     Function {
         fid:  2u8,
         name: "OR",
         arity: 2,
         code: function_or,
+        opt_adf_num: None,
     },
     Function {
         fid:  3u8,
         name: "NAND",
         arity: 2,
         code: function_nand,
+        opt_adf_num: None,
     },
     Function {
         fid:  4u8,
         name: "NOR",
         arity: 2,
         code: function_nor,
+        opt_adf_num: None,
     },
 ];
 
@@ -290,36 +218,42 @@ pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 6] = [
         name: "AND",
         arity: 2,
         code: function_and,
+        opt_adf_num: None,
     },
     Function {
         fid:  1u8,
         name: "OR",
         arity: 2,
         code: function_or,
+        opt_adf_num: None,
     },
     Function {
         fid:  2u8,
         name: "NAND",
         arity: 2,
         code: function_nand,
+        opt_adf_num: None,
     },
     Function {
         fid:  3u8,
         name: "NOR",
         arity: 2,
         code: function_nor,
+        opt_adf_num: None,
     },
     Function {
         fid:  4u8,
         name: "ADF0",
         arity: 2,
-        code: function_adf0,
+        code: function_adf,
+        opt_adf_num: Some(0),   // ideintifies ADF0
     },
     Function {
         fid:  5u8,
         name: "ADF1",
         arity: 2,
-        code: function_adf1,
+        code: function_adf,
+        opt_adf_num: Some(1),   // ideintifies ADF0
     },
 ];
 
@@ -330,24 +264,28 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF0: [Function; 4] = [
         name: "AND",
         arity: 2,
         code: function_and,
+        opt_adf_num: None,
     },
     Function {
         fid:  1u8,
         name: "OR",
         arity: 2,
         code: function_or,
+        opt_adf_num: None,
     },
     Function {
         fid:  2u8,
         name: "NAND",
         arity: 2,
         code: function_nand,
+        opt_adf_num: None,
     },
     Function {
         fid:  3u8,
         name: "NOR",
         arity: 2,
         code: function_nor,
+        opt_adf_num: None,
     },
 ];
 
@@ -358,30 +296,35 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF1: [Function; 5] = [
         name: "AND",
         arity: 2,
         code: function_and,
+        opt_adf_num: None,
     },
     Function {
         fid:  1u8,
         name: "OR",
         arity: 2,
         code: function_or,
+        opt_adf_num: None,
     },
     Function {
         fid:  2u8,
         name: "NAND",
         arity: 2,
         code: function_nand,
+        opt_adf_num: None,
     },
     Function {
         fid:  3u8,
         name: "NOR",
         arity: 2,
         code: function_nor,
+        opt_adf_num: None,
     },
     Function {
         fid:  4u8,
         name: "ADF0",
         arity: 2,
-        code: function_adf0,
+        code: function_adf,
+        opt_adf_num: Some(0),   // ideintifies ADF0
     },
 ];
 
@@ -436,8 +379,9 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; EVEN_PARITY_K_VALUE] = [
 ];
 
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
+// Same for ADF0 and ADF1
 #[cfg(gpopt_adf="yes")]
-pub static TERMINALS_FUNC_DEF_BRANCH: [Terminal; EVEN_PARITY_K_VALUE-1] = [
+pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; EVEN_PARITY_K_VALUE-1] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
@@ -493,8 +437,7 @@ impl FitnessCase {
 /// where it can then access it's fitness case data and currency values.
 pub struct RunContext<'a> {
     pub fitness_cases: Vec::<FitnessCase>,
-    pub opt_func_def_branch_adf0: Option<&'a TreeBranch>, // used for calling adf0
-    pub opt_func_def_branch_adf1: Option<&'a TreeBranch>, // used for calling adf1
+    pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
     pub opt_adf_args: Option<Vec<GpType>>,
     pub cur_fc: usize,
     pub hits: GpHits,
@@ -504,8 +447,7 @@ impl RunContext<'_> {
     pub fn new() -> RunContext<'static> {
         let mut rc = RunContext {
             cur_fc: 0,
-            opt_func_def_branch_adf0: None,
-            opt_func_def_branch_adf1: None,
+            opt_func_def_branches: None,
             opt_adf_args: None,
             fitness_cases: Vec::new(),
             hits: 0,
