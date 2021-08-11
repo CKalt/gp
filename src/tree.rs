@@ -401,6 +401,17 @@ impl TreeBranch {
     }
 }
 
+type TreeBranches = Vec<TreeBranch>;
+impl TreeBranches {
+    fn clone(&self) -> TreeBranches {
+        let tree_branches: TreeBranches = Vec::new();
+        for tree_branch in self {
+            tree_branches.push(tree_branch.clone());
+        }
+        tree_branches
+    }
+}
+
 pub struct Tree {
     pub tfid: Option<usize>,  // None until sorted, then this is Tree's zero
                       // based index within TreeSet.tree_vec after sorting for
@@ -408,13 +419,13 @@ pub struct Tree {
     pub tcid: usize,  // The id of the Tree when first created and put into the array
     pub fitness: Fitness,
     pub result_branch: TreeBranch,
-    pub opt_func_def_branch: Option<TreeBranch>, // If None no-adf, else adf.
+    pub opt_func_def_branches: Option<Vec<TreeBranch>>, // If None no-adf, else adf.
     pub is_winner: bool,        // true if known winner
 }
 impl Tree {
     /// new Tree is constructed with an optional func def branch. 
     pub fn new(result_branch_root: Node,
-            opt_func_def_branch_root: Option<Node>) -> Tree {
+            opt_func_def_branch_roots: Option<Vec<Node>>) -> Tree {
         match opt_func_def_branch_root {
             // no adf case
             None =>
@@ -423,23 +434,31 @@ impl Tree {
                     tcid: 0,
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branch: None,  // i.e. no-adf
+                    opt_func_def_branch: None,  // i.e. no-adf(s)
                     is_winner: false,
                 },
             // adf case
-            Some(func_def_branch_root) =>
+            Some(func_def_branch_roots) => {
                 Tree { 
                     tfid: None,
                     tcid: 0,
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branch: Some(TreeBranch::new(func_def_branch_root)),
+                    opt_func_def_branches: Some({
+                        let func_def_branches: TreeBranches = Vec::new();
+                        for func_def_branch_root in func_def_branch_roots {
+                            func_def_branches
+                                .push(TreeBranch::new(func_def_branch_root));
+                        }
+                        func_def_branches
+                    }),
                     is_winner: false,
-                },
+                }
+            }
         }
     }
     pub fn clone(&self) -> Tree {
-        match &self.opt_func_def_branch {
+        match &self.opt_func_def_branches {
             // no adf case
             None =>
                 Tree { 
@@ -451,13 +470,14 @@ impl Tree {
                     is_winner: self.is_winner,
                 },
             // adf case
-            Some(func_def_branch) =>
+            Some(func_def_branches) =>
                 Tree { 
                     tfid: None,
                     tcid: 0,
                     fitness: self.fitness.clone(),
                     result_branch: self.result_branch.clone(),
-                    opt_func_def_branch: Some(func_def_branch.clone()),
+                    (UC)
+                    opt_func_def_branches: Some(func_def_branches.clone()),
                     is_winner: self.is_winner,
                 },
         }
