@@ -402,8 +402,12 @@ impl TreeBranch {
 }
 
 type TreeBranches = Vec<TreeBranch>;
-impl TreeBranches {
-    fn clone(&self) -> TreeBranches {
+trait CloneBranches {
+    fn clone(&self) -> Self;
+}
+
+impl CloneBranches for TreeBranches {
+    fn clone(&self) -> Self {
         let tree_branches: TreeBranches = Vec::new();
         for tree_branch in self {
             tree_branches.push(tree_branch.clone());
