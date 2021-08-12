@@ -529,17 +529,17 @@ impl Tree {
     }
     /// Get total num terminal nodes across all branches
     pub fn get_num_terminal_nodes(&self) -> Option<TreeNodeIndex> {
+        let num_rb_terminal_nodes = self.result_branch.num_terminal_nodes.unwrap();
         match &self.opt_func_def_branches {
-            // no adf case
-            None => Some(self.result_branch.num_terminal_nodes.unwrap()),
-            // adf case
+            // no adf case - only need count of terminal nodes in result branch
+            None => Some(num_rb_terminal_nodes),
+            // adf case - need to add up result branch and func def branches
             Some(func_def_branches) => {
-                let mut num_tnodes_total: TreeNodeIndex =
-                    self.result_branch.num_terminal_nodes.unwrap();
+                let mut sum_tnodes = num_rb_terminal_nodes;
                 for func_def_branch in func_def_branches.iter() {
-                    num_tnodes_total += func_def_branch.num_terminal_nodes.unwrap();
+                    sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
                 }
-                Some(num_tnodes_total)
+                Some(sum_tnodes)
             },
         }
     }
@@ -633,18 +633,17 @@ impl Tree {
                     self.result_branch.root.find_function_node_ref(fi)),
             // adf case
             Some(func_def_branches) => {
-                let mut num_fd_branch_fnodes: TreeNodeIndex = 0;
+                let mut sum_fnodes: TreeNodeIndex = 0;
                 let mut fi_offset: TreeNodeIndex = 0;
                 for (adf_num, func_def_branch) in
                     func_def_branches.iter().enumerate() {
-                    num_fd_branch_fnodes +=
-                        func_def_branch.num_function_nodes.unwrap();
-                    if fi < num_fd_branch_fnodes {
+                    sum_fnodes += func_def_branch.num_function_nodes.unwrap();
+                    if fi < sum_fnodes {
                         return (FunctionDefining(adf_num), 
                             func_def_branch.root
                                 .find_function_node_ref(fi - fi_offset))
                     }
-                    fi_offset = num_fd_branch_fnodes;
+                    fi_offset = sum_fnodes;
                 }
                 (ResultProducing, 
                     self.result_branch.root

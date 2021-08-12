@@ -35,18 +35,23 @@ impl TreeSet {
     }
     fn tree_match(t1: &Tree, t2: &Tree) -> bool {
         if t1.result_branch.root.deep_match(&t2.result_branch.root) {
-            match &t1.opt_func_def_branch {
+            match &t1.opt_func_def_branches {
                 // no adf case
                 None => true,
                 // adf case
-                Some(func_def_branch) => {
-                    func_def_branch.root.deep_match(
-                        &t2.opt_func_def_branch.as_ref().unwrap().root
-                    )
+                Some(func_def_branches) => {
+                    // if any fd branch doesn't match false
+                    for func_def_branch in func_def_branches.iter() {
+                        if !func_def_branch.root.deep_match(
+                            &t2.opt_func_def_branch.as_ref().unwrap().root
+                        ) {
+                            return false;
+                        }
+                    }
+                    true
                 },
             }
-        }
-        else {
+        } else {
             false
         }
     }
@@ -59,19 +64,24 @@ impl TreeSet {
         return false;
     }
     fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
+        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+
         let mut result_branch_root =
             FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
-            let mut func_def_branch_root =
-                FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
-            Self::gen_tree_full_method_r(rng, &mut func_def_branch_root, 2, depth,
-                    CONTROL.funcs_fdb[0], CONTROL.terms_fdb[0]);
-            Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
-        }
-        else {
+            let func_def_branch_roots: Vec<Node>: Vec::new();
+            for i in 0..CONTROL.funcs_fdb.len() {
+                let mut func_def_branch_root =
+                    FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
+                Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
+                    2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
+                func_def_branch_roots.push(FNode(func_def_branch_root));
+            }
+            Tree::new(FNode(result_branch_root), Some(func_def_branch_roots))
+        } else {
             Tree::new(FNode(result_branch_root), None)
         }
     }
@@ -80,14 +90,15 @@ impl TreeSet {
             funcs: &'static [Function], terms: &'static [Terminal]) {
         if level >= depth {
             for i in 0..func_node.fnc.arity {
-                let rnd_tref = Terminal::get_rnd_ref(rng, terms); // Always a Terminal Node
+                // Always a Terminal Node
+                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
                 func_node.set_arg(i, TNode(rnd_tref));
             }
-        }
-        else {
+        } else {
             let c_depth = level+1;
-            for i in 0..func_node.fnc.arity {
-                let rnd_fn = FunctionNode::new_rnd(rng, funcs); // Always a Funciton Node
+            for i in 0..func_node.fnc.arity { 
+                // Always a Funciton Node
+                let rnd_fn = FunctionNode::new_rnd(rng, funcs);
                 let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
 
                 match *node {
@@ -100,20 +111,24 @@ impl TreeSet {
         }
     }
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
+        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
         let mut result_branch_root =
             FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
-            let mut func_def_branch_root =
-                FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[0]);
-            Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root, 2, depth,
-                    CONTROL.funcs_fdb[0], CONTROL.terms_fdb[0]);
-
-            Tree::new(FNode(result_branch_root), Some(FNode(func_def_branch_root)))
-        }
-        else {
+            let mut func_def_branch_roots: Vec<Node> = Vec::new();
+            let func_def_branch_roots: Vec<Node>: Vec::new();
+            for i in 0..CONTROL.funcs_fdb.len() {
+                let mut func_def_branch_root =
+                    FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
+                Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
+                        2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
+                func_def_branch_roots.push(FNode(func_def_branch_root));
+            }
+            Tree::new(FNode(result_branch_root), Some(func_def_branch_roots))
+        } else {
             Tree::new(FNode(result_branch_root), None)
         }
     }
@@ -122,14 +137,16 @@ impl TreeSet {
             funcs: &'static [Function], terms: &'static [Terminal]) {
         if level >= depth {
             for i in 0..func_node.fnc.arity {
-                let rnd_tref = Terminal::get_rnd_ref(rng, terms); // Always a Terminal Node
+                // Always a Terminal Node
+                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
                 func_node.set_arg(i, TNode(rnd_tref));
             }
         }
         else {
             let c_depth = level+1;
             for i in 0..func_node.fnc.arity {
-                let rnd_ft_node = Node::new_rnd(rng, funcs, terms); // Either a Function or Terminal Node
+                // Either a Function or Terminal Node
+                let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
                 let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                 if let FNode(ref mut fn_ref) = node {
                     Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
@@ -359,9 +376,9 @@ impl TreeSet {
         tree.tcid = index;
         self.tree_vec.push(tree);
     }
-    // rnd_internal_point - randomly decides whether to do crossover at an
+    // rnd_int_pt_decide - randomly decides whether to do crossover at an
     // internal point (function) or terminal based on control Pip value.
-    fn rnd_internal_point(rng: &mut GpRng) -> bool {
+    fn rnd_int_pt_decide(rng: &mut GpRng) -> bool {
         #[cfg(gpopt_rng="file_stream")]
         let num: GpFloat = rng.gen_float();
 
@@ -379,7 +396,7 @@ impl TreeSet {
         let b_type: BranchType;
 
         let swap_target1 =
-            if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_internal_point(rng) {
+            if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let nref_pair = t1.get_rnd_function_node_ref(rng);
                 b_type = nref_pair.0;
                 node = nref_pair.1;
@@ -392,7 +409,7 @@ impl TreeSet {
             };
 
         let swap_target2 =
-            if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_internal_point(rng) {
+            if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 t2.get_rnd_function_node_ref_bt(rng, &b_type)
             } else {
                 t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
@@ -461,7 +478,6 @@ impl TreeSet {
         assert_eq!(new_trees.tree_vec.len(), CONTROL.M);
         new_trees
     }
-
 }
 
 #[cfg(gpopt_select_method="fpb")]
