@@ -128,7 +128,7 @@ fn terminal_d5(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[5]
 }
 
-# The number of args for adf for even k parity is k-1.
+/// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
      match rc.opt_adf_args {
@@ -137,7 +137,7 @@ fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
     }
 }
 
-# The number of args for adf for even k parity is k-1.
+/// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
@@ -146,7 +146,7 @@ fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
     }
 }
 
-# The number of args for adf for even k parity is k-1.
+/// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 #[cfg(any(gpopt_even_parity_k="4",
           gpopt_even_parity_k="5",
@@ -158,7 +158,7 @@ fn terminal_adf0_arg2(rc: &RunContext) -> GpType {
     }
 }
             
-# The number of args for adf for even k parity is k-1.
+/// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 #[cfg(any(gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
@@ -169,7 +169,7 @@ fn terminal_adf0_arg3(rc: &RunContext) -> GpType {
     }
 }
 
-# The number of args for adf for even k parity is k-1.
+/// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="6")]
 fn terminal_adf0_arg4(rc: &RunContext) -> GpType {
@@ -456,23 +456,19 @@ impl RunContext<'_> {
 
         for i in 0..RUN_CONTROL_NUM_FITNESS_CASES {
             let mut fc = FitnessCase::new();
-            for bit in 0..6 {
-                fc.input_bits[bit] = (i & 2u8.pow(bit as u32) as usize) != 0;
+            let sum_of_bits = 0u16;
+            for bit in 0..EVEN_PARITY_K_VALUE {
+                let bit_value: bool = (i & 2u8.pow(bit as u32) as usize) != 0;
+                fc.input_bits[bit] = bit_value;
+                if bit_value {
+                    sum_of_bits += 1;
+                }
             }
-            fc.output_bit = Self::is_bool6_sym(i as u8);
+            fc.output_bit = (( sum_of_bits % 2 ) == 0);
             rc.fitness_cases.push(fc);
         }
 
         rc
-    }
-    fn is_bool6_sym(val: u8) -> bool {
-        // bit @pos 2^0 must match bit @pos 2^5
-        // bit @pos 2^1 must match bit @pos 2^4
-        // bit @pos 2^2 must match bit @pos 2^3
-
-        ((val & 2u8.pow(0)) != 0) == ((val & 2u8.pow(5)) != 0) &&
-        ((val & 2u8.pow(1)) != 0) == ((val & 2u8.pow(4)) != 0) &&
-        ((val & 2u8.pow(2)) != 0) == ((val & 2u8.pow(3)) != 0)
     }
     pub fn get_cur_fc(&self) -> &FitnessCase {
         &self.fitness_cases[self.cur_fc]

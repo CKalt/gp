@@ -72,7 +72,7 @@ impl TreeSet {
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
-            let func_def_branch_roots: Vec<Node>: Vec::new();
+            let func_def_branch_roots: Vec<Node> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
@@ -119,7 +119,7 @@ impl TreeSet {
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branch_roots: Vec<Node> = Vec::new();
-            let func_def_branch_roots: Vec<Node>: Vec::new();
+            let func_def_branch_roots: Vec<Node> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);

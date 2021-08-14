@@ -611,7 +611,7 @@ impl Tree {
                     func_def_branch.num_function_nodes.unwrap();
 
                 if fi < num_fd_branch_fnodes {
-                    (fi,FunctionDef0, 
+                    (fi, FunctionDef0, 
                         func_def_branch.root.find_function_node_ref(fi))
                 } else {
                     let adj_fi = fi - num_fd_branch_fnodes;
