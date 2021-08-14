@@ -464,7 +464,7 @@ impl RunContext<'_> {
                     sum_of_bits += 1;
                 }
             }
-            fc.output_bit = (( sum_of_bits % 2 ) == 0);
+            fc.output_bit = ( sum_of_bits % 2 ) == 0;
             rc.fitness_cases.push(fc);
         }
 

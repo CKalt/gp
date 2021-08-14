@@ -41,9 +41,10 @@ impl TreeSet {
                 // adf case
                 Some(func_def_branches) => {
                     // if any fd branch doesn't match false
-                    for func_def_branch in func_def_branches.iter() {
+                    for (b_i, func_def_branch) in
+                        func_def_branches.iter().enumerate() {
                         if !func_def_branch.root.deep_match(
-                            &t2.opt_func_def_branch.as_ref().unwrap().root
+                            &t2.opt_func_def_branches.as_ref().unwrap()[b_i].root
                         ) {
                             return false;
                         }
@@ -288,10 +289,14 @@ impl TreeSet {
             // init accumulators
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0;
-            if let Some(func_def_branch) = &tree.opt_func_def_branch {
-                rc.opt_func_def_branch = Some(&func_def_branch);
+            if let Some(func_def_branches) = &tree.opt_func_def_branches {
+                let func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
+                for func_def_branch in func_def_branches {
+                    func_def_branch_refs.push(func_def_branch);
+                }
+                rc.opt_func_def_branches = Some(func_def_branch_refs);
             } else {
-                rc.opt_func_def_branch = None;
+                rc.opt_func_def_branches = None;
             }
 
             for fc_i in 0..rc.fitness_cases.len() {
@@ -304,8 +309,8 @@ impl TreeSet {
                     sum_hits += 1;
                 }
             }
-            if let Some(_) = rc.opt_func_def_branch {
-                rc.opt_func_def_branch = None;
+            if let Some(_) = rc.opt_func_def_branches {
+                rc.opt_func_def_branches = None;
             }
             rc.hits = sum_hits;
             rc.error = sum_error;

@@ -102,7 +102,7 @@ impl Node {
             _ => false,
         }
     }
-    fn count_nodes(&self, counts: &mut (i32, i32)) {
+    fn count_nodes(&self, counts: &mut (usize, usize)) {
         match self {
             TNode(_) => counts.0 += 1,
             FNode(ref fn_ref) => {
@@ -365,7 +365,7 @@ pub enum GenerateMethod {
     Grow
 }
 
-type TreeNodeIndex = i32;
+type TreeNodeIndex = usize;
 
 pub enum BranchType {
     ResultProducing,
@@ -398,7 +398,7 @@ impl TreeBranch {
         self.num_function_nodes = None;
     }
     pub fn count_nodes(&mut self) {
-        let mut counts = (0i32, 0i32); // (num_terms, num_funcs)
+        let mut counts = (0usize, 0usize);
         self.root.count_nodes(&mut counts);
         self.num_terminal_nodes = Some(counts.0);
         self.num_function_nodes = Some(counts.1);
@@ -457,7 +457,7 @@ impl Tree {
                         for func_def_branch_root in
                                 func_def_branch_roots.iter() {
                             func_def_branches
-                                .push(TreeBranch::new(func_def_branch_root));
+                                .push(TreeBranch::new(*func_def_branch_root));
                         }
                         func_def_branches
                     }),
@@ -497,7 +497,7 @@ impl Tree {
             ResultProducing => self.result_branch.num_function_nodes,
             FunctionDefining(adf_num) =>  
                 self.opt_func_def_branches
-                    .as_ref().unwrap()[adf_num].num_function_nodes,
+                    .as_ref().unwrap()[*adf_num].num_function_nodes,
         }
     }
     /// Get total num function nodes across all branches
@@ -524,7 +524,7 @@ impl Tree {
         match b_type {
             ResultProducing   => self.result_branch.num_terminal_nodes,
             FunctionDefining(adf_num) => self.opt_func_def_branches.as_ref()
-                .unwrap()[adf_num].num_terminal_nodes,
+                .unwrap()[*adf_num].num_terminal_nodes,
         }
     }
     /// Get total num terminal nodes across all branches
@@ -556,7 +556,7 @@ impl Tree {
     /// count nodes across all branches
     pub fn count_nodes(&mut self) {
         self.result_branch.count_nodes(); // for adf and no-adf cases
-        if let Some(func_def_branches) = &mut self.opt_func_def_branch {
+        if let Some(func_def_branches) = &mut self.opt_func_def_branches {
             // adf case only
             for func_def_branch in func_def_branches.iter_mut() {
                 func_def_branch.count_nodes();
@@ -578,7 +578,7 @@ impl Tree {
 
         println!("nFunctions = {:?}\nnTerminals= {:?}", self.get_num_function_nodes(),
             self.get_num_terminal_nodes());
-        if let Some(func_def_branches) = &self.opt_func_def_branch {
+        if let Some(func_def_branches) = &self.opt_func_def_branches {
             // adf case only
             for (adf_num, func_def_branch) in
                     func_def_branches.iter().enumerate() {
@@ -593,31 +593,37 @@ impl Tree {
     }
     /// get a random function node over all branches. return node index, branch
     /// type and ref to node. Index sequence is in branch order major
-    /// adfN..adf0, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// adf0..adfN, rb0, rb0..rbN and and minor within each branch tree, depth
     /// first.
     pub fn get_rnd_function_node_ref_i(&mut self,
             rng: &mut GpRng)
         -> (TreeNodeIndex, BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
 
-        match &mut self.opt_func_def_branch {
+        match &mut self.opt_func_def_branches {
             // no adf case
             None =>
-                (fi, Result0,
+                (fi, ResultProducing,
                     self.result_branch.root.find_function_node_ref(fi)),
-            // adf case
-            Some(func_def_branch) => {
-                let num_fd_branch_fnodes =
-                    func_def_branch.num_function_nodes.unwrap();
 
-                if fi < num_fd_branch_fnodes {
-                    (fi, FunctionDef0, 
-                        func_def_branch.root.find_function_node_ref(fi))
-                } else {
-                    let adj_fi = fi - num_fd_branch_fnodes;
-                    (adj_fi, Result0,
-                        self.result_branch.root.find_function_node_ref(adj_fi))
+            // adf case
+            Some(func_def_branches) => {
+                let mut sum_fnodes: TreeNodeIndex = 0;
+                let mut fi_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter().enumerate() {
+                    sum_fnodes += func_def_branch.num_function_nodes.unwrap();
+                    if fi < sum_fnodes {
+                        return (fi, FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_function_node_ref(fi - fi_offset))
+                    }
+                    fi_offset = sum_fnodes;
                 }
+                let adj_fi = fi - fi_offset;
+                (adj_fi, ResultProducing, 
+                    self.result_branch.root
+                        .find_function_node_ref(adj_fi))
             }
         }
     }
@@ -657,9 +663,10 @@ impl Tree {
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let fi = self.get_rnd_function_index_bt(rng, b_type);
         match b_type {
-            ResultProducing => self.result_branch.root.find_function_node_ref(fi),
-            FunctionDefining(adf_num) => self.opt_func_def_branch
-                .as_mut().unwrap().root.find_function_node_ref(fi),
+            ResultProducing => self
+                .result_branch.root.find_function_node_ref(fi),
+            FunctionDefining(adf_num) => self.opt_func_def_branches
+                .as_mut().unwrap()[*adf_num].root.find_function_node_ref(fi),
         }
     }
     /// get a random function index for a specific branch type.
@@ -682,28 +689,33 @@ impl Tree {
     }
     /// get a random terminal node over all branches. return node index, branch
     /// type and ref to node. Index sequence is in branch order major
-    /// adfN..adf0, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// adf0..adf1, rb0, rb0..rbN and and minor within each branch tree, depth
     /// first.
     pub fn get_rnd_terminal_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        match &mut self.opt_func_def_branch {
+        match &mut self.opt_func_def_branches {
             // no adf case
-            None => (Result0,
+            None => (ResultProducing,
                 self.result_branch.root.find_terminal_node_ref(ti)),
             // adf case
-            Some(func_def_branch) => {
-                let num_fd_branch_tnodes =
-                    func_def_branch.num_terminal_nodes.unwrap();
+            Some(func_def_branches) => {
+                let mut sum_tnodes: TreeNodeIndex = 0;
+                let mut ti_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter().enumerate() {
+                    sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
 
-                if ti < num_fd_branch_tnodes {
-                    (FunctionDef0, 
-                        func_def_branch.root.find_terminal_node_ref(ti))
-                } else {
-                    (Result0,
-                        self.result_branch.root.find_terminal_node_ref(
-                                ti - num_fd_branch_tnodes))
+                    if ti < sum_tnodes {
+                        return (FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_terminal_node_ref(ti - ti_offset))
+                    }
+                    ti_offset = sum_tnodes;
                 }
+                (ResultProducing, 
+                    self.result_branch.root
+                        .find_terminal_node_ref(ti - ti_offset))
             }
         }
     }
@@ -712,9 +724,9 @@ impl Tree {
             rng: &mut GpRng, b_type: &BranchType) -> &mut Node {
         let ti = self.get_rnd_terminal_index_bt(rng, b_type);
         match b_type {
-            Result0 => self.result_branch.root.find_terminal_node_ref(ti),
-            FunctionDef0 => self.opt_func_def_branch.as_mut().unwrap()
-                .root.find_terminal_node_ref(ti),
+            ResultProducing => self.result_branch.root.find_terminal_node_ref(ti),
+            FunctionDefining(adf_num) => self.opt_func_def_branches.
+                as_mut().unwrap()[*adf_num].root.find_terminal_node_ref(ti),
         }
     }
     /// get a random terminal node over all branches. return node index, branch
@@ -726,24 +738,30 @@ impl Tree {
             rng: &mut GpRng)
         -> (TreeNodeIndex,  BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
-        match &mut self.opt_func_def_branch {
+        match &mut self.opt_func_def_branches {
             // no adf case
-            None =>
-                 (ti, Result0,
-                      self.result_branch.root.find_terminal_node_ref(ti)),
+            None => (ti, ResultProducing,
+                self.result_branch.root.find_terminal_node_ref(ti)),
             // adf case
-            Some(func_def_branch) => {
-                let num_fd_branch_tnodes =
-                    func_def_branch.num_terminal_nodes.unwrap();
+            Some(func_def_branches) => {
+                let mut sum_tnodes: TreeNodeIndex = 0;
+                let mut ti_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter().enumerate() {
+                    sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
 
-                if ti < num_fd_branch_tnodes {
-                    (ti, FunctionDef0, 
-                        func_def_branch.root.find_terminal_node_ref(ti))
-                } else {
-                    let adj_ti = ti - num_fd_branch_tnodes;
-                    (adj_ti, Result0,
-                        self.result_branch.root.find_terminal_node_ref(adj_ti))
+                    if ti < sum_tnodes {
+                        let adj_ti = ti - ti_offset;
+                        return (adj_ti, FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_terminal_node_ref(adj_ti))
+                    }
+                    ti_offset = sum_tnodes;
                 }
+                let adj_ti = ti - ti_offset;
+                (adj_ti, ResultProducing, 
+                    self.result_branch.root
+                        .find_terminal_node_ref(adj_ti))
             }
         }
     }
@@ -770,8 +788,13 @@ impl Tree {
         if self.result_branch.root.node_depth_gt(d, 1) {
             true
         } else {
-            if let Some(func_def_branch) = &self.opt_func_def_branch {
-                func_def_branch.root.node_depth_gt(d, 1)
+            if let Some(func_def_branches) = &self.opt_func_def_branches {
+                for func_def_branch in func_def_branches.iter() {
+                    if func_def_branch.root.node_depth_gt(d, 1) {
+                        return true;
+                    }
+                }
+                return false;
             }
             else {
                 false
@@ -793,9 +816,16 @@ impl Tree {
         let mut sum_hits: GpHits = 0;
         let mut sum_error: GpRaw = 0;
 
-        if let Some(func_def_branch) = &self.opt_func_def_branch {
-            rc.opt_func_def_branch = Some(&func_def_branch);
+        if let Some(func_def_branches) = &self.opt_func_def_branches {
+            let func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
+            for func_def_branch in func_def_branches {
+                func_def_branch_refs.push(func_def_branch);
+            }
+            rc.opt_func_def_branches = Some(func_def_branch_refs);
+        } else {
+            rc.opt_func_def_branches = None;
         }
+
         for fc_i in 0..rc.fitness_cases.len() {
             rc.cur_fc = fc_i;
             let result = Tree::exec_node(&mut rc, &self.result_branch.root);
@@ -807,8 +837,8 @@ impl Tree {
                 sum_hits += 1;
             }
         }
-        if let Some(_) = rc.opt_func_def_branch {
-            rc.opt_func_def_branch = None;
+        if let Some(_) = rc.opt_func_def_branches {
+            rc.opt_func_def_branches = None;
         }
 
         rc.hits = sum_hits;
