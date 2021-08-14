@@ -412,7 +412,7 @@ trait CloneBranches {
 
 impl CloneBranches for TreeBranches {
     fn clone(&self) -> Self {
-        let tree_branches: TreeBranches = Vec::new();
+        let mut tree_branches: TreeBranches = Vec::new();
         for tree_branch in self {
             tree_branches.push(tree_branch.clone());
         }
@@ -447,20 +447,27 @@ impl Tree {
                 },
             // adf case
             Some(func_def_branch_roots) => {
+                let mut func_def_branches: Vec<TreeBranch> = Vec::new();
+                for f_i in 0..func_def_branch_roots.len() {
+                    func_def_branches.
+                        push(TreeBranch::new(func_def_branch_roots[f_i]));
+                }
+
+
+
+
+
+
+
+
+
+
                 Tree { 
                     tfid: None,
                     tcid: 0,
                     fitness: Fitness::new(),
                     result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branches: Some({
-                        let func_def_branches: TreeBranches = Vec::new();
-                        for func_def_branch_root in
-                                func_def_branch_roots.iter() {
-                            func_def_branches
-                                .push(TreeBranch::new(*func_def_branch_root));
-                        }
-                        func_def_branches
-                    }),
+                    opt_func_def_branches: Some(func_def_branches),
                     is_winner: false,
                 }
             }
@@ -582,10 +589,9 @@ impl Tree {
             // adf case only
             for (adf_num, func_def_branch) in
                     func_def_branches.iter().enumerate() {
-                println!("Function Def Branch0:");
+                println!("Function Def ADF{}:", adf_num);
                 func_def_branch.root.print();
             }
-
         }
         println!("\nResult Branch0:");
         self.result_branch.root.print();

@@ -456,7 +456,7 @@ impl RunContext<'_> {
 
         for i in 0..RUN_CONTROL_NUM_FITNESS_CASES {
             let mut fc = FitnessCase::new();
-            let sum_of_bits = 0u16;
+            let mut sum_of_bits = 0u16;
             for bit in 0..EVEN_PARITY_K_VALUE {
                 let bit_value: bool = (i & 2u8.pow(bit as u32) as usize) != 0;
                 fc.input_bits[bit] = bit_value;
