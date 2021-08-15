@@ -379,9 +379,9 @@ pub struct TreeBranch {
     pub num_terminal_nodes: Option<TreeNodeIndex>,
 }
 impl TreeBranch {
-    fn new(root: Node) -> TreeBranch {
+    pub fn new(root: Node) -> TreeBranch {
         TreeBranch{
-            root: root,
+            root,
             num_function_nodes: None,     // None until count_nodes is called
             num_terminal_nodes: None,     // None until count_nodes is called
         }
@@ -432,45 +432,15 @@ pub struct Tree {
 }
 impl Tree {
     /// new Tree is constructed with a optional set of func def branches. 
-    pub fn new(result_branch_root: Node,
-            opt_func_def_branch_roots: Option<Vec<Node>>) -> Tree {
-        match opt_func_def_branch_roots {
-            // no adf case
-            None =>
-                Tree { 
-                    tfid: None,
-                    tcid: 0,
-                    fitness: Fitness::new(),
-                    result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branches: None,  // i.e. no-adf(s)
-                    is_winner: false,
-                },
-            // adf case
-            Some(func_def_branch_roots) => {
-                let mut func_def_branches: Vec<TreeBranch> = Vec::new();
-                for f_i in 0..func_def_branch_roots.len() {
-                    func_def_branches.
-                        push(TreeBranch::new(func_def_branch_roots[f_i]));
-                }
-
-
-
-
-
-
-
-
-
-
-                Tree { 
-                    tfid: None,
-                    tcid: 0,
-                    fitness: Fitness::new(),
-                    result_branch: TreeBranch::new(result_branch_root),
-                    opt_func_def_branches: Some(func_def_branches),
-                    is_winner: false,
-                }
-            }
+    pub fn new(result_branch: TreeBranch,
+            opt_func_def_branches: Option<Vec<TreeBranch>>) -> Tree {
+        Tree { 
+            tfid: None,
+            tcid: 0,
+            fitness: Fitness::new(),
+            result_branch,
+            opt_func_def_branches,
+            is_winner: false,
         }
     }
     pub fn clone(&self) -> Tree {
@@ -617,7 +587,7 @@ impl Tree {
                 let mut sum_fnodes: TreeNodeIndex = 0;
                 let mut fi_offset: TreeNodeIndex = 0;
                 for (adf_num, func_def_branch) in
-                    func_def_branches.iter().enumerate() {
+                    func_def_branches.iter_mut().enumerate() {
                     sum_fnodes += func_def_branch.num_function_nodes.unwrap();
                     if fi < sum_fnodes {
                         return (fi, FunctionDefining(adf_num), 
@@ -648,7 +618,7 @@ impl Tree {
                 let mut sum_fnodes: TreeNodeIndex = 0;
                 let mut fi_offset: TreeNodeIndex = 0;
                 for (adf_num, func_def_branch) in
-                    func_def_branches.iter().enumerate() {
+                    func_def_branches.iter_mut().enumerate() {
                     sum_fnodes += func_def_branch.num_function_nodes.unwrap();
                     if fi < sum_fnodes {
                         return (FunctionDefining(adf_num), 
@@ -709,7 +679,7 @@ impl Tree {
                 let mut sum_tnodes: TreeNodeIndex = 0;
                 let mut ti_offset: TreeNodeIndex = 0;
                 for (adf_num, func_def_branch) in
-                    func_def_branches.iter().enumerate() {
+                    func_def_branches.iter_mut().enumerate() {
                     sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
 
                     if ti < sum_tnodes {
@@ -753,7 +723,7 @@ impl Tree {
                 let mut sum_tnodes: TreeNodeIndex = 0;
                 let mut ti_offset: TreeNodeIndex = 0;
                 for (adf_num, func_def_branch) in
-                    func_def_branches.iter().enumerate() {
+                    func_def_branches.iter_mut().enumerate() {
                     sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
 
                     if ti < sum_tnodes {
@@ -823,7 +793,7 @@ impl Tree {
         let mut sum_error: GpRaw = 0;
 
         if let Some(func_def_branches) = &self.opt_func_def_branches {
-            let func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
+            let mut func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
             for func_def_branch in func_def_branches {
                 func_def_branch_refs.push(func_def_branch);
             }
@@ -918,7 +888,7 @@ impl Tree {
             Node::deep_new_from_parse_tree(&rb_node, rb0_funcs, rb0_terms);
 
         // There may or may not be a func def branch 
-        let opt_func_def_branch_root = 
+        let opt_func_def_branches = 
             if CONTROL.num_terminals_func_def_branch > 0 {
                 let (fd0_s, fd0_funcs, fd0_terms) = opt_fdb0.unwrap(); // func def branch 0
                 let fd_result = parse_sexpr(fd0_s);
@@ -927,13 +897,16 @@ impl Tree {
                         Ok(parsed_tuple) => parsed_tuple.1,
                         Err(error) => panic!("cannot parse result branch: {:?}", error),
                     };
-                Some(Node::deep_new_from_parse_tree(&fd_node, fd0_funcs, fd0_terms))
+                Some(TreeBranch::new(
+                    Node::deep_new_from_parse_tree(
+                        &fd_node, fd0_funcs, fd0_terms)))
             } else {
                 assert!(opt_fdb0.is_none());
                 None
             };
 
-        let mut tree = Tree::new(result_branch_root, opt_func_def_branch_root);
+        let mut tree = Tree::new(
+            TreeBranch::new(result_branch_root), opt_func_def_branches);
         tree.count_nodes();
         tree
     }

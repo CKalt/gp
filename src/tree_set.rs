@@ -73,17 +73,20 @@ impl TreeSet {
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
-            let func_def_branch_roots: Vec<Node> = Vec::new();
+            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
                 Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
                     2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
-                func_def_branch_roots.push(FNode(func_def_branch_root));
+                func_def_branches.push(TreeBranch::new(FNode(func_def_branch_root)));
             }
-            Tree::new(FNode(result_branch_root), Some(func_def_branch_roots))
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), 
+                Some(func_def_branches))
         } else {
-            Tree::new(FNode(result_branch_root), None)
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), None)
         }
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
@@ -119,17 +122,21 @@ impl TreeSet {
                 CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
-            let mut func_def_branch_roots: Vec<Node> = Vec::new();
+            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
                 Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
                         2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
-                func_def_branch_roots.push(FNode(func_def_branch_root));
+                func_def_branches
+                    .push(TreeBranch::new(FNode(func_def_branch_root)));
             }
-            Tree::new(FNode(result_branch_root), Some(func_def_branch_roots))
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)),
+                Some(func_def_branches))
         } else {
-            Tree::new(FNode(result_branch_root), None)
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), None)
         }
     }
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
@@ -289,7 +296,7 @@ impl TreeSet {
             let mut sum_hits: GpHits = 0;
             let mut sum_error: GpRaw = 0;
             if let Some(func_def_branches) = &tree.opt_func_def_branches {
-                let func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
+                let mut func_def_branch_refs:  Vec<&TreeBranch> = Vec::new();
                 for func_def_branch in func_def_branches {
                     func_def_branch_refs.push(func_def_branch);
                 }
