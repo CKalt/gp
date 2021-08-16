@@ -52,8 +52,8 @@ impl Node {
             FNode(FunctionNode::new(rand_fid, funcs))
         }
     }
-    #[cfg(test)]
     // performs a deep (recusrive) build of node tree from parsed input.
+    #[cfg(test)]
     pub fn deep_new_from_parse_tree(parsed_node: &ParsedSNode,
             funcs: &'static [Function], terms: &'static [Terminal]) -> Node {
         match parsed_node {
@@ -782,6 +782,7 @@ impl Tree {
     pub fn qualifies(&self) -> bool {
         !self.tree_depth_gt(CONTROL.Dc)
     }
+
     /// execute a single tree and print results.
     pub fn print_exec_one(&mut self) -> bool {
         self.print();
@@ -872,11 +873,10 @@ impl Tree {
     }
 
     #[cfg(test)]
-    pub fn parse( rb0: (&str, &'static [Function], &'static [Terminal]),
-           opt_fdb0: Option<(&str, &'static [Function], &'static [Terminal])>) 
-            -> Tree {
+    pub fn parse(
+            rb0_s: &str,
+            fdb_ses: Vec<&str>) -> Tree {
         // There always is a result branch and we parse that first.
-        let (rb0_s, rb0_funcs, rb0_terms) = rb0; // result branch 0
         let rb_result = parse_sexpr(rb0_s);
         let rb_node =
             match rb_result {
@@ -885,23 +885,29 @@ impl Tree {
             };
 
         let result_branch_root = 
-            Node::deep_new_from_parse_tree(&rb_node, rb0_funcs, rb0_terms);
+            Node::deep_new_from_parse_tree(&rb_node, CONTROL.funcs_rpb[0],
+                CONTROL.terms_rpb[0]);
 
-        // There may or may not be a func def branch 
+        // There may or may not be a func def branch0
         let opt_func_def_branches = 
-            if CONTROL.num_terminals_func_def_branch > 0 {
-                let (fd0_s, fd0_funcs, fd0_terms) = opt_fdb0.unwrap(); // func def branch 0
-                let fd_result = parse_sexpr(fd0_s);
-                let fd_node = 
-                    match fd_result {
-                        Ok(parsed_tuple) => parsed_tuple.1,
-                        Err(error) => panic!("cannot parse result branch: {:?}", error),
-                    };
-                Some(TreeBranch::new(
-                    Node::deep_new_from_parse_tree(
-                        &fd_node, fd0_funcs, fd0_terms)))
+            if CONTROL.terms_fdb.len() > 0 {
+                let mut branches: Vec<TreeBranch> = Vec::new();
+                for (b_i, fdb_s) in fdb_ses.iter().enumerate() {
+                    let fd_result = parse_sexpr(fdb_s);
+                    let fd_node = 
+                        match fd_result {
+                            Ok(parsed_tuple) => parsed_tuple.1,
+                            Err(error) => panic!("cannot parse result branch: {:?}", error),
+                        };
+                    let tb = TreeBranch::new(
+                                Node::deep_new_from_parse_tree(
+                                    &fd_node,
+                                    CONTROL.funcs_fdb[b_i],
+                                    CONTROL.terms_fdb[b_i]));
+                    branches.push(tb);
+                }
+                Some(branches)
             } else {
-                assert!(opt_fdb0.is_none());
                 None
             };
 

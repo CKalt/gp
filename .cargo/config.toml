@@ -3,11 +3,13 @@
 # gpopt_trace := on | off
 # gpopt_adf := yes | no
 # gpopt_mult_threaded := yes | no
+# gpopt_even_parity_k= 3 | 4 | 5 | 6
 [build]
 rustflags = """
     --cfg gpopt_select_method="tournament"
     --cfg gpopt_rng="seedable"
     --cfg gpopt_trace="off"
-    --cfg gpopt_adf="yes"
     --cfg gpopt_mult_threaded="yes"
+    --cfg gpopt_adf="yes"
+    --cfg gpopt_even_parity_k="4"
 """

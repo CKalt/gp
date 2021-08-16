@@ -51,7 +51,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
 
     let adf_num =
-        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
+        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
     rc.exec_adf(adf_num, arg1, arg2)
 }
@@ -64,7 +64,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg3 = Tree::exec_node(rc, &func.branch[2]);
 
     let adf_num =
-        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
+        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
     rc.exec_adf(adf_num, arg1, arg2, arg3)
 }
@@ -78,7 +78,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg4 = Tree::exec_node(rc, &func.branch[3]);
 
     let adf_num =
-        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
+        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
     rc.exec_adf(adf_num, arg1, arg2, arg3, arg4)
 }
@@ -93,7 +93,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg5 = Tree::exec_node(rc, &func.branch[4]);
 
     let adf_num =
-        func.fref.opt_adf_num.expect("branch not assigned for exec_adf0");
+        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
     rc.exec_adf(adf_num, arg1, arg2, arg3, arg4, arg5)
 }
@@ -322,7 +322,7 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF1: [Function; 5] = [
     Function {
         fid:  4u8,
         name: "ADF0",
-        arity: 2,
+        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
         code: function_adf,
         opt_adf_num: Some(0),   // ideintifies ADF0
     },
@@ -443,7 +443,7 @@ pub struct RunContext<'a> {
     pub hits: GpHits,
     pub error: GpRaw,
 }
-impl RunContext<'_> {
+impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
         let mut rc = RunContext {
             cur_fc: 0,
@@ -501,9 +501,15 @@ impl RunContext<'_> {
     /// by the func_def_branch arg.
     #[cfg(gpopt_adf="yes")]
     #[cfg(gpopt_even_parity_k="3")]
-    pub fn exec_adf(&mut self, func_def_branch: &'a TreeBranch, arg1: GpType,
+    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
                 arg2: GpType)
             -> GpType {
+        let func_def_branch = 
+            self
+                .opt_func_def_branches
+                .as_ref()
+                .expect("exec_adf with None set for branches.")[adf_num];
+
         match self.opt_adf_args {
             None    => {
                 self.opt_adf_args = Some(vec![ arg1, arg2 ]);
@@ -524,9 +530,15 @@ impl RunContext<'_> {
     /// by the func_def_branch arg.
     #[cfg(gpopt_adf="yes")]
     #[cfg(gpopt_even_parity_k="4")]
-    pub fn exec_adf(&mut self, func_def_branch: &'a TreeBranch, arg1: GpType,
+    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
             arg2: GpType, arg3: GpType)
             -> GpType {
+        let func_def_branch = 
+            self
+                .opt_func_def_branches
+                .as_ref()
+                .expect("exec_adf with None set for branches.")[adf_num];
+
         match self.opt_adf_args {
             None    => {
                 self.opt_adf_args = Some(vec![ arg1, arg2, arg3 ]);
@@ -547,9 +559,15 @@ impl RunContext<'_> {
     /// by the func_def_branch arg.
     #[cfg(gpopt_adf="yes")]
     #[cfg(gpopt_even_parity_k="5")]
-    pub fn exec_adf(&mut self, func_def_branch: &'a TreeBranch, arg1: GpType,
+    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
                 arg2: GpType, arg3: GpType, arg4: GpType)
             -> GpType {
+        let func_def_branch = 
+            self
+                .opt_func_def_branches
+                .as_ref()
+                .expect("exec_adf with None set for branches.")[adf_num];
+
         match self.opt_adf_args {
             None    => {
                 self.opt_adf_args = Some(vec![ arg1, arg2, arg3, arg4 ]);
@@ -570,9 +588,15 @@ impl RunContext<'_> {
     /// by the func_def_branch arg.
     #[cfg(gpopt_adf="yes")]
     #[cfg(gpopt_even_parity_k="6")]
-    pub fn exec_adf(&mut self, func_def_branch: &'a TreeBranch, arg1: GpType,
+    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
                 arg2: GpType, arg3: GpType, arg4: GpType, arg5: GpType)
             -> GpType {
+        let func_def_branch = 
+            self
+                .opt_func_def_branches
+                .as_ref()
+                .expect("exec_adf with None set for branches.")[adf_num];
+
         match self.opt_adf_args {
             None    => {
                 self.opt_adf_args = Some(vec![ arg1, arg2, arg3, arg4, arg5 ]);
@@ -608,89 +632,32 @@ pub fn init_run() { }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::Tree;
-    use super::*;
-
     #[test]
+    #[cfg(gpopt_adf="yes")]
     pub fn test_print_exec_one() {
+        use crate::tree::*;
         // first build this test tree:
         // func def branch:
         //     (AND ARG0 ARG1)
         // result branch:
         //     (OR (ADF0 true true) false)
         // exec_tree s/b: true
-        let mut tree = Tree::parse(("(OR (ADF0 D0 D1) D2)",
-                                    CONTROL.funcs_rpb[0],
-                                    CONTROL.terms_rpb[0]), // result branch 0
-                               Some(("(AND ARG0 ARG1)",
-                                    CONTROL.funcs_fdb[0],
-                                    CONTROL.terms_fdb[0]))); // func def branch 0
+        #[cfg(gpopt_even_parity_k="3")]
+        let mut tree = Tree::parse("(OR (ADF1 D0 D1) D2)",
+              vec!["(AND ARG0 ARG1)",
+                   "(OR (ADF0 ARG1 ARG0) (AND (ADF0 ARG0 ARG1))"]);
+        #[cfg(gpopt_even_parity_k="4")]
+        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2) (NAND D3 D2))",
+              vec!["(AND (OR ARG0 ARG1) ARG2)",
+                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0) (AND ARG0 (ADF0 ARG0 ARG1 ARG2))"]);
+        #[cfg(gpopt_even_parity_k="5")]
+        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3) (OR (NAND D3 D2) D4))",
+              vec!["(AND (NAND (OR ARG0 ARG1) ARG3) ARG2)", // ADF0
+                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3) (OR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
+        #[cfg(gpopt_even_parity_k="6")]
+        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3 D4) (OR (NAND D3 D2) D5))",
+              vec!["(AND (NAND (NOR (OR ARG0 ARG1) ARG4) ARG3) ARG2)", // ADF0
+                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3 ARG4) (NOR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
         assert_eq!(tree.print_exec_one(), false);
-
-        let rb0_s = r#"
-(AND
-  (NOR
-    (OR
-      (ADF0 D3 D2)
-      (ADF0 D4 D1))
-    (NOR D0
-      (NAND D0 D5)))
-  (NOR
-    (NOR
-      (NOR D0 D5)
-      (AND D0 D5))
-    (AND
-      (OR
-        (ADF0 D3 D2)
-        (ADF0 D4 D1))
-      (OR D3 D2)))
-)
-        "#;
-
-        let fd0_s = r#"
-(AND
-  (AND
-    (AND
-      (NAND ARG1 ARG0)
-      (OR ARG0 ARG1))
-    (OR
-      (NAND ARG1 ARG0)
-      (NOR ARG0 ARG0)))
-  (NAND
-    (OR
-      (NOR ARG1 ARG0)
-      (NOR
-        (NOR ARG0
-          (NAND
-            (OR ARG1 ARG1)
-            (NOR ARG0 ARG0)))
-        (OR
-          (NOR
-            (OR
-              (NOR
-                (OR ARG1 ARG1)
-                (NOR
-                  (OR
-                    (NAND ARG0 ARG0) ARG0)
-                  (NAND ARG0 ARG1)))
-              (NOR
-                (NAND ARG0 ARG1)
-                (NOR ARG0 ARG0)))
-            (NAND ARG1 ARG0))
-          (NAND
-            (AND ARG0 ARG0)
-            (NAND ARG1 ARG0)))))
-    (NOR ARG1 ARG0))
-)
-        "#;
-
-        let mut tree = Tree::parse((rb0_s,
-                                    CONTROL.funcs_rpb[0],
-                                    CONTROL.terms_rpb[0]), // result branch 0
-                               Some((fd0_s,
-                                    CONTROL.funcs_fdb[0],
-                                    CONTROL.terms_fdb[0]))); // func def branch 0
-        assert_eq!(tree.print_exec_one(), true);
-
     }
 }
