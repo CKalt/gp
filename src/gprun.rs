@@ -244,14 +244,14 @@ pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 6] = [
     Function {
         fid:  4u8,
         name: "ADF0",
-        arity: 2,
+        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
         code: function_adf,
         opt_adf_num: Some(0),   // ideintifies ADF0
     },
     Function {
         fid:  5u8,
         name: "ADF1",
-        arity: 2,
+        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
         code: function_adf,
         opt_adf_num: Some(1),   // ideintifies ADF0
     },
@@ -636,12 +636,7 @@ pub mod tests {
     #[cfg(gpopt_adf="yes")]
     pub fn test_print_exec_one() {
         use crate::tree::*;
-        // first build this test tree:
-        // func def branch:
-        //     (AND ARG0 ARG1)
-        // result branch:
-        //     (OR (ADF0 true true) false)
-        // exec_tree s/b: true
+        // first build tree:
         #[cfg(gpopt_even_parity_k="3")]
         let mut tree = Tree::parse("(OR (ADF1 D0 D1) D2)",
               vec!["(AND ARG0 ARG1)",
@@ -658,6 +653,6 @@ pub mod tests {
         let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3 D4) (OR (NAND D3 D2) D5))",
               vec!["(AND (NAND (NOR (OR ARG0 ARG1) ARG4) ARG3) ARG2)", // ADF0
                    "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3 ARG4) (NOR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
-        assert_eq!(tree.print_exec_one(), false);
+        assert_eq!(tree.print_exec_one(), true);
     }
 }

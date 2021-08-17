@@ -559,11 +559,14 @@ impl Tree {
             // adf case only
             for (adf_num, func_def_branch) in
                     func_def_branches.iter().enumerate() {
+                println!("\n-------------------\n");
                 println!("Function Def ADF{}:", adf_num);
                 func_def_branch.root.print();
             }
         }
-        println!("\nResult Branch0:");
+                
+        println!("\n-------------------\n");
+        println!("Result Branch0:");
         self.result_branch.root.print();
         println!("");
     }
