@@ -7,9 +7,9 @@
 [build]
 rustflags = """
     --cfg gpopt_select_method="tournament"
-    --cfg gpopt_rng="seedable"
+    --cfg gpopt_rng="thread"
     --cfg gpopt_trace="off"
     --cfg gpopt_mult_threaded="yes"
     --cfg gpopt_adf="yes"
-    --cfg gpopt_even_parity_k="4"
+    --cfg gpopt_even_parity_k="6"
 """
