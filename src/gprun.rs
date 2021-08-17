@@ -331,13 +331,13 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF1: [Function; 5] = [
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
 
 #[cfg(gpopt_even_parity_k="3")]
-const EVEN_PARITY_K_VALUE: usize = 3;
+pub const EVEN_PARITY_K_VALUE: usize = 3;
 #[cfg(gpopt_even_parity_k="4")]
-const EVEN_PARITY_K_VALUE: usize = 4;
+pub const EVEN_PARITY_K_VALUE: usize = 4;
 #[cfg(gpopt_even_parity_k="5")]
-const EVEN_PARITY_K_VALUE: usize = 5;
+pub const EVEN_PARITY_K_VALUE: usize = 5;
 #[cfg(gpopt_even_parity_k="6")]
-const EVEN_PARITY_K_VALUE: usize = 6;
+pub const EVEN_PARITY_K_VALUE: usize = 6;
 
 pub static TERMINALS_RESULT_BRANCH: [Terminal; EVEN_PARITY_K_VALUE] = [
     Terminal {

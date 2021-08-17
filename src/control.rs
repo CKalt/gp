@@ -45,7 +45,8 @@ impl Control<'_> {
 }
 
 lazy_static! {
-#[warn(non_snake_case)]
+    pub static ref RUN_LOG_FNAME: String = run_log_fname();
+    #[warn(non_snake_case)]
     pub static ref CONTROL: Control<'static> = {
         Control {
             #[cfg(gpopt_adf="yes")]
@@ -79,10 +80,19 @@ lazy_static! {
             show_best_tree_results: true,
             show_controls: false,
             run_tests: false,
-            #[cfg(gpopt_adf="yes")]
-            run_log_file:       "gp_run_adf.log",
-            #[cfg(gpopt_adf="no")]
-            run_log_file:       "gp_run_no_adf.log",
+            run_log_file:       &RUN_LOG_FNAME,
         }
     };
+}
+
+/// Called by lazy_static! macro to set RUN_LOG_FNAME
+pub fn run_log_fname() -> String {
+    #[cfg(gpopt_adf="yes")]
+    let val = format!(
+            "gp_run_even_{}_parity_adf.log", EVEN_PARITY_K_VALUE);
+    #[cfg(gpopt_adf="no")]
+    let val = format!(
+            "gp_run_even_{}_parity_no_adf.log", EVEN_PARITY_K_VALUE);
+
+    val
 }
