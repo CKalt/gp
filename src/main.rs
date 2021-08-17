@@ -61,7 +61,7 @@ fn test_tee_to_run_log() {
     assert_eq!(parsed, Some((win, run, gen, e)));
 }
 
-fn tee_to_run_log(win: i32, run: i32, gen: u16, e: i64) {
+fn tee_to_run_log(win: i32, run: i32, gen: u16, e: u64) {
     let msg = format!("win={}, run={}, gen={}, effort={}", win, run, gen, e);
 
     let create_bool = !Path::new(CONTROL.run_log_file).exists();
@@ -147,7 +147,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
                 tree: trees.tree_vec[i].clone(),
                 run: run_number,
                 gen: trees.gen,
-                e: CONTROL.computational_effort(run_number, trees.gen),
+                e: EvalCount::num_evals_for_winner()
             };
             Some(winner)
         },

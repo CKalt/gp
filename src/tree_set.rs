@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use crate::gprun::*;
 use crate::tree::*;
-use crate::control::CONTROL;
+use crate::control::*;
 use crate::gprng::GpRng;
 use crate::fitness::GpFloat;
 use crate::fitness::GpHits;
@@ -323,7 +323,7 @@ impl TreeSet {
 
             let (f, is_winner) = rc.compute_fitness();
             tree.fitness = f;
-            tree.is_winner = is_winner;
+            tree.is_winner = EvalCount::inc(is_winner);
         }
         rc.hits
     }

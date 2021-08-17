@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use crate::fitness::GpFloat;
 use lazy_static::*;
 use crate::gprun::*;
@@ -36,15 +37,36 @@ pub struct Control<'a> {
     pub run_tests: bool,
     pub run_log_file:       &'static str,
 }
-impl Control<'_> {
-    pub fn computational_effort(&self, runs: i32, gen: u16) -> i64 {
-        self.M as i64 * (
-            (self.G as i64 * (runs-1) as i64) + (gen+1) as i64
-        )
+
+pub struct EvalCount {
+    winner_found: bool,
+    num_evals_for_winner: u64,
+}
+impl EvalCount {
+    fn new() -> Self {
+        EvalCount {
+            winner_found: false,
+            num_evals_for_winner: 0,
+        }
+    }
+    pub fn inc(is_winner: bool) -> bool {
+        let mut ec = EVAL_COUNT.lock().unwrap();
+        if !ec.winner_found {
+            if is_winner {
+                ec.winner_found = true;
+            }
+            ec.num_evals_for_winner += 1;
+        }
+        is_winner
+    }
+    pub fn num_evals_for_winner() -> u64 {
+        let ec = EVAL_COUNT.lock().unwrap();
+        ec.num_evals_for_winner
     }
 }
 
 lazy_static! {
+    pub static ref EVAL_COUNT: Mutex<EvalCount> = Mutex::new(EvalCount::new());
     pub static ref RUN_LOG_FNAME: String = run_log_fname();
     #[warn(non_snake_case)]
     pub static ref CONTROL: Control<'static> = {
