@@ -650,7 +650,6 @@ pub mod tests {
               vec!["(AND (NAND (OR ARG0 ARG1) ARG3) ARG2)", // ADF0
                    "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3) (OR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
         #[cfg(gpopt_even_parity_k="6")]
-
         let rb_str = r#"
 (OR
   (ADF1
@@ -695,6 +694,7 @@ pub mod tests {
       (ADF1 D3 D2 D1 D0 D3)))
 )
 "#;
+        #[cfg(gpopt_even_parity_k="6")]
         let adf0_str = r#"
 (AND
   (NOR
@@ -713,6 +713,7 @@ pub mod tests {
       (AND ARG4 ARG4)))
 )
 "#;
+        #[cfg(gpopt_even_parity_k="6")]
         let adf1_str = r#"
 (OR
   (AND
