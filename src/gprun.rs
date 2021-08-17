@@ -650,9 +650,106 @@ pub mod tests {
               vec!["(AND (NAND (OR ARG0 ARG1) ARG3) ARG2)", // ADF0
                    "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3) (OR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
         #[cfg(gpopt_even_parity_k="6")]
-        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3 D4) (OR (NAND D3 D2) D5))",
-              vec!["(AND (NAND (NOR (OR ARG0 ARG1) ARG4) ARG3) ARG2)", // ADF0
-                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3 ARG4) (NOR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
+
+        let rb_str = r#"
+(OR
+  (ADF1
+    (OR
+      (NOR D2 D5)
+      (NAND D5 D0))
+    (NAND
+      (OR D0 D2)
+      (ADF1 D3 D5 D2 D5 D5))
+    (ADF0
+      (AND D2 D4)
+      (ADF1 D5 D2 D4 D1 D1)
+      (ADF1 D2 D1 D4 D3 D3)
+      (OR D5 D5)
+      (AND D5 D3))
+    (OR D0 D2)
+    (NAND
+      (NAND D4
+        (OR D2 D0))
+      (ADF0 D5 D4 D3 D0 D4)))
+  (ADF0
+    (NOR
+      (NOR D0 D0)
+      (ADF1 D5 D0 D0 D0 D2))
+    (ADF0
+      (OR D2 D3)
+      (NOR D3 D1)
+      (AND D2 D3)
+      (ADF0 D1 D1 D5 D1 D2)
+      (NAND D5 D0))
+    (OR
+      (ADF1 D3 D3 D0 D0 D4)
+      (NOR D0 D3))
+    (NOR
+      (ADF0 D3 D2 D0 D3 D5)
+      (ADF0 D4 D5 D2 D1 D1))
+    (ADF0
+      (ADF0 D4 D4 D2 D2 D1)
+      (NOR D3 D5)
+      (AND D3 D0)
+      (ADF1 D4 D4 D1 D1 D0)
+      (ADF1 D3 D2 D1 D0 D3)))
+)
+"#;
+        let adf0_str = r#"
+(AND
+  (NOR
+    (NOR
+      (OR ARG1 ARG3)
+      (NAND ARG3 ARG3))
+    (OR
+      (AND ARG4 ARG3)
+      (NOR ARG4 ARG3)))
+  (NAND
+    (NOR
+      (NOR ARG2 ARG1)
+      (NAND ARG3 ARG0))
+    (NOR
+      (AND ARG3 ARG3)
+      (AND ARG4 ARG4)))
+)
+"#;
+        let adf1_str = r#"
+(OR
+  (AND
+    (AND
+      (OR ARG0 ARG1)
+      (NOR ARG4 ARG0))
+    (AND
+      (ADF0
+        (NOR ARG3 ARG1)
+        (OR ARG3 ARG3)
+        (ADF0 ARG1 ARG3 ARG1 ARG0 ARG3)
+        (NAND ARG4 ARG1)
+        (NAND ARG3 ARG4))
+      (NOR ARG4 ARG0)))
+  (ADF0
+    (OR
+      (NAND ARG0 ARG0)
+      (NAND ARG1 ARG1))
+    (ADF0
+      (NOR ARG3 ARG1)
+      (OR ARG3 ARG3)
+      (ADF0 ARG1 ARG3 ARG1 ARG0 ARG3)
+      (NAND ARG4 ARG1)
+      (NAND ARG3 ARG4))
+    (ADF0
+      (NAND ARG3 ARG3)
+      (NAND ARG1 ARG0)
+      (NAND ARG1 ARG3)
+      (AND ARG0 ARG0)
+      (NOR ARG2 ARG4))
+    (OR
+      (AND ARG3 ARG4) ARG3)
+    (NOR
+      (OR ARG1 ARG1) ARG1))
+)
+"#;
+        let mut tree = Tree::parse(rb_str, vec![adf0_str, adf1_str]);
         assert_eq!(tree.print_exec_one(), true);
     }
 }

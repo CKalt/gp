@@ -44,7 +44,7 @@ fn test_tee_to_run_log() {
     let win: i32 = 5;
     let run: i32 = 10;
     let gen: u16 = 23;
-    let e: i64 = 233235235;
+    let e: u64 = 233235235;
 
     tee_to_run_log(win, run, gen, e);
 
@@ -56,7 +56,7 @@ fn test_tee_to_run_log() {
     file.read_line(&mut input).unwrap();
     input.truncate(input.len() - 1);            // remove new line
     let parsed = scanf!(input, "win={}, run={}, gen={}, effort={}",
-        i32, i32, u16, i64);
+        i32, i32, u16, u64);
 
     assert_eq!(parsed, Some((win, run, gen, e)));
 }
