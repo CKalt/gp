@@ -649,7 +649,149 @@ pub mod tests {
         let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3) (OR (NAND D3 D2) D4))",
               vec!["(AND (NAND (OR ARG0 ARG1) ARG3) ARG2)", // ADF0
                    "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3) (OR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
-        #[cfg(gpopt_even_parity_k="6")]
+
+        let (rb_str, fd_vec) = get_k_n_test();
+
+        let mut tree = Tree::parse(rb_str, fd_vec);
+        assert_eq!(tree.print_exec_one(), true);
+    }
+
+    #[cfg(gpopt_even_parity_k="5")]
+    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
+        let rb_str = r#"
+(NAND
+  (NAND
+    (NAND
+      (NAND
+        (ADF1 D1
+          (NOR D3 D0)
+          (ADF1 D3 D4 D0 D3)
+          (OR D1 D4))
+        (NOR D2 D2))
+      (ADF0
+        (ADF0
+          (OR D1 D3) D2
+          (NOR D1 D2)
+          (AND D0 D2))
+        (AND
+          (AND D0 D2)
+          (ADF1 D3 D4 D0 D3))
+        (AND D3 D1)
+        (NAND
+          (ADF0
+            (ADF1 D4
+              (ADF1 D0 D2
+                (AND D0 D2)
+                (OR D4 D0))
+              (ADF1 D1
+                (AND D1 D4)
+                (AND D0 D4)
+                (NAND D2 D4)) D0) D1
+            (ADF1 D0 D2
+              (AND D0 D2)
+              (OR D4 D0))
+            (NOR
+              (NOR
+                (ADF0 D1 D2 D2 D4)
+                (ADF0 D3 D4 D3 D0))
+              (ADF1 D0
+                (AND D3 D2)
+                (ADF0 D4 D4 D0 D3) D2)))
+          (OR D2 D3))))
+    (NOR D2 D2))
+  (ADF0
+    (ADF0
+      (OR D1 D3) D2
+      (NOR D1 D2)
+      (NOR D0 D1))
+    (AND
+      (AND D0 D2)
+      (ADF1 D3 D4 D0 D3))
+    (AND D3 D1)
+    (NAND
+      (ADF0
+        (ADF1 D4
+          (ADF1 D0 D2
+            (NAND D2 D4)
+            (OR D4 D0))
+          (ADF1 D1
+            (AND D1 D4)
+            (AND D0 D4)
+            (NAND D2 D4)) D0) D1
+        (AND D0
+          (NAND
+            (NAND D0 D0) D3))
+        (NOR
+          (ADF0
+            (NOR D1 D1)
+            (NOR D3 D4) D1
+            (AND D0 D2))
+          (ADF1 D0
+            (AND D3 D2)
+            (ADF0 D4 D4 D0 D3) D2)))
+      (OR D2 D0)))
+)
+"#;
+        let adf0_str = r#"
+(NAND
+  (OR
+    (AND
+      (OR ARG0 ARG3)
+      (AND ARG1 ARG3))
+    (OR
+      (NOR ARG3 ARG1)
+      (AND ARG3 ARG1)))
+  (NAND
+    (NOR
+      (NOR ARG1 ARG2)
+      (OR ARG3 ARG3))
+    (NOR
+      (OR ARG0 ARG2)
+      (AND ARG2 ARG0)))
+)
+"#;
+        let adf1_str = r#"
+(ADF0
+  (NAND
+    (NOR
+      (OR ARG2 ARG3)
+      (NAND ARG1 ARG2))
+    (NOR
+      (OR ARG2 ARG3)
+      (NAND ARG1 ARG2)))
+  (NOR
+    (NOR
+      (ADF0 ARG1 ARG0 ARG2 ARG2)
+      (ADF0 ARG3 ARG1 ARG2 ARG0))
+    (NOR ARG2 ARG0))
+  (ADF0
+    (OR
+      (NOR ARG3 ARG3)
+      (ADF0 ARG0 ARG3 ARG3 ARG1))
+    (AND
+      (OR ARG3 ARG2)
+      (ADF0 ARG2 ARG1 ARG0 ARG3))
+    (ADF0
+      (NAND ARG0 ARG2)
+      (ADF0 ARG3 ARG0 ARG3 ARG3)
+      (NOR ARG3 ARG1)
+      (NAND ARG0 ARG1))
+    (NAND
+      (OR ARG0 ARG3)
+      (OR ARG2 ARG1)))
+  (NAND
+    (NOR
+      (OR ARG1 ARG2)
+      (ADF0 ARG0 ARG3 ARG1 ARG1))
+    (NOR
+      (OR ARG2 ARG3) ARG3))
+)
+"#;
+        (rb_str, vec![adf0_str, adf1_str])
+    }
+
+    #[cfg(gpopt_even_parity_k="6")]
+    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
 (OR
   (ADF1
@@ -694,7 +836,6 @@ pub mod tests {
       (ADF1 D3 D2 D1 D0 D3)))
 )
 "#;
-        #[cfg(gpopt_even_parity_k="6")]
         let adf0_str = r#"
 (AND
   (NOR
@@ -713,7 +854,6 @@ pub mod tests {
       (AND ARG4 ARG4)))
 )
 "#;
-        #[cfg(gpopt_even_parity_k="6")]
         let adf1_str = r#"
 (OR
   (AND
@@ -750,7 +890,6 @@ pub mod tests {
       (OR ARG1 ARG1) ARG1))
 )
 "#;
-        let mut tree = Tree::parse(rb_str, vec![adf0_str, adf1_str]);
-        assert_eq!(tree.print_exec_one(), true);
+        (rb_str, vec![adf0_str, adf1_str])
     }
 }
