@@ -637,24 +637,172 @@ pub mod tests {
     pub fn test_print_exec_one() {
         use crate::tree::*;
         // first build tree:
-        #[cfg(gpopt_even_parity_k="3")]
-        let mut tree = Tree::parse("(OR (ADF1 D0 D1) D2)",
-              vec!["(AND ARG0 ARG1)",
-                   "(OR (ADF0 ARG1 ARG0) (AND (ADF0 ARG0 ARG1))"]);
-        #[cfg(gpopt_even_parity_k="4")]
-        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2) (NAND D3 D2))",
-              vec!["(AND (OR ARG0 ARG1) ARG2)",
-                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0) (AND ARG0 (ADF0 ARG0 ARG1 ARG2))"]);
-        #[cfg(gpopt_even_parity_k="5")]
-        let mut tree = Tree::parse("(OR (ADF1 D0 D1 D2 D3) (OR (NAND D3 D2) D4))",
-              vec!["(AND (NAND (OR ARG0 ARG1) ARG3) ARG2)", // ADF0
-                   "(OR (ADF0 ARG1 (OR ARG0 ARG2) ARG0 ARG3) (OR ARG3 (AND (ADF0 ARG0 ARG1 ARG2 ARG3))))"]);
-
         let (rb_str, fd_vec) = get_k_n_test();
-
         let mut tree = Tree::parse(rb_str, fd_vec);
+
         assert_eq!(tree.print_exec_one(), true);
     }
+
+    #[cfg(gpopt_even_parity_k="4")]
+    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
+        let rb_str = r#"
+(ADF0
+  (ADF0
+    (ADF1
+      (AND
+        (OR D0 D2)
+        (ADF1 D2 D1 D1))
+      (ADF0
+        (ADF1 D1 D3 D3)
+        (OR D3 D2)
+        (NOR D2 D3))
+      (AND D3 D1))
+    (OR
+      (ADF1
+        (NOR D0 D2)
+        (ADF1 D0 D1 D1)
+        (AND D0 D2))
+      (NAND
+        (ADF0 D1 D2 D3)
+        (AND D2 D1)))
+    (NOR
+      (ADF0
+        (NAND D3 D3)
+        (OR D3 D1)
+        (ADF1 D0 D1 D3))
+      (NAND
+        (ADF1 D3 D0 D0)
+        (OR D0 D2))))
+  (NAND
+    (ADF1
+      (NOR
+        (ADF1 D0 D0 D1)
+        (NAND D0 D0))
+      (ADF0
+        (ADF0 D0 D1 D3)
+        (NOR D1 D0)
+        (AND D0 D2))
+      (OR
+        (ADF1 D3 D3 D1)
+        (NOR D2 D1)))
+    (NAND
+      (OR
+        (ADF1
+          (NOR D3 D2) D0 D2)
+        (AND D2 D1))
+      (ADF1
+        (AND D1 D0)
+        (ADF1 D0 D2 D1)
+        (NAND D3 D0))))
+  (NAND
+    (NAND
+      (ADF1
+        (OR D3 D0)
+        (AND D3 D2)
+        (ADF0
+          (ADF1 D1 D3 D3)
+          (OR D3 D2)
+          (NOR D2 D3)))
+      (ADF0
+        (AND D3 D2)
+        (OR D3 D1)
+        (ADF1 D3 D0 D0)))
+    (ADF0
+      (NAND
+        (AND D1 D1)
+        (OR D2 D1))
+      (NAND
+        (NAND D3 D0)
+        (AND D0 D3))
+      (ADF0
+        (NAND D2 D0)
+        (OR D0 D2)
+        (NOR D1 D1))))
+)
+"#;
+        let adf0_str = r#"
+(NOR
+  (NOR
+    (AND
+      (OR
+        (AND ARG0 ARG2)
+        (NAND ARG0 ARG0))
+      (NAND
+        (NAND ARG0 ARG2)
+        (AND ARG1 ARG2)))
+    (AND
+      (NOR
+        (NAND ARG0 ARG2)
+        (OR ARG1 ARG0))
+      (NAND
+        (OR ARG0 ARG1)
+        (OR ARG0 ARG0))))
+  (AND
+    (NOR
+      (AND
+        (AND ARG2 ARG1)
+        (NAND ARG1 ARG0))
+      (OR
+        (AND ARG1 ARG2)
+        (NAND ARG0 ARG0)))
+    (OR
+      (AND
+        (NAND
+          (OR ARG2 ARG2)
+          (NAND ARG1 ARG1))
+        (NOR ARG0 ARG2))
+      (NAND
+        (NAND ARG2 ARG0)
+        (NOR ARG2 ARG0))))
+)
+"#;
+        let adf1_str = r#"
+(AND
+  (OR
+    (NAND
+      (ADF0
+        (AND ARG1 ARG0)
+        (NAND ARG0 ARG2)
+        (AND ARG2 ARG2))
+      (NAND
+        (NAND ARG1 ARG2)
+        (OR ARG2 ARG1)))
+    (OR
+      (NOR
+        (ADF0 ARG2 ARG0 ARG2)
+        (OR ARG0 ARG2))
+      (ADF0
+        (OR ARG2 ARG2)
+        (ADF0 ARG2 ARG1 ARG0)
+        (NOR ARG2 ARG0))))
+  (OR
+    (AND
+      (OR
+        (ADF0 ARG0 ARG2 ARG2)
+        (OR ARG0 ARG0))
+      (OR
+        (NOR ARG1 ARG2) ARG0))
+    (ADF0
+      (OR
+        (NOR ARG2 ARG0)
+        (NOR
+          (ADF0
+            (OR ARG2 ARG0)
+            (NAND ARG2 ARG2)
+            (ADF0 ARG0 ARG1 ARG2))
+          (NAND ARG1 ARG0)))
+      (ADF0
+        (ADF0 ARG1 ARG1 ARG2)
+        (OR ARG1 ARG1)
+        (NAND ARG1 ARG2))
+      (OR
+        (OR ARG1 ARG2)
+        (NOR ARG0 ARG0))))
+)
+"#;
+        (rb_str, vec![adf0_str, adf1_str])
+    }
+
 
     #[cfg(gpopt_even_parity_k="5")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
