@@ -1,0 +1,177 @@
+    Finished release [optimized] target(s) in 0.02s
+     Running `target/release/gp`
+CURRENT NUM THREADS= 8
+Run #1
+num cases w/error lt 0.01=33
+   gen tfid tcid   hits      r      s        a        n      nfr avgRawF
+  ----  ---  ---  -----    ---    ---   ------   ------   ------
+     0 15999 13782     21     11     11 0.083333 0.000089 0.999777  16.00
+     1 15999 15995     21     11     11 0.083333 0.000088 0.999960  16.16
+     2 15999 14563     22     10     10 0.090909 0.000093 0.999822  16.59
+     3 15999 5734     23      9      9 0.100000 0.000097 0.999891  17.34
+     4 15999 2828     24      8      8 0.111111 0.000100 1.000135  18.41
+     5 15999 12409     24      8      8 0.111111 0.000091 0.999878  19.65
+     6 15999 13698     26      6      6 0.142857 0.000110 0.999988  20.43
+     7 15999 12105     26      6      6 0.142857 0.000106 1.000129  20.82
+     8 15999 14997     26      6      6 0.142857 0.000102 1.000168  21.18
+     9 15999 4041     27      5      5 0.166667 0.000112 1.000081  21.70
+    10 15999 15029     27      5      5 0.166667 0.000105 0.999958  22.27
+    11 15999 4818     28      4      4 0.200000 0.000118 0.999960  22.82
+    12 15999 15060     28      4      4 0.200000 0.000111 1.000013  23.24
+    13 15999 15734     28      4      4 0.200000 0.000104 0.999990  23.63
+    14 15999 13458     29      3      3 0.250000 0.000124 1.000008  23.99
+    15 15999 15553     29      3      3 0.250000 0.000114 1.000170  24.57
+    16 15999 15671     29      3      3 0.250000 0.000109 0.999995  24.86
+    17 15999 15961     29      3      3 0.250000 0.000102 1.000182  25.11
+    18 15999 9675     30      2      2 0.333333 0.000127 1.000108  25.46
+    19 15999 15456     30      2      2 0.333333 0.000120 1.000173  25.73
+    20 15999 10711     31      1      1 0.500000 0.000163 1.000100  26.20
+    21 15999 15710     31      1      1 0.500000 0.000157 1.000098  26.37
+    22 15999 15926     31      1      1 0.500000 0.000154 1.000081  26.48
+    23 15999 15974     31      1      1 0.500000 0.000145 0.999958  26.64
+win=1, run=1, gen=24, effort=395792
+num cases w/error lt 0.01=32
+tfid tcid   hits      r      s        a        n      nfr
+ ---  ---  -----    ---    ---   ------   ------   ------
+   0    0     32      0      0 1.000000 -1.000000 -1.000000  -1.00
+-------------tree (None/0)----------------
+nFunctions = Some(120)
+nTerminals= Some(189)
+
+-------------------
+
+Function Def ADF0:
+
+(NAND
+  (OR
+    (AND
+      (OR ARG0 ARG3)
+      (AND ARG1 ARG3))
+    (OR
+      (NOR ARG3 ARG1)
+      (AND ARG3 ARG1)))
+  (NAND
+    (NOR
+      (NOR ARG1 ARG2)
+      (OR ARG3 ARG3))
+    (NOR
+      (OR ARG0 ARG2)
+      (AND ARG2 ARG0)))
+)
+-------------------
+
+Function Def ADF1:
+
+(ADF0
+  (NAND
+    (NOR
+      (OR ARG2 ARG3)
+      (NAND ARG1 ARG2))
+    (NOR
+      (OR ARG2 ARG3)
+      (NAND ARG1 ARG2)))
+  (NOR
+    (NOR
+      (ADF0 ARG1 ARG0 ARG2 ARG2)
+      (ADF0 ARG3 ARG1 ARG2 ARG0))
+    (NOR ARG2 ARG0))
+  (ADF0
+    (OR
+      (NOR ARG3 ARG3)
+      (ADF0 ARG0 ARG3 ARG3 ARG1))
+    (AND
+      (OR ARG3 ARG2)
+      (ADF0 ARG2 ARG1 ARG0 ARG3))
+    (ADF0
+      (NAND ARG0 ARG2)
+      (ADF0 ARG3 ARG0 ARG3 ARG3)
+      (NOR ARG3 ARG1)
+      (NAND ARG0 ARG1))
+    (NAND
+      (OR ARG0 ARG3)
+      (OR ARG2 ARG1)))
+  (NAND
+    (NOR
+      (OR ARG1 ARG2)
+      (ADF0 ARG0 ARG3 ARG1 ARG1))
+    (NOR
+      (OR ARG2 ARG3) ARG3))
+)
+-------------------
+
+Result Branch0:
+
+(NAND
+  (NAND
+    (NAND
+      (NAND
+        (ADF1 D1
+          (NOR D3 D0)
+          (ADF1 D3 D4 D0 D3)
+          (OR D1 D4))
+        (NOR D2 D2))
+      (ADF0
+        (ADF0
+          (OR D1 D3) D2
+          (NOR D1 D2)
+          (AND D0 D2))
+        (AND
+          (AND D0 D2)
+          (ADF1 D3 D4 D0 D3))
+        (AND D3 D1)
+        (NAND
+          (ADF0
+            (ADF1 D4
+              (ADF1 D0 D2
+                (AND D0 D2)
+                (OR D4 D0))
+              (ADF1 D1
+                (AND D1 D4)
+                (AND D0 D4)
+                (NAND D2 D4)) D0) D1
+            (ADF1 D0 D2
+              (AND D0 D2)
+              (OR D4 D0))
+            (NOR
+              (NOR
+                (ADF0 D1 D2 D2 D4)
+                (ADF0 D3 D4 D3 D0))
+              (ADF1 D0
+                (AND D3 D2)
+                (ADF0 D4 D4 D0 D3) D2)))
+          (OR D2 D3))))
+    (NOR D2 D2))
+  (ADF0
+    (ADF0
+      (OR D1 D3) D2
+      (NOR D1 D2)
+      (NOR D0 D1))
+    (AND
+      (AND D0 D2)
+      (ADF1 D3 D4 D0 D3))
+    (AND D3 D1)
+    (NAND
+      (ADF0
+        (ADF1 D4
+          (ADF1 D0 D2
+            (NAND D2 D4)
+            (OR D4 D0))
+          (ADF1 D1
+            (AND D1 D4)
+            (AND D0 D4)
+            (NAND D2 D4)) D0) D1
+        (AND D0
+          (NAND
+            (NAND D0 D0) D3))
+        (NOR
+          (ADF0
+            (NOR D1 D1)
+            (NOR D3 D4) D1
+            (AND D0 D2))
+          (ADF1 D0
+            (AND D3 D2)
+            (ADF0 D4 D4 D0 D3) D2)))
+      (OR D2 D0)))
+)
+Have Winner
+Win has reached max of 1 runs ending.
