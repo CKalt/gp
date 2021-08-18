@@ -21,6 +21,7 @@ type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
 pub type TermNodeCode = fn (rc: &RunContext) -> GpType;
 
 pub struct Winner {
+    pub win: i32,   // Win number (among sequence of runs)
     pub tree: Tree,
     pub run: i32,
     pub gen: u16,
@@ -30,6 +31,10 @@ impl Winner {
     pub fn print_result(&self) {
         Tree::print_result_header(None, &self.tree.fitness.hits);
         self.tree.print_result(None, -1.0);
+    }
+    pub fn structural_complexity(&self) -> TreeNodeIndex {
+        self.tree.get_num_terminal_nodes().unwrap() 
+            + self.tree.get_num_function_nodes().unwrap()
     }
 }
 

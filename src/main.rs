@@ -61,8 +61,10 @@ fn test_tee_to_run_log() {
     assert_eq!(parsed, Some((win, run, gen, e)));
 }
 
-fn tee_to_run_log(win: i32, run: i32, gen: u16, e: u64) {
-    let msg = format!("win={}, run={}, gen={}, effort={}", win, run, gen, e);
+fn tee_to_run_log(winner: &Winner) {
+    let msg = format!("win={}, run={}, gen={}, effort={}, S={}", 
+        winner.win, winner.run, winner.gen, winner.e,
+        winner.structural_complexity());
 
     let create_bool = !Path::new(CONTROL.run_log_file).exists();
     let mut file =
@@ -144,6 +146,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     match trees.winning_index {
         Some(i) => {
             let winner = Winner{
+                win: 0,
                 tree: trees.tree_vec[i].clone(),
                 run: run_number,
                 gen: trees.gen,
@@ -202,9 +205,10 @@ fn main() {
             
         if let Some(mut winner) = opt_winner {
             win_number += 1;
+            winner.win = win_number;
             run_number = 0i32;
             let rc = RunContext::new();
-            tee_to_run_log(win_number, winner.run, winner.gen, winner.e);
+            tee_to_run_log(&winner);
 
             winner.print_result();
             rc.print_run_illustration(

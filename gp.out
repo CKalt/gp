@@ -1,120 +1,54 @@
    Compiling cfg-if v1.0.0
-   Compiling autocfg v1.0.1
    Compiling libc v0.2.94
+   Compiling autocfg v1.0.1
    Compiling proc-macro2 v1.0.27
    Compiling lazy_static v1.4.0
+   Compiling unicode-xid v0.2.2
    Compiling memchr v2.3.4
    Compiling crossbeam-utils v0.8.5
-   Compiling unicode-xid v0.2.2
-   Compiling crossbeam-epoch v0.9.5
    Compiling getrandom v0.2.2
-   Compiling ryu v1.0.5
+   Compiling crossbeam-epoch v0.9.5
+   Compiling scopeguard v1.1.0
+   Compiling rayon-core v1.9.1
    Compiling bitflags v1.2.1
+   Compiling ryu v1.0.5
    Compiling syn v1.0.73
    Compiling radium v0.5.3
-   Compiling rayon-core v1.9.1
-   Compiling scopeguard v1.1.0
-   Compiling version_check v0.9.3
    Compiling lexical-core v0.7.6
+   Compiling version_check v0.9.3
    Compiling regex-syntax v0.6.25
-   Compiling tap v1.0.1
-   Compiling wyz v0.2.0
-   Compiling funty v1.1.0
    Compiling ppv-lite86 v0.2.10
-   Compiling static_assertions v1.1.0
+   Compiling funty v1.1.0
+   Compiling tap v1.0.1
    Compiling arrayvec v0.5.2
+   Compiling static_assertions v1.1.0
+   Compiling wyz v0.2.0
    Compiling either v1.6.1
    Compiling memoffset v0.6.4
    Compiling rayon v1.5.1
    Compiling nom v6.2.1
-   Compiling aho-corasick v0.7.15
    Compiling crossbeam-channel v0.5.1
-   Compiling quote v1.0.9
-   Compiling num_cpus v1.13.0
+   Compiling aho-corasick v0.7.15
    Compiling bitvec v0.19.5
+   Compiling num_cpus v1.13.0
+   Compiling quote v1.0.9
    Compiling rand_core v0.6.2
-   Compiling const_format_proc_macros v0.2.14
    Compiling regex v1.4.6
+   Compiling const_format_proc_macros v0.2.14
    Compiling rand_chacha v0.3.0
+   Compiling format_num v0.1.0
    Compiling crossbeam-deque v0.8.1
    Compiling rand v0.8.3
-   Compiling format_num v0.1.0
    Compiling const_format v0.2.14
    Compiling sscanf_macro v0.1.2
    Compiling sscanf v0.1.2
    Compiling gp v0.1.0 (/home/chris/projects/rust/gp)
-    Finished release [optimized] target(s) in 23.88s
+    Finished release [optimized] target(s) in 23.21s
      Running `target/release/gp`
 CURRENT NUM THREADS= 8
 Run #1
-win=1, run=1, gen=0, effort=11096
-num cases w/error lt 0.01=8
-tfid tcid   hits      r      s        a        n      nfr
- ---  ---  -----    ---    ---   ------   ------   ------
-   0    0      8      0      0 1.000000 -1.000000 -1.000000  -1.00
--------------tree (None/0)----------------
-nFunctions = Some(45)
-nTerminals= Some(48)
-
--------------------
-
-Function Def ADF0:
-
-(AND
-  (NAND
-    (NAND
-      (OR ARG1 ARG0)
-      (OR ARG0 ARG0))
-    (NAND
-      (NAND ARG0 ARG1)
-      (NOR ARG1 ARG1)))
-  (NAND
-    (AND
-      (OR ARG0 ARG1)
-      (AND ARG1 ARG0))
-    (AND
-      (NAND ARG0 ARG0)
-      (AND ARG1 ARG1)))
-)
--------------------
-
-Function Def ADF1:
-
-(ADF0
-  (OR
-    (AND
-      (NOR ARG0 ARG1)
-      (OR ARG0 ARG0))
-    (NAND
-      (OR ARG1 ARG0)
-      (NAND ARG1 ARG0)))
-  (AND
-    (ADF0
-      (ADF0 ARG1 ARG0)
-      (AND ARG1 ARG1))
-    (OR
-      (NOR ARG0 ARG1)
-      (ADF0 ARG0 ARG0)))
-)
--------------------
-
-Result Branch0:
-
-(NAND
-  (NAND
-    (ADF1
-      (NOR D2 D2)
-      (ADF1 D0 D1))
-    (ADF0
-      (ADF0 D2 D0)
-      (AND D1 D1)))
-  (ADF0
-    (OR
-      (ADF0 D2 D1)
-      (ADF1 D2 D0))
-    (NAND
-      (NAND D1 D0)
-      (ADF0 D2 D2)))
-)
-Have Winner
-Win has reached max of 1 runs ending.
+num cases w/error lt 0.01=63
+   gen tfid tcid   hits      r      s        a        n      nfr avgRawF
+  ----  ---  ---  -----    ---    ---   ------   ------   ------
+     0 3999 3568     36     28     28 0.034483 0.000284 1.000018  32.00
+     1 3999 3324     36     28     28 0.034483 0.000283 0.999987  32.18
