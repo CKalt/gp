@@ -1,232 +1,120 @@
    Compiling cfg-if v1.0.0
-   Compiling libc v0.2.94
    Compiling autocfg v1.0.1
+   Compiling libc v0.2.94
    Compiling proc-macro2 v1.0.27
+   Compiling lazy_static v1.4.0
+   Compiling memchr v2.3.4
    Compiling crossbeam-utils v0.8.5
    Compiling unicode-xid v0.2.2
-   Compiling memchr v2.3.4
-   Compiling lazy_static v1.4.0
    Compiling crossbeam-epoch v0.9.5
    Compiling getrandom v0.2.2
-   Compiling scopeguard v1.1.0
-   Compiling bitflags v1.2.1
    Compiling ryu v1.0.5
-   Compiling rayon-core v1.9.1
-   Compiling radium v0.5.3
+   Compiling bitflags v1.2.1
    Compiling syn v1.0.73
+   Compiling radium v0.5.3
+   Compiling rayon-core v1.9.1
+   Compiling scopeguard v1.1.0
    Compiling version_check v0.9.3
    Compiling lexical-core v0.7.6
    Compiling regex-syntax v0.6.25
-   Compiling arrayvec v0.5.2
-   Compiling ppv-lite86 v0.2.10
-   Compiling static_assertions v1.1.0
    Compiling tap v1.0.1
    Compiling wyz v0.2.0
    Compiling funty v1.1.0
+   Compiling ppv-lite86 v0.2.10
+   Compiling static_assertions v1.1.0
+   Compiling arrayvec v0.5.2
    Compiling either v1.6.1
    Compiling memoffset v0.6.4
    Compiling rayon v1.5.1
    Compiling nom v6.2.1
    Compiling aho-corasick v0.7.15
    Compiling crossbeam-channel v0.5.1
-   Compiling bitvec v0.19.5
    Compiling quote v1.0.9
    Compiling num_cpus v1.13.0
-   Compiling const_format_proc_macros v0.2.14
+   Compiling bitvec v0.19.5
    Compiling rand_core v0.6.2
+   Compiling const_format_proc_macros v0.2.14
    Compiling regex v1.4.6
    Compiling rand_chacha v0.3.0
    Compiling crossbeam-deque v0.8.1
-   Compiling const_format v0.2.14
    Compiling rand v0.8.3
    Compiling format_num v0.1.0
+   Compiling const_format v0.2.14
    Compiling sscanf_macro v0.1.2
    Compiling sscanf v0.1.2
    Compiling gp v0.1.0 (/home/chris/projects/rust/gp)
-    Finished release [optimized] target(s) in 24.46s
+    Finished release [optimized] target(s) in 23.88s
      Running `target/release/gp`
 CURRENT NUM THREADS= 8
 Run #1
-num cases w/error lt 0.01=140
-   gen tfid tcid   hits      r      s        a        n      nfr avgRawF
-  ----  ---  ---  -----    ---    ---   ------   ------   ------
-     0 15999 14144     11      5      5 0.166667 0.000094 1.000341   8.00
-     1 15999 5358     12      4      4 0.200000 0.000110 1.000101   8.17
-     2 15999 11055     13      3      3 0.250000 0.000131 1.000111   8.57
-     3 15999 15233     13      3      3 0.250000 0.000124 1.000165   8.96
-     4 15999 14014     13      3      3 0.250000 0.000116 0.999929   9.45
-     5 15999 4308     15      1      1 0.500000 0.000214 1.000166   9.92
-     6 15999 15221     15      1      1 0.500000 0.000197 0.999999  10.39
-     7 15999 15723     15      1      1 0.500000 0.000182 1.000027  10.77
-win=1, run=1, gen=8, effort=132632
-num cases w/error lt 0.01=16
+win=1, run=1, gen=0, effort=11096
+num cases w/error lt 0.01=8
 tfid tcid   hits      r      s        a        n      nfr
  ---  ---  -----    ---    ---   ------   ------   ------
-   0    0     16      0      0 1.000000 -1.000000 -1.000000  -1.00
+   0    0      8      0      0 1.000000 -1.000000 -1.000000  -1.00
 -------------tree (None/0)----------------
-nFunctions = Some(146)
-nTerminals= Some(186)
+nFunctions = Some(45)
+nTerminals= Some(48)
 
 -------------------
 
 Function Def ADF0:
 
-(NOR
-  (NOR
+(AND
+  (NAND
+    (NAND
+      (OR ARG1 ARG0)
+      (OR ARG0 ARG0))
+    (NAND
+      (NAND ARG0 ARG1)
+      (NOR ARG1 ARG1)))
+  (NAND
     (AND
-      (OR
-        (AND ARG0 ARG2)
-        (NAND ARG0 ARG0))
-      (NAND
-        (NAND ARG0 ARG2)
-        (AND ARG1 ARG2)))
+      (OR ARG0 ARG1)
+      (AND ARG1 ARG0))
     (AND
-      (NOR
-        (NAND ARG0 ARG2)
-        (OR ARG1 ARG0))
-      (NAND
-        (OR ARG0 ARG1)
-        (OR ARG0 ARG0))))
-  (AND
-    (NOR
-      (AND
-        (AND ARG2 ARG1)
-        (NAND ARG1 ARG0))
-      (OR
-        (AND ARG1 ARG2)
-        (NAND ARG0 ARG0)))
-    (OR
-      (AND
-        (NAND
-          (OR ARG2 ARG2)
-          (NAND ARG1 ARG1))
-        (NOR ARG0 ARG2))
-      (NAND
-        (NAND ARG2 ARG0)
-        (NOR ARG2 ARG0))))
+      (NAND ARG0 ARG0)
+      (AND ARG1 ARG1)))
 )
 -------------------
 
 Function Def ADF1:
 
-(AND
-  (OR
-    (NAND
-      (ADF0
-        (AND ARG1 ARG0)
-        (NAND ARG0 ARG2)
-        (AND ARG2 ARG2))
-      (NAND
-        (NAND ARG1 ARG2)
-        (OR ARG2 ARG1)))
-    (OR
-      (NOR
-        (ADF0 ARG2 ARG0 ARG2)
-        (OR ARG0 ARG2))
-      (ADF0
-        (OR ARG2 ARG2)
-        (ADF0 ARG2 ARG1 ARG0)
-        (NOR ARG2 ARG0))))
+(ADF0
   (OR
     (AND
-      (OR
-        (ADF0 ARG0 ARG2 ARG2)
-        (OR ARG0 ARG0))
-      (OR
-        (NOR ARG1 ARG2) ARG0))
+      (NOR ARG0 ARG1)
+      (OR ARG0 ARG0))
+    (NAND
+      (OR ARG1 ARG0)
+      (NAND ARG1 ARG0)))
+  (AND
     (ADF0
-      (OR
-        (NOR ARG2 ARG0)
-        (NOR
-          (ADF0
-            (OR ARG2 ARG0)
-            (NAND ARG2 ARG2)
-            (ADF0 ARG0 ARG1 ARG2))
-          (NAND ARG1 ARG0)))
-      (ADF0
-        (ADF0 ARG1 ARG1 ARG2)
-        (OR ARG1 ARG1)
-        (NAND ARG1 ARG2))
-      (OR
-        (OR ARG1 ARG2)
-        (NOR ARG0 ARG0))))
+      (ADF0 ARG1 ARG0)
+      (AND ARG1 ARG1))
+    (OR
+      (NOR ARG0 ARG1)
+      (ADF0 ARG0 ARG0)))
 )
 -------------------
 
 Result Branch0:
 
-(ADF0
-  (ADF0
-    (ADF1
-      (AND
-        (OR D0 D2)
-        (ADF1 D2 D1 D1))
-      (ADF0
-        (ADF1 D1 D3 D3)
-        (OR D3 D2)
-        (NOR D2 D3))
-      (AND D3 D1))
-    (OR
-      (ADF1
-        (NOR D0 D2)
-        (ADF1 D0 D1 D1)
-        (AND D0 D2))
-      (NAND
-        (ADF0 D1 D2 D3)
-        (AND D2 D1)))
-    (NOR
-      (ADF0
-        (NAND D3 D3)
-        (OR D3 D1)
-        (ADF1 D0 D1 D3))
-      (NAND
-        (ADF1 D3 D0 D0)
-        (OR D0 D2))))
+(NAND
   (NAND
     (ADF1
-      (NOR
-        (ADF1 D0 D0 D1)
-        (NAND D0 D0))
-      (ADF0
-        (ADF0 D0 D1 D3)
-        (NOR D1 D0)
-        (AND D0 D2))
-      (OR
-        (ADF1 D3 D3 D1)
-        (NOR D2 D1)))
-    (NAND
-      (OR
-        (ADF1
-          (NOR D3 D2) D0 D2)
-        (AND D2 D1))
-      (ADF1
-        (AND D1 D0)
-        (ADF1 D0 D2 D1)
-        (NAND D3 D0))))
-  (NAND
-    (NAND
-      (ADF1
-        (OR D3 D0)
-        (AND D3 D2)
-        (ADF0
-          (ADF1 D1 D3 D3)
-          (OR D3 D2)
-          (NOR D2 D3)))
-      (ADF0
-        (AND D3 D2)
-        (OR D3 D1)
-        (ADF1 D3 D0 D0)))
+      (NOR D2 D2)
+      (ADF1 D0 D1))
     (ADF0
-      (NAND
-        (AND D1 D1)
-        (OR D2 D1))
-      (NAND
-        (NAND D3 D0)
-        (AND D0 D3))
-      (ADF0
-        (NAND D2 D0)
-        (OR D0 D2)
-        (NOR D1 D1))))
+      (ADF0 D2 D0)
+      (AND D1 D1)))
+  (ADF0
+    (OR
+      (ADF0 D2 D1)
+      (ADF1 D2 D0))
+    (NAND
+      (NAND D1 D0)
+      (ADF0 D2 D2)))
 )
 Have Winner
 Win has reached max of 1 runs ending.

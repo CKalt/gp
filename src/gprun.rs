@@ -643,6 +643,65 @@ pub mod tests {
         assert_eq!(tree.print_exec_one(), true);
     }
 
+    #[cfg(gpopt_even_parity_k="3")]
+    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
+        let rb_str = r#"
+(NAND
+  (NAND
+    (ADF1
+      (NOR D2 D2)
+      (ADF1 D0 D1))
+    (ADF0
+      (ADF0 D2 D0)
+      (AND D1 D1)))
+  (ADF0
+    (OR
+      (ADF0 D2 D1)
+      (ADF1 D2 D0))
+    (NAND
+      (NAND D1 D0)
+      (ADF0 D2 D2)))
+)
+"#;
+        let adf0_str = r#"
+(AND
+  (NAND
+    (NAND
+      (OR ARG1 ARG0)
+      (OR ARG0 ARG0))
+    (NAND
+      (NAND ARG0 ARG1)
+      (NOR ARG1 ARG1)))
+  (NAND
+    (AND
+      (OR ARG0 ARG1)
+      (AND ARG1 ARG0))
+    (AND
+      (NAND ARG0 ARG0)
+      (AND ARG1 ARG1)))
+)
+"#;
+        let adf1_str = r#"
+(ADF0
+  (OR
+    (AND
+      (NOR ARG0 ARG1)
+      (OR ARG0 ARG0))
+    (NAND
+      (OR ARG1 ARG0)
+      (NAND ARG1 ARG0)))
+  (AND
+    (ADF0
+      (ADF0 ARG1 ARG0)
+      (AND ARG1 ARG1))
+    (OR
+      (NOR ARG0 ARG1)
+      (ADF0 ARG0 ARG0)))
+)
+"#;
+        (rb_str, vec![adf0_str, adf1_str])
+    }
+
     #[cfg(gpopt_even_parity_k="4")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
