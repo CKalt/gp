@@ -2,14 +2,16 @@
 # gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
 # gpopt_adf := yes | no
+# gpopt_num_adf := 1 | 2 | 3 | 4 | 5
+# gpopt_num_adf_args := 2 | 3 | 4
 # gpopt_mult_threaded := yes | no
-# gpopt_even_parity_k= 7 | 8 | 9 | 10 | 11
 [build]
 rustflags = """
-    --cfg gpopt_select_method="fpb"
+    --cfg gpopt_select_method="tournament"
     --cfg gpopt_rng="thread"
     --cfg gpopt_trace="off"
     --cfg gpopt_mult_threaded="yes"
     --cfg gpopt_adf="yes"
-    --cfg gpopt_even_parity_k="7"
+    --cfg gpopt_num_adf="1"
+    --cfg gpopt_adf_arity="2"
 """

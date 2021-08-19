@@ -212,16 +212,37 @@ pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 6] = [
     Function {
         fid:  4u8,
         name: "ADF0",
-        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
+        arity: ADF_ARITY as u8,
         code: function_adf,
         opt_adf_num: Some(0),   // ideintifies ADF0
     },
     Function {
         fid:  5u8,
         name: "ADF1",
-        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
+        arity: ADF_ARITY as u8,
         code: function_adf,
-        opt_adf_num: Some(1),   // ideintifies ADF0
+        opt_adf_num: Some(1),   // ideintifies ADF1
+    },
+    Function {
+        fid:  6u8,
+        name: "ADF2",
+        arity: ADF_ARITY as u8,
+        code: function_adf,
+        opt_adf_num: Some(2),   // ideintifies ADF2
+    },
+    Function {
+        fid:  7u8,
+        name: "ADF3",
+        arity: ADF_ARITY as u8,
+        code: function_adf,
+        opt_adf_num: Some(3),   // ideintifies ADF3
+    },
+    Function {
+        fid:  8u8,
+        name: "ADF4",
+        arity: ADF_ARITY as u8,
+        code: function_adf,
+        opt_adf_num: Some(4),   // ideintifies ADF4
     },
 ];
 
