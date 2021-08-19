@@ -63,6 +63,11 @@ impl EvalCount {
         let ec = EVAL_COUNT.lock().unwrap();
         ec.num_evals_for_winner
     }
+    pub fn reset() {
+        let mut ec = EVAL_COUNT.lock().unwrap();
+        ec.num_evals_for_winner = 0;
+        ec.winner_found = false;
+    }
 }
 
 lazy_static! {
