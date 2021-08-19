@@ -219,6 +219,8 @@ fn main() {
             if CONTROL.W > 0 && CONTROL.W == win_number {
                 println!("Win has reached max of {} runs ending.", CONTROL.W);
                 break;
+            } else {
+                EvalCount::reset();
             }
         } else {
             println!("Exceeded CONTROL.R ({}) runs without finding a winner.",
