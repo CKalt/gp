@@ -221,7 +221,7 @@ pub static FUNCTIONS_RESULT_BRANCH_ADF: [Function; 6] = [
         name: "ADF1",
         arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
         code: function_adf,
-        opt_adf_num: Some(1),   // ideintifies ADF0
+        opt_adf_num: Some(1),   // ideintifies ADF1
     },
 ];
 
