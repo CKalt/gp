@@ -86,7 +86,7 @@ lazy_static! {
             funcs_fdb:          Box::new([]),
             #[cfg(gpopt_adf="no")]
             terms_fdb:          Box::new([]),
-            M:                  16000,      // Number of individuals in each generation
+            M:                  4000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree
             Dc:                 17,         // Maximum depth of S Expressions for a created tree

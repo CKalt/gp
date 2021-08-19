@@ -113,7 +113,7 @@ fn terminal_d10(rc: &RunContext) -> GpType {
 
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
+fn terminal_adf_arg0(rc: &RunContext) -> GpType {
      match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[0],
@@ -122,7 +122,7 @@ fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
 
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
+fn terminal_adf_arg1(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[1],
@@ -134,7 +134,7 @@ fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
 #[cfg(any(gpopt_even_parity_k="4",
           gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
-fn terminal_adf0_arg2(rc: &RunContext) -> GpType {
+fn terminal_adf_arg2(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[2],
@@ -145,7 +145,7 @@ fn terminal_adf0_arg2(rc: &RunContext) -> GpType {
 #[cfg(gpopt_adf="yes")]
 #[cfg(any(gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
-fn terminal_adf0_arg3(rc: &RunContext) -> GpType {
+fn terminal_adf_arg3(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[3],
@@ -155,7 +155,7 @@ fn terminal_adf0_arg3(rc: &RunContext) -> GpType {
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="6")]
-fn terminal_adf0_arg4(rc: &RunContext) -> GpType {
+fn terminal_adf_arg4(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[4],
@@ -400,22 +400,22 @@ pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; 4] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
-        code: terminal_adf0_arg0,
+        code: terminal_adf_arg0,
     },
     Terminal {
         tid:  1u8,
         name: "ARG1",
-        code: terminal_adf0_arg1,
+        code: terminal_adf_arg1,
     },
     Terminal {
         tid:  2u8,
         name: "ARG2",
-        code: terminal_adf0_arg2,
+        code: terminal_adf_arg2,
     },
     Terminal {
         tid:  3u8,
         name: "ARG3",
-        code: terminal_adf0_arg3,
+        code: terminal_adf_arg3,
     },
 ];
 
@@ -504,65 +504,6 @@ impl<'a> RunContext<'_> {
     /// exec_adf: executes and automatically defined function specified
     /// by the func_def_branch arg.
     #[cfg(gpopt_adf="yes")]
-    #[cfg(gpopt_even_parity_k="3")]
-    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
-                arg2: GpType)
-            -> GpType {
-        let func_def_branch = 
-            self
-                .opt_func_def_branches
-                .as_ref()
-                .expect("exec_adf with None set for branches.")[adf_num];
-
-        match self.opt_adf_args {
-            None    => {
-                self.opt_adf_args = Some(vec![ arg1, arg2 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = None;
-                result
-            },
-            Some(ref args) => {
-                let (a,b) = (args[0], args[1]);
-                self.opt_adf_args = Some(vec![ arg1, arg2 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(vec![ a, b ]);
-                result
-            }
-        }
-    }
-    /// exec_adf: executes and automatically defined function specified
-    /// by the func_def_branch arg.
-    #[cfg(gpopt_adf="yes")]
-    #[cfg(gpopt_even_parity_k="4")]
-    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
-            arg2: GpType, arg3: GpType)
-            -> GpType {
-        let func_def_branch = 
-            self
-                .opt_func_def_branches
-                .as_ref()
-                .expect("exec_adf with None set for branches.")[adf_num];
-
-        match self.opt_adf_args {
-            None    => {
-                self.opt_adf_args = Some(vec![ arg1, arg2, arg3 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = None;
-                result
-            },
-            Some(ref args) => {
-                let (a,b,c) = (args[0], args[1], args[2]);
-                self.opt_adf_args = Some(vec![ arg1, arg2, arg3 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(vec![ a, b, c ]);
-                result
-            }
-        }
-    }
-    /// exec_adf: executes and automatically defined function specified
-    /// by the func_def_branch arg.
-    #[cfg(gpopt_adf="yes")]
-    #[cfg(gpopt_even_parity_k="5")]
     pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
                 arg2: GpType, arg3: GpType, arg4: GpType)
             -> GpType {
@@ -584,35 +525,6 @@ impl<'a> RunContext<'_> {
                 self.opt_adf_args = Some(vec![ arg1, arg2, arg3, arg4 ]);
                 let result = Tree::exec_node(self, &func_def_branch.root);
                 self.opt_adf_args = Some(vec![ a, b, c, d ]);
-                result
-            }
-        }
-    }
-    /// exec_adf: executes and automatically defined function specified
-    /// by the func_def_branch arg.
-    #[cfg(gpopt_adf="yes")]
-    #[cfg(gpopt_even_parity_k="6")]
-    pub fn exec_adf(&mut self, adf_num: usize, arg1: GpType,
-                arg2: GpType, arg3: GpType, arg4: GpType, arg5: GpType)
-            -> GpType {
-        let func_def_branch = 
-            self
-                .opt_func_def_branches
-                .as_ref()
-                .expect("exec_adf with None set for branches.")[adf_num];
-
-        match self.opt_adf_args {
-            None    => {
-                self.opt_adf_args = Some(vec![ arg1, arg2, arg3, arg4, arg5 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = None;
-                result
-            },
-            Some(ref args) => {
-                let (a,b,c,d,e) = (args[0], args[1], args[2], args[3], args[4]);
-                self.opt_adf_args = Some(vec![ arg1, arg2, arg3, arg4, arg5 ]);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(vec![ a, b, c, d, e ]);
                 result
             }
         }
