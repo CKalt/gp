@@ -87,20 +87,20 @@ fn terminal_d6(rc: &RunContext) -> GpType {
 
 #[cfg(any(gpopt_even_parity_k="8",
           gpopt_even_parity_k="9",
-          gpopt_even_parity_k="10"),
+          gpopt_even_parity_k="10",
           gpopt_even_parity_k="11"))]
 fn terminal_d7(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[7]
 }
 
 #[cfg(any(gpopt_even_parity_k="9",
-          gpopt_even_parity_k="10"),
+          gpopt_even_parity_k="10",
           gpopt_even_parity_k="11"))]
 fn terminal_d8(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[8]
 }
 
-#[cfg(any(gpopt_even_parity_k="10"),
+#[cfg(any(gpopt_even_parity_k="10",
           gpopt_even_parity_k="11"))]
 fn terminal_d9(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[9]
@@ -131,9 +131,6 @@ fn terminal_adf_arg1(rc: &RunContext) -> GpType {
 
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-#[cfg(any(gpopt_even_parity_k="4",
-          gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
 fn terminal_adf_arg2(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
@@ -143,22 +140,10 @@ fn terminal_adf_arg2(rc: &RunContext) -> GpType {
             
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-#[cfg(any(gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
 fn terminal_adf_arg3(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[3],
-    }
-}
-
-/// The number of args for adf for even k parity is k-1.
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="6")]
-fn terminal_adf_arg4(rc: &RunContext) -> GpType {
-    match rc.opt_adf_args {
-        None => panic!("terminal arg access with empty args list"),
-        Some(ref args) => args[4],
     }
 }
 
@@ -392,7 +377,6 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; EVEN_PARITY_K_VALUE] = [
     },
 ];
 
-(UC)
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
 // Same for ADF0 and ADF1
 #[cfg(gpopt_adf="yes")]
@@ -559,459 +543,57 @@ pub mod tests {
         assert_eq!(tree.print_exec_one(), true);
     }
 
-    #[cfg(gpopt_even_parity_k="3")]
+    #[cfg(gpopt_even_parity_k="7")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
-(NAND
-  (NAND
-    (ADF1
-      (NOR D2 D2)
-      (ADF1 D0 D1))
-    (ADF0
-      (ADF0 D2 D0)
-      (AND D1 D1)))
-  (ADF0
-    (OR
-      (ADF0 D2 D1)
-      (ADF1 D2 D0))
-    (NAND
-      (NAND D1 D0)
-      (ADF0 D2 D2)))
-)
 "#;
         let adf0_str = r#"
-(AND
-  (NAND
-    (NAND
-      (OR ARG1 ARG0)
-      (OR ARG0 ARG0))
-    (NAND
-      (NAND ARG0 ARG1)
-      (NOR ARG1 ARG1)))
-  (NAND
-    (AND
-      (OR ARG0 ARG1)
-      (AND ARG1 ARG0))
-    (AND
-      (NAND ARG0 ARG0)
-      (AND ARG1 ARG1)))
-)
 "#;
         let adf1_str = r#"
-(ADF0
-  (OR
-    (AND
-      (NOR ARG0 ARG1)
-      (OR ARG0 ARG0))
-    (NAND
-      (OR ARG1 ARG0)
-      (NAND ARG1 ARG0)))
-  (AND
-    (ADF0
-      (ADF0 ARG1 ARG0)
-      (AND ARG1 ARG1))
-    (OR
-      (NOR ARG0 ARG1)
-      (ADF0 ARG0 ARG0)))
-)
 "#;
         (rb_str, vec![adf0_str, adf1_str])
     }
 
-    #[cfg(gpopt_even_parity_k="4")]
+    #[cfg(gpopt_even_parity_k="8")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
-(ADF0
-  (ADF0
-    (ADF1
-      (AND
-        (OR D0 D2)
-        (ADF1 D2 D1 D1))
-      (ADF0
-        (ADF1 D1 D3 D3)
-        (OR D3 D2)
-        (NOR D2 D3))
-      (AND D3 D1))
-    (OR
-      (ADF1
-        (NOR D0 D2)
-        (ADF1 D0 D1 D1)
-        (AND D0 D2))
-      (NAND
-        (ADF0 D1 D2 D3)
-        (AND D2 D1)))
-    (NOR
-      (ADF0
-        (NAND D3 D3)
-        (OR D3 D1)
-        (ADF1 D0 D1 D3))
-      (NAND
-        (ADF1 D3 D0 D0)
-        (OR D0 D2))))
-  (NAND
-    (ADF1
-      (NOR
-        (ADF1 D0 D0 D1)
-        (NAND D0 D0))
-      (ADF0
-        (ADF0 D0 D1 D3)
-        (NOR D1 D0)
-        (AND D0 D2))
-      (OR
-        (ADF1 D3 D3 D1)
-        (NOR D2 D1)))
-    (NAND
-      (OR
-        (ADF1
-          (NOR D3 D2) D0 D2)
-        (AND D2 D1))
-      (ADF1
-        (AND D1 D0)
-        (ADF1 D0 D2 D1)
-        (NAND D3 D0))))
-  (NAND
-    (NAND
-      (ADF1
-        (OR D3 D0)
-        (AND D3 D2)
-        (ADF0
-          (ADF1 D1 D3 D3)
-          (OR D3 D2)
-          (NOR D2 D3)))
-      (ADF0
-        (AND D3 D2)
-        (OR D3 D1)
-        (ADF1 D3 D0 D0)))
-    (ADF0
-      (NAND
-        (AND D1 D1)
-        (OR D2 D1))
-      (NAND
-        (NAND D3 D0)
-        (AND D0 D3))
-      (ADF0
-        (NAND D2 D0)
-        (OR D0 D2)
-        (NOR D1 D1))))
-)
 "#;
         let adf0_str = r#"
-(NOR
-  (NOR
-    (AND
-      (OR
-        (AND ARG0 ARG2)
-        (NAND ARG0 ARG0))
-      (NAND
-        (NAND ARG0 ARG2)
-        (AND ARG1 ARG2)))
-    (AND
-      (NOR
-        (NAND ARG0 ARG2)
-        (OR ARG1 ARG0))
-      (NAND
-        (OR ARG0 ARG1)
-        (OR ARG0 ARG0))))
-  (AND
-    (NOR
-      (AND
-        (AND ARG2 ARG1)
-        (NAND ARG1 ARG0))
-      (OR
-        (AND ARG1 ARG2)
-        (NAND ARG0 ARG0)))
-    (OR
-      (AND
-        (NAND
-          (OR ARG2 ARG2)
-          (NAND ARG1 ARG1))
-        (NOR ARG0 ARG2))
-      (NAND
-        (NAND ARG2 ARG0)
-        (NOR ARG2 ARG0))))
-)
 "#;
         let adf1_str = r#"
-(AND
-  (OR
-    (NAND
-      (ADF0
-        (AND ARG1 ARG0)
-        (NAND ARG0 ARG2)
-        (AND ARG2 ARG2))
-      (NAND
-        (NAND ARG1 ARG2)
-        (OR ARG2 ARG1)))
-    (OR
-      (NOR
-        (ADF0 ARG2 ARG0 ARG2)
-        (OR ARG0 ARG2))
-      (ADF0
-        (OR ARG2 ARG2)
-        (ADF0 ARG2 ARG1 ARG0)
-        (NOR ARG2 ARG0))))
-  (OR
-    (AND
-      (OR
-        (ADF0 ARG0 ARG2 ARG2)
-        (OR ARG0 ARG0))
-      (OR
-        (NOR ARG1 ARG2) ARG0))
-    (ADF0
-      (OR
-        (NOR ARG2 ARG0)
-        (NOR
-          (ADF0
-            (OR ARG2 ARG0)
-            (NAND ARG2 ARG2)
-            (ADF0 ARG0 ARG1 ARG2))
-          (NAND ARG1 ARG0)))
-      (ADF0
-        (ADF0 ARG1 ARG1 ARG2)
-        (OR ARG1 ARG1)
-        (NAND ARG1 ARG2))
-      (OR
-        (OR ARG1 ARG2)
-        (NOR ARG0 ARG0))))
-)
 "#;
         (rb_str, vec![adf0_str, adf1_str])
     }
 
-
-    #[cfg(gpopt_even_parity_k="5")]
+    #[cfg(gpopt_even_parity_k="9")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
-(NAND
-  (NAND
-    (NAND
-      (NAND
-        (ADF1 D1
-          (NOR D3 D0)
-          (ADF1 D3 D4 D0 D3)
-          (OR D1 D4))
-        (NOR D2 D2))
-      (ADF0
-        (ADF0
-          (OR D1 D3) D2
-          (NOR D1 D2)
-          (AND D0 D2))
-        (AND
-          (AND D0 D2)
-          (ADF1 D3 D4 D0 D3))
-        (AND D3 D1)
-        (NAND
-          (ADF0
-            (ADF1 D4
-              (ADF1 D0 D2
-                (AND D0 D2)
-                (OR D4 D0))
-              (ADF1 D1
-                (AND D1 D4)
-                (AND D0 D4)
-                (NAND D2 D4)) D0) D1
-            (ADF1 D0 D2
-              (AND D0 D2)
-              (OR D4 D0))
-            (NOR
-              (NOR
-                (ADF0 D1 D2 D2 D4)
-                (ADF0 D3 D4 D3 D0))
-              (ADF1 D0
-                (AND D3 D2)
-                (ADF0 D4 D4 D0 D3) D2)))
-          (OR D2 D3))))
-    (NOR D2 D2))
-  (ADF0
-    (ADF0
-      (OR D1 D3) D2
-      (NOR D1 D2)
-      (NOR D0 D1))
-    (AND
-      (AND D0 D2)
-      (ADF1 D3 D4 D0 D3))
-    (AND D3 D1)
-    (NAND
-      (ADF0
-        (ADF1 D4
-          (ADF1 D0 D2
-            (NAND D2 D4)
-            (OR D4 D0))
-          (ADF1 D1
-            (AND D1 D4)
-            (AND D0 D4)
-            (NAND D2 D4)) D0) D1
-        (AND D0
-          (NAND
-            (NAND D0 D0) D3))
-        (NOR
-          (ADF0
-            (NOR D1 D1)
-            (NOR D3 D4) D1
-            (AND D0 D2))
-          (ADF1 D0
-            (AND D3 D2)
-            (ADF0 D4 D4 D0 D3) D2)))
-      (OR D2 D0)))
-)
 "#;
         let adf0_str = r#"
-(NAND
-  (OR
-    (AND
-      (OR ARG0 ARG3)
-      (AND ARG1 ARG3))
-    (OR
-      (NOR ARG3 ARG1)
-      (AND ARG3 ARG1)))
-  (NAND
-    (NOR
-      (NOR ARG1 ARG2)
-      (OR ARG3 ARG3))
-    (NOR
-      (OR ARG0 ARG2)
-      (AND ARG2 ARG0)))
-)
 "#;
         let adf1_str = r#"
-(ADF0
-  (NAND
-    (NOR
-      (OR ARG2 ARG3)
-      (NAND ARG1 ARG2))
-    (NOR
-      (OR ARG2 ARG3)
-      (NAND ARG1 ARG2)))
-  (NOR
-    (NOR
-      (ADF0 ARG1 ARG0 ARG2 ARG2)
-      (ADF0 ARG3 ARG1 ARG2 ARG0))
-    (NOR ARG2 ARG0))
-  (ADF0
-    (OR
-      (NOR ARG3 ARG3)
-      (ADF0 ARG0 ARG3 ARG3 ARG1))
-    (AND
-      (OR ARG3 ARG2)
-      (ADF0 ARG2 ARG1 ARG0 ARG3))
-    (ADF0
-      (NAND ARG0 ARG2)
-      (ADF0 ARG3 ARG0 ARG3 ARG3)
-      (NOR ARG3 ARG1)
-      (NAND ARG0 ARG1))
-    (NAND
-      (OR ARG0 ARG3)
-      (OR ARG2 ARG1)))
-  (NAND
-    (NOR
-      (OR ARG1 ARG2)
-      (ADF0 ARG0 ARG3 ARG1 ARG1))
-    (NOR
-      (OR ARG2 ARG3) ARG3))
-)
 "#;
         (rb_str, vec![adf0_str, adf1_str])
     }
 
-    #[cfg(gpopt_even_parity_k="6")]
+    #[cfg(gpopt_even_parity_k="10")]
     fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
-(OR
-  (ADF1
-    (OR
-      (NOR D2 D5)
-      (NAND D5 D0))
-    (NAND
-      (OR D0 D2)
-      (ADF1 D3 D5 D2 D5 D5))
-    (ADF0
-      (AND D2 D4)
-      (ADF1 D5 D2 D4 D1 D1)
-      (ADF1 D2 D1 D4 D3 D3)
-      (OR D5 D5)
-      (AND D5 D3))
-    (OR D0 D2)
-    (NAND
-      (NAND D4
-        (OR D2 D0))
-      (ADF0 D5 D4 D3 D0 D4)))
-  (ADF0
-    (NOR
-      (NOR D0 D0)
-      (ADF1 D5 D0 D0 D0 D2))
-    (ADF0
-      (OR D2 D3)
-      (NOR D3 D1)
-      (AND D2 D3)
-      (ADF0 D1 D1 D5 D1 D2)
-      (NAND D5 D0))
-    (OR
-      (ADF1 D3 D3 D0 D0 D4)
-      (NOR D0 D3))
-    (NOR
-      (ADF0 D3 D2 D0 D3 D5)
-      (ADF0 D4 D5 D2 D1 D1))
-    (ADF0
-      (ADF0 D4 D4 D2 D2 D1)
-      (NOR D3 D5)
-      (AND D3 D0)
-      (ADF1 D4 D4 D1 D1 D0)
-      (ADF1 D3 D2 D1 D0 D3)))
-)
 "#;
         let adf0_str = r#"
-(AND
-  (NOR
-    (NOR
-      (OR ARG1 ARG3)
-      (NAND ARG3 ARG3))
-    (OR
-      (AND ARG4 ARG3)
-      (NOR ARG4 ARG3)))
-  (NAND
-    (NOR
-      (NOR ARG2 ARG1)
-      (NAND ARG3 ARG0))
-    (NOR
-      (AND ARG3 ARG3)
-      (AND ARG4 ARG4)))
-)
 "#;
         let adf1_str = r#"
-(OR
-  (AND
-    (AND
-      (OR ARG0 ARG1)
-      (NOR ARG4 ARG0))
-    (AND
-      (ADF0
-        (NOR ARG3 ARG1)
-        (OR ARG3 ARG3)
-        (ADF0 ARG1 ARG3 ARG1 ARG0 ARG3)
-        (NAND ARG4 ARG1)
-        (NAND ARG3 ARG4))
-      (NOR ARG4 ARG0)))
-  (ADF0
-    (OR
-      (NAND ARG0 ARG0)
-      (NAND ARG1 ARG1))
-    (ADF0
-      (NOR ARG3 ARG1)
-      (OR ARG3 ARG3)
-      (ADF0 ARG1 ARG3 ARG1 ARG0 ARG3)
-      (NAND ARG4 ARG1)
-      (NAND ARG3 ARG4))
-    (ADF0
-      (NAND ARG3 ARG3)
-      (NAND ARG1 ARG0)
-      (NAND ARG1 ARG3)
-      (AND ARG0 ARG0)
-      (NOR ARG2 ARG4))
-    (OR
-      (AND ARG3 ARG4) ARG3)
-    (NOR
-      (OR ARG1 ARG1) ARG1))
-)
+"#;
+        (rb_str, vec![adf0_str, adf1_str])
+    }
+
+    #[cfg(gpopt_even_parity_k="11")]
+    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
+        let rb_str = r#"
+"#;
+        let adf0_str = r#"
+"#;
+        let adf1_str = r#"
 "#;
         (rb_str, vec![adf0_str, adf1_str])
     }
