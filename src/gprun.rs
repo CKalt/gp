@@ -45,32 +45,6 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 }
 
 #[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="3")]
-fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-
-    let adf_num =
-        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
-
-    rc.exec_adf(adf_num, arg1, arg2)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="4")]
-fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-
-    let adf_num =
-        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
-
-    rc.exec_adf(adf_num, arg1, arg2, arg3)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="5")]
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let arg1 = Tree::exec_node(rc, &func.branch[0]);
     let arg2 = Tree::exec_node(rc, &func.branch[1]);
@@ -81,21 +55,6 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
         func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
     rc.exec_adf(adf_num, arg1, arg2, arg3, arg4)
-}
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_even_parity_k="6")]
-fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let arg1 = Tree::exec_node(rc, &func.branch[0]);
-    let arg2 = Tree::exec_node(rc, &func.branch[1]);
-    let arg3 = Tree::exec_node(rc, &func.branch[2]);
-    let arg4 = Tree::exec_node(rc, &func.branch[3]);
-    let arg5 = Tree::exec_node(rc, &func.branch[4]);
-
-    let adf_num =
-        func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
-
-    rc.exec_adf(adf_num, arg1, arg2, arg3, arg4, arg5)
 }
 
 fn terminal_d0(rc: &RunContext) -> GpType {
@@ -110,22 +69,46 @@ fn terminal_d2(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[2]
 }
 
-#[cfg(any(gpopt_even_parity_k="4",
-          gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
 fn terminal_d3(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[3]
 }
 
-#[cfg(any(gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
 fn terminal_d4(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[4]
 }
 
-#[cfg(gpopt_even_parity_k="6")]
 fn terminal_d5(rc: &RunContext) -> GpType {
     rc.get_cur_fc().input_bits[5]
+}
+
+fn terminal_d6(rc: &RunContext) -> GpType {
+    rc.get_cur_fc().input_bits[6]
+}
+
+#[cfg(any(gpopt_even_parity_k="8",
+          gpopt_even_parity_k="9",
+          gpopt_even_parity_k="10"),
+          gpopt_even_parity_k="11"))]
+fn terminal_d7(rc: &RunContext) -> GpType {
+    rc.get_cur_fc().input_bits[7]
+}
+
+#[cfg(any(gpopt_even_parity_k="9",
+          gpopt_even_parity_k="10"),
+          gpopt_even_parity_k="11"))]
+fn terminal_d8(rc: &RunContext) -> GpType {
+    rc.get_cur_fc().input_bits[8]
+}
+
+#[cfg(any(gpopt_even_parity_k="10"),
+          gpopt_even_parity_k="11"))]
+fn terminal_d9(rc: &RunContext) -> GpType {
+    rc.get_cur_fc().input_bits[9]
+}
+
+#[cfg(gpopt_even_parity_k="11")]
+fn terminal_d10(rc: &RunContext) -> GpType {
+    rc.get_cur_fc().input_bits[10]
 }
 
 /// The number of args for adf for even k parity is k-1.
@@ -330,14 +313,16 @@ pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF1: [Function; 5] = [
 
 // TERMINAL SPECIFICS - RESULT PRODUCING BRANCH - result_branch
 
-#[cfg(gpopt_even_parity_k="3")]
-pub const EVEN_PARITY_K_VALUE: usize = 3;
-#[cfg(gpopt_even_parity_k="4")]
-pub const EVEN_PARITY_K_VALUE: usize = 4;
-#[cfg(gpopt_even_parity_k="5")]
-pub const EVEN_PARITY_K_VALUE: usize = 5;
-#[cfg(gpopt_even_parity_k="6")]
-pub const EVEN_PARITY_K_VALUE: usize = 6;
+#[cfg(gpopt_even_parity_k="7")]
+pub const EVEN_PARITY_K_VALUE: usize = 7;
+#[cfg(gpopt_even_parity_k="8")]
+pub const EVEN_PARITY_K_VALUE: usize = 8;
+#[cfg(gpopt_even_parity_k="9")]
+pub const EVEN_PARITY_K_VALUE: usize = 9;
+#[cfg(gpopt_even_parity_k="10")]
+pub const EVEN_PARITY_K_VALUE: usize = 10;
+#[cfg(gpopt_even_parity_k="11")]
+pub const EVEN_PARITY_K_VALUE: usize = 11;
 
 pub static TERMINALS_RESULT_BRANCH: [Terminal; EVEN_PARITY_K_VALUE] = [
     Terminal {
@@ -355,33 +340,63 @@ pub static TERMINALS_RESULT_BRANCH: [Terminal; EVEN_PARITY_K_VALUE] = [
         name: "D2",
         code: terminal_d2,
     },
-#[cfg(any(gpopt_even_parity_k="4",
-          gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
     Terminal {
         tid:  3u8,
         name: "D3",
         code: terminal_d3,
     },
-#[cfg(any(gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
     Terminal {
         tid:  4u8,
         name: "D4",
         code: terminal_d4,
     },
-#[cfg(gpopt_even_parity_k="6")]
     Terminal {
         tid:  5u8,
         name: "D5",
         code: terminal_d5,
     },
+    Terminal {
+        tid:  6u8,
+        name: "D6",
+        code: terminal_d6,
+    },
+#[cfg(any(gpopt_even_parity_k="8",
+          gpopt_even_parity_k="9",
+          gpopt_even_parity_k="10",
+          gpopt_even_parity_k="11"))]
+    Terminal {
+        tid:  7u8,
+        name: "D7",
+        code: terminal_d7,
+    },
+#[cfg(any(gpopt_even_parity_k="9",
+          gpopt_even_parity_k="10",
+          gpopt_even_parity_k="11"))]
+    Terminal {
+        tid:  8u8,
+        name: "D8",
+        code: terminal_d8,
+    },
+#[cfg(any(gpopt_even_parity_k="10",
+          gpopt_even_parity_k="11"))]
+    Terminal {
+        tid:  9u8,
+        name: "D9",
+        code: terminal_d9,
+    },
+#[cfg(gpopt_even_parity_k="11")]
+    Terminal {
+        tid:  10u8,
+        name: "D10",
+        code: terminal_d10,
+    },
 ];
 
+(UC)
 // TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
 // Same for ADF0 and ADF1
 #[cfg(gpopt_adf="yes")]
-pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; EVEN_PARITY_K_VALUE-1] = [
+pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; 4] = [
     Terminal {
         tid:  0u8,
         name: "ARG0",
@@ -392,26 +407,15 @@ pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; EVEN_PARITY_K_VALUE-1] 
         name: "ARG1",
         code: terminal_adf0_arg1,
     },
-#[cfg(any(gpopt_even_parity_k="4",
-          gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
     Terminal {
         tid:  2u8,
         name: "ARG2",
         code: terminal_adf0_arg2,
     },
-#[cfg(any(gpopt_even_parity_k="5",
-          gpopt_even_parity_k="6"))]
     Terminal {
         tid:  3u8,
         name: "ARG3",
         code: terminal_adf0_arg3,
-    },
-#[cfg(gpopt_even_parity_k="6")]
-    Terminal {
-        tid:  4u8,
-        name: "ARG4",
-        code: terminal_adf0_arg4,
     },
 ];
 
