@@ -130,7 +130,7 @@ fn terminal_d5(rc: &RunContext) -> GpType {
 
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
+fn terminal_adf_arg0(rc: &RunContext) -> GpType {
      match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[0],
@@ -139,7 +139,7 @@ fn terminal_adf0_arg0(rc: &RunContext) -> GpType {
 
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
-fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
+fn terminal_adf_arg1(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[1],
@@ -151,7 +151,7 @@ fn terminal_adf0_arg1(rc: &RunContext) -> GpType {
 #[cfg(any(gpopt_even_parity_k="4",
           gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
-fn terminal_adf0_arg2(rc: &RunContext) -> GpType {
+fn terminal_adf_arg2(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[2],
@@ -162,7 +162,7 @@ fn terminal_adf0_arg2(rc: &RunContext) -> GpType {
 #[cfg(gpopt_adf="yes")]
 #[cfg(any(gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
-fn terminal_adf0_arg3(rc: &RunContext) -> GpType {
+fn terminal_adf_arg3(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[3],
@@ -172,7 +172,7 @@ fn terminal_adf0_arg3(rc: &RunContext) -> GpType {
 /// The number of args for adf for even k parity is k-1.
 #[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_even_parity_k="6")]
-fn terminal_adf0_arg4(rc: &RunContext) -> GpType {
+fn terminal_adf_arg4(rc: &RunContext) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
         Some(ref args) => args[4],
@@ -385,12 +385,12 @@ pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; EVEN_PARITY_K_VALUE-1] 
     Terminal {
         tid:  0u8,
         name: "ARG0",
-        code: terminal_adf0_arg0,
+        code: terminal_adf_arg0,
     },
     Terminal {
         tid:  1u8,
         name: "ARG1",
-        code: terminal_adf0_arg1,
+        code: terminal_adf_arg1,
     },
 #[cfg(any(gpopt_even_parity_k="4",
           gpopt_even_parity_k="5",
@@ -398,20 +398,20 @@ pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; EVEN_PARITY_K_VALUE-1] 
     Terminal {
         tid:  2u8,
         name: "ARG2",
-        code: terminal_adf0_arg2,
+        code: terminal_adf_arg2,
     },
 #[cfg(any(gpopt_even_parity_k="5",
           gpopt_even_parity_k="6"))]
     Terminal {
         tid:  3u8,
         name: "ARG3",
-        code: terminal_adf0_arg3,
+        code: terminal_adf_arg3,
     },
 #[cfg(gpopt_even_parity_k="6")]
     Terminal {
         tid:  4u8,
         name: "ARG4",
-        code: terminal_adf0_arg4,
+        code: terminal_adf_arg4,
     },
 ];
 
