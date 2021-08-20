@@ -262,7 +262,7 @@ impl Node {
 pub struct Function {
     #[allow(dead_code)]
     pub fid:    u8,
-    pub name:   & 'static str,
+    pub name:   String,
     pub arity:  u8,
     pub code:   FuncNodeCode,
     pub opt_adf_num: Option<usize>, // if present, identifies adf number [0..n]
@@ -271,7 +271,7 @@ pub struct Function {
 
 pub struct Terminal {
     pub tid:    u8,
-    pub name:   & 'static str,
+    pub name:   String,
     pub code:   TermNodeCode,
     pub index:  usize,
 }
@@ -337,7 +337,7 @@ impl FunctionNode {
 
     /// create a new FunctionNode choosing which one at random.
     /// (formerly called newRndFNode() in gp.c)
-    pub fn new_rnd(rng: &mut GpRng, funcs: &'static [Function]) -> FunctionNode {
+    pub fn new_rnd(rng: &mut GpRng, funcs: &'static Vec<Function>) -> FunctionNode {
         assert_ne!(funcs.len(), 0);
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
         FunctionNode::new(rand_fid, funcs)

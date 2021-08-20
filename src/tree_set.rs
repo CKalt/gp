@@ -68,17 +68,17 @@ impl TreeSet {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
 
         let mut result_branch_root =
-            FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
+            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
-                CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
-                    FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
                 Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
-                    2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
+                    2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
                 func_def_branches.push(TreeBranch::new(FNode(func_def_branch_root)));
             }
             Tree::new(
@@ -91,7 +91,7 @@ impl TreeSet {
     }
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
-            funcs: &'static [Function], terms: &'static [Terminal]) {
+            funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>) {
         if level >= depth {
             for i in 0..func_node.fnc.arity {
                 // Always a Terminal Node
@@ -117,17 +117,17 @@ impl TreeSet {
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
         let mut result_branch_root =
-            FunctionNode::new_rnd(rng, CONTROL.funcs_rpb[0]);
+            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
-                CONTROL.funcs_rpb[0], CONTROL.terms_rpb[0]);
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
-                    FunctionNode::new_rnd(rng, CONTROL.funcs_fdb[i]);
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
                 Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
-                        2, depth, CONTROL.funcs_fdb[i], CONTROL.terms_fdb[i]);
+                        2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
                 func_def_branches
                     .push(TreeBranch::new(FNode(func_def_branch_root)));
             }

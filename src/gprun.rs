@@ -74,7 +74,7 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 
 #[cfg(gpopt_adf="yes")]
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let args: Vec<GpType> = Vec::new();
+    let mut args: Vec<GpType> = Vec::new();
     for b_i in 0..ADF_ARITY {
         args.push(Tree::exec_node(rc, &func.branch[b_i]));
     }
@@ -100,28 +100,28 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     let mut funcs = vec![
         Function {
             fid:  0u8,
-            name: "AND",
+            name: "AND".to_string(),
             arity: 2,
             code: function_and,
             opt_adf_num: None,
         },
         Function {
             fid:  1u8,
-            name: "OR",
+            name: "OR".to_string(),
             arity: 2,
             code: function_or,
             opt_adf_num: None,
         },
         Function {
             fid:  2u8,
-            name: "NAND",
+            name: "NAND".to_string(),
             arity: 2,
             code: function_nand,
             opt_adf_num: None,
         },
         Function {
             fid:  3u8,
-            name: "NOR",
+            name: "NOR".to_string(),
             arity: 2,
             code: function_nor,
             opt_adf_num: None,
@@ -132,7 +132,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
         funcs.push(
             Function {
                 fid:  a_i as u8 + 4u8,
-                name: &format!("ADF{}", a_i),
+                name: format!("ADF{}", a_i),
                 arity: ADF_ARITY as u8,
                 code: function_adf,
                 opt_adf_num: Some(a_i),   // ideintifies ADFn
@@ -146,12 +146,12 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
 }
 
 pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
-    let terms: Vec<Terminal> = Vec::new();
+    let mut terms: Vec<Terminal> = Vec::new();
     for tid in 0..EVEN_PARITY_K_VALUE {
         terms.push(
             Terminal {
                 tid:  tid as u8,
-                name: &format!("D{}", tid),
+                name: format!("D{}", tid),
                 code: terminal_data,
                 index: tid,
             },
@@ -161,33 +161,33 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
 }
 
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
-    let branches: Vec<Vec<Function>> = Vec::new();
+    let mut branches: Vec<Vec<Function>> = Vec::new();
     for b_i in 0..NUM_ADF {
-        let funcs = vec![
+        let mut funcs = vec![
             Function {
                 fid:  0u8,
-                name: "AND",
+                name: "AND".to_string(),
                 arity: 2,
                 code: function_and,
                 opt_adf_num: None,
             },
             Function {
                 fid:  1u8,
-                name: "OR",
+                name: "OR".to_string(),
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
             },
             Function {
                 fid:  2u8,
-                name: "NAND",
+                name: "NAND".to_string(),
                 arity: 2,
                 code: function_nand,
                 opt_adf_num: None,
             },
             Function {
                 fid:  3u8,
-                name: "NOR",
+                name: "NOR".to_string(),
                 arity: 2,
                 code: function_nor,
                 opt_adf_num: None,
@@ -197,7 +197,7 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
             funcs.push(
                 Function {
                     fid:  4u8 + f_i as u8,
-                    name: &format!("ADF{}", f_i),
+                    name: format!("ADF{}", f_i),
                     arity: ADF_ARITY as u8,
                     code: function_adf,
                     opt_adf_num: Some(f_i),
@@ -211,14 +211,14 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
 }
 
 pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
-    let branches: Vec<Vec<Terminal>> = Vec::new();
-    for b_i in 0..NUM_ADF {
-        let terms = Vec::new();
+    let mut branches: Vec<Vec<Terminal>> = Vec::new();
+    for _b_i in 0..NUM_ADF {
+        let mut terms = Vec::new();
         for t_i in 0..ADF_ARITY {
             terms.push(
                 Terminal {
                     tid:  t_i as u8,
-                    name: &format!("ARG{}", t_i),
+                    name: format!("ARG{}", t_i),
                     code: terminal_adf_arg,
                     index: t_i
                 },
@@ -323,17 +323,18 @@ impl<'a> RunContext<'_> {
                 .expect("exec_adf with None set for branches.")[adf_num];
 
         match self.opt_adf_args {
-            None    => {
-                self.opt_adf_args = Some(&args);
+            None => {
+                let passed_args = args.clone();
+                self.opt_adf_args = Some(&passed_args);
                 let result = Tree::exec_node(self, &func_def_branch.root);
                 self.opt_adf_args = None;
                 result
             },
             Some(ref orig_args) => {
-                let save_args = orig_args.clone();
-                self.opt_adf_args = Some(&args.clone());
+                let passed_args = args.clone();
+                self.opt_adf_args = Some(&passed_args);
                 let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(&save_args.clone());
+                self.opt_adf_args = Some(orig_args);
                 result
             }
         }
