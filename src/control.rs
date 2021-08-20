@@ -8,10 +8,10 @@ pub type TreeDepth = u16;
 
 #[allow(non_snake_case)]
 pub struct Control<'a> {
-    pub funcs_rpb:              Box<[&'a[Function]]>,
-    pub terms_rpb:              Box<[&'a[Terminal]]>,
-    pub funcs_fdb:              Box<[&'a[Function]]>,
-    pub terms_fdb:              Box<[&'a[Terminal]]>,
+    pub funcs_rpb:              Box<Vec<Vec<Function>>>,
+    pub terms_rpb:              Box<Vec<Vec<Terminal>>>,
+    pub funcs_fdb:              Box<Vec<Vec<Function>>>,
+    pub terms_fdb:              Box<Vec<Vec<Terminal>>>,
     pub M:   usize,             // Number of individuals in each generation
     pub G:   u16,               // Number of generations to run
     pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
@@ -76,16 +76,17 @@ lazy_static! {
     #[warn(non_snake_case)]
     pub static ref CONTROL: Control<'static> = {
         Control {
+            funcs_rpb:          Box::new(get_functions_for_result_branches()),
+            terms_rpb:          Box::new(get_terminals_for_result_branches()),
+            funcs_fdb:          Box::new(get_functions_for_func_def_branches()),
+
+
+
+
+
+
             #[cfg(gpopt_adf="yes")]
-            funcs_rpb:          Box::new([&FUNCTIONS_RESULT_BRANCH_ADF]),
-            #[cfg(gpopt_adf="no")]
-            funcs_rpb:          Box::new([&FUNCTIONS_RESULT_BRANCH_NO_ADF]),
-            terms_rpb:          Box::new([&TERMINALS_RESULT_BRANCH]),
-            #[cfg(gpopt_adf="yes")]
-            funcs_fdb:          Box::new([&FUNCTIONS_FUNC_DEF_BRANCH_ADF0,
-                                          &FUNCTIONS_FUNC_DEF_BRANCH_ADF1,]),
-            #[cfg(gpopt_adf="yes")]
-            terms_fdb:          Box::new([&TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,
+            terms_fdb:          Box::new(vec![&TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,
                                           &TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,]),
             #[cfg(gpopt_adf="no")]
             funcs_fdb:          Box::new([]),
