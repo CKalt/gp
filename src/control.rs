@@ -79,19 +79,7 @@ lazy_static! {
             funcs_rpb:          Box::new(get_functions_for_result_branches()),
             terms_rpb:          Box::new(get_terminals_for_result_branches()),
             funcs_fdb:          Box::new(get_functions_for_func_def_branches()),
-
-
-
-
-
-
-            #[cfg(gpopt_adf="yes")]
-            terms_fdb:          Box::new(vec![&TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,
-                                          &TERMINALS_FUNC_DEF_BRANCH_ADF_0_1,]),
-            #[cfg(gpopt_adf="no")]
-            funcs_fdb:          Box::new([]),
-            #[cfg(gpopt_adf="no")]
-            terms_fdb:          Box::new([]),
+            terms_rpb:          Box::new(get_terminals_for_func_def_branches()),
             M:                  4000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree

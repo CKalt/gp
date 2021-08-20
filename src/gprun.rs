@@ -22,23 +22,31 @@ pub type GpType = bool;
 
 pub const EVEN_PARITY_K_VALUE: usize = 5;
 
+#[cfg(gpopt_adf="no")]
+pub const NUM_ADF: usize = 0;
+
+#[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_num_adf="1")]
 pub const NUM_ADF: usize = 1;
+#[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_num_adf="2")]
 pub const NUM_ADF: usize = 2;
+#[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_num_adf="3")]
 pub const NUM_ADF: usize = 3;
+#[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_num_adf="4")]
 pub const NUM_ADF: usize = 4;
+#[cfg(gpopt_adf="yes")]
 #[cfg(gpopt_num_adf="5")]
 pub const NUM_ADF: usize = 5;
 
-#[cfg(gpopt_adf_parity="2")]
-pub const ADF_PARITY: usize = 2;
-#[cfg(gpopt_adf_parity="3")]
-pub const ADF_PARITY: usize = 3;
-#[cfg(gpopt_adf_parity="4")]
-pub const ADF_PARITY: usize = 4;
+#[cfg(gpopt_adf_arity="2")]
+pub const ADF_ARITY: usize = 2;
+#[cfg(gpopt_adf_arity="3")]
+pub const ADF_ARITY: usize = 3;
+#[cfg(gpopt_adf_arity="4")]
+pub const ADF_ARITY: usize = 4;
 
 fn function_and(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let val1 = Tree::exec_node(rc, &func.branch[0]);
@@ -67,7 +75,7 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 #[cfg(gpopt_adf="yes")]
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let args: Vec<GpTyp> = Vec::new();
-    for b_i in 0..ADF_PARITY {
+    for b_i in 0..ADF_ARITY {
         args.push(Tree::exec_node(rc, &func.branch[b_i]));
     }
 
@@ -77,98 +85,17 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     rc.exec_adf(adf_num, &args);
 }
 
-fn terminal_d0(rc: &RunContext) -> GpType {
-    rc.get_cur_fc().input_bits[0]
+fn terminal_data(rc: &RunContext, term: &Terminal) -> GpType {
+    rc.get_cur_fc().input_bits[term.index]
 }
 
-fn terminal_d1(rc: &RunContext) -> GpType {
-    rc.get_cur_fc().input_bits[1]
-}
-
-fn terminal_d2(rc: &RunContext) -> GpType {
-    rc.get_cur_fc().input_bits[2]
-}
-
-fn terminal_d3(rc: &RunContext) -> GpType {
-    rc.get_cur_fc().input_bits[3]
-}
-
-fn terminal_d4(rc: &RunContext) -> GpType {
-    rc.get_cur_fc().input_bits[4]
-}
-
-#[cfg(gpopt_adf="yes")]
-fn terminal_adf_arg0(rc: &RunContext) -> GpType {
-     match rc.opt_adf_args {
-        None => panic!("terminal arg access with empty args list"),
-        Some(ref args) => args[0],
-    }
-}
-
-/// The number of args for adf for even k parity is k-1.
-#[cfg(gpopt_adf="yes")]
-fn terminal_adf_arg1(rc: &RunContext) -> GpType {
+fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
-        Some(ref args) => args[1],
+        Some(ref args) => args[term.index],
     }
 }
 
-/// The number of args for adf for even k parity is k-1.
-#[cfg(gpopt_adf="yes")]
-fn terminal_adf_arg2(rc: &RunContext) -> GpType {
-    match rc.opt_adf_args {
-        None => panic!("terminal arg access with empty args list"),
-        Some(ref args) => args[2],
-    }
-}
-            
-/// The number of args for adf for even k parity is k-1.
-#[cfg(gpopt_adf="yes")]
-fn terminal_adf_arg3(rc: &RunContext) -> GpType {
-    match rc.opt_adf_args {
-        None => panic!("terminal arg access with empty args list"),
-        Some(ref args) => args[3],
-    }
-}
-
-#[cfg(gpopt_adf="no")]
-pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
-    vec![
-        vec![
-            Function {
-                fid:  1u8,
-                name: "AND",
-                arity: 2,
-                code: function_and,
-                opt_adf_num: None,
-            },
-            Function {
-                fid:  2u8,
-                name: "OR",
-                arity: 2,
-                code: function_or,
-                opt_adf_num: None,
-            },
-            Function {
-                fid:  3u8,
-                name: "NAND",
-                arity: 2,
-                code: function_nand,
-                opt_adf_num: None,
-            },
-            Function {
-                fid:  4u8,
-                name: "NOR",
-                arity: 2,
-                code: function_nor,
-                opt_adf_num: None,
-            },
-        ]
-    ]
-}
-
-#[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     let mut funcs = vec![
         Function {
@@ -219,136 +146,88 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
 }
 
 pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
-    vec![ 
-        // TERMINALS FOR RESULT BRANCH 0 (only one result branch)
-        vec![
+    let terms: Vec<Terminal> = Vec::new();
+    for tid in 0..EVEN_PARITY_K_VALUE {
+        terms.push(
             Terminal {
-                tid:  0u8,
-                name: "D0",
-                code: terminal_d0,
+                tid:  tid as u8,
+                name: &format!("D{}", tid),
+                code: terminal_data,
+                index: tid,
             },
-            Terminal {
-                tid:  1u8,
-                name: "D1",
-                code: terminal_d1,
-            },
-            Terminal {
-                tid:  2u8,
-                name: "D2",
-                code: terminal_d2,
-            },
-            Terminal {
-                tid:  3u8,
-                name: "D3",
-                code: terminal_d3,
-            },
-            Terminal {
-                tid:  4u8,
-                name: "D4",
-                code: terminal_d4,
-            },
-        ]
-    ]
+        );
+    }
+    vec![terms]
 }
 
-#[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
-    let funcs = vec![
-        Function {
-            fid:  0u8,
-            name: "AND",
-            arity: 2,
-            code: function_and,
-            opt_adf_num: None,
-        },
-        Function {
-            fid:  1u8,
-            name: "OR",
-            arity: 2,
-            code: function_or,
-            opt_adf_num: None,
-        },
-        Function {
-            fid:  2u8,
-            name: "NAND",
-            arity: 2,
-            code: function_nand,
-            opt_adf_num: None,
-        },
-        Function {
-            fid:  3u8,
-            name: "NOR",
-            arity: 2,
-            code: function_nor,
-            opt_adf_num: None,
-        },
-    ];
+    let branches = Vec<Vec<Function>>: = Vec::new();
+    for b_i in NUM_ADF {
+        let funcs = vec![
+            Function {
+                fid:  0u8,
+                name: "AND",
+                arity: 2,
+                code: function_and,
+                opt_adf_num: None,
+            },
+            Function {
+                fid:  1u8,
+                name: "OR",
+                arity: 2,
+                code: function_or,
+                opt_adf_num: None,
+            },
+            Function {
+                fid:  2u8,
+                name: "NAND",
+                arity: 2,
+                code: function_nand,
+                opt_adf_num: None,
+            },
+            Function {
+                fid:  3u8,
+                name: "NOR",
+                arity: 2,
+                code: function_nor,
+                opt_adf_num: None,
+            },
+        ];
+        for f_i in 0..NUM_ADF-1 {
+            funcs.push(
+                Function {
+                    fid:  3u8,
+                    name: &format!("ADF{}", f_i),
+                    arity: ADF_ARITY,
+                    code: function_adf,
+                    opt_adf_num: Some(f_i),
+                },
+            );
+        }
+
+        branches.push(funcs);
+    }
+    branches
 }
 
-#[cfg(gpopt_adf="yes")]
-pub static FUNCTIONS_FUNC_DEF_BRANCH_ADF1: [Function; 5] = [
-    Function {
-        fid:  0u8,
-        name: "AND",
-        arity: 2,
-        code: function_and,
-        opt_adf_num: None,
-    },
-    Function {
-        fid:  1u8,
-        name: "OR",
-        arity: 2,
-        code: function_or,
-        opt_adf_num: None,
-    },
-    Function {
-        fid:  2u8,
-        name: "NAND",
-        arity: 2,
-        code: function_nand,
-        opt_adf_num: None,
-    },
-    Function {
-        fid:  3u8,
-        name: "NOR",
-        arity: 2,
-        code: function_nor,
-        opt_adf_num: None,
-    },
-    Function {
-        fid:  4u8,
-        name: "ADF0",
-        arity: EVEN_PARITY_K_VALUE as u8 - 1u8,
-        code: function_adf,
-        opt_adf_num: Some(0),   // ideintifies ADF0
-    },
-];
-
-// TERMINAL SPECIFICS FUNCTION DEFINING BRANCH - func_def_branch
-// Same for ADF0 and ADF1
-#[cfg(gpopt_adf="yes")]
-pub static TERMINALS_FUNC_DEF_BRANCH_ADF_0_1: [Terminal; 4] = [
-    Terminal {
-        tid:  0u8,
-        name: "ARG0",
-        code: terminal_adf_arg0,
-    },
-    Terminal {
-        tid:  1u8,
-        name: "ARG1",
-        code: terminal_adf_arg1,
-    },
-    Terminal {
-        tid:  2u8,
-        name: "ARG2",
-        code: terminal_adf_arg2,
-    },
-    Terminal {
-        tid:  3u8,
-        name: "ARG3",
-        code: terminal_adf_arg3,
-    },
-];
+pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
+    let branches: Vec<Vec<Terminal>> = Vec::new();
+    for b_i in 0..NUM_ADF {
+        let terms = Vec::new();
+        for t_i in 0..ADF_ARITY {
+            terms.push(
+                Terminal {
+                    tid:  t_i as u8,
+                    name: &format!("ARG{}", t_i),
+                    code: terminal_adf_arg,
+                    index: t_i
+                },
+            );
+        }
+        branches.push(terms);
+    }
+    branches
+}
 
 pub const RUN_CONTROL_NUM_FITNESS_CASES: usize =
     2usize.pow(EVEN_PARITY_K_VALUE as u32);

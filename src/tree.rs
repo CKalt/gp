@@ -18,7 +18,7 @@ use gp::parsers::ParsedSNode::*;
 use Node::*;
 
 type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
-pub type TermNodeCode = fn (rc: &RunContext) -> GpType;
+pub type TermNodeCode = fn (rc: &RunContext, &Terminal) -> GpType;
 
 pub struct Winner {
     pub win: i32,   // Win number (among sequence of runs)
@@ -273,6 +273,7 @@ pub struct Terminal {
     pub tid:    u8,
     pub name:   & 'static str,
     pub code:   TermNodeCode,
+    pub index:  usize,
 }
 impl Terminal {
     /// (Formerly called getRndTNode() in gp.c)
@@ -867,7 +868,7 @@ impl Tree {
     pub fn exec_node(rc: &mut RunContext, node: &Node) -> GpType {
         match node {
             TNode(t) => {
-                (t.code)(rc)
+                (t.code)(rc, &t)
             }
 
             FNode(f) => {
