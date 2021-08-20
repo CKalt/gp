@@ -252,7 +252,7 @@ impl FitnessCase {
 pub struct RunContext<'a> {
     pub fitness_cases: Vec::<FitnessCase>,
     pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
-    pub opt_adf_args: Option<&'a Vec<GpType>>,
+    pub opt_adf_args: Option<Vec<GpType>>,
     pub cur_fc: usize,
     pub hits: GpHits,
     pub error: GpRaw,
@@ -325,16 +325,17 @@ impl<'a> RunContext<'_> {
         match self.opt_adf_args {
             None => {
                 let passed_args = args.clone();
-                self.opt_adf_args = Some(&passed_args);
+                self.opt_adf_args = Some(passed_args);
                 let result = Tree::exec_node(self, &func_def_branch.root);
                 self.opt_adf_args = None;
                 result
             },
             Some(ref orig_args) => {
+                let save_args = orig_args.clone();
                 let passed_args = args.clone();
-                self.opt_adf_args = Some(&passed_args);
+                self.opt_adf_args = Some(passed_args);
                 let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(orig_args);
+                self.opt_adf_args = Some(save_args);
                 result
             }
         }
