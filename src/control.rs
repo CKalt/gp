@@ -7,7 +7,7 @@ use crate::tree::*;
 pub type TreeDepth = u16;
 
 #[allow(non_snake_case)]
-pub struct Control<'a> {
+pub struct Control {
     pub funcs_rpb:              Box<Vec<Vec<Function>>>,
     pub terms_rpb:              Box<Vec<Vec<Terminal>>>,
     pub funcs_fdb:              Box<Vec<Vec<Function>>>,
@@ -74,7 +74,7 @@ lazy_static! {
     pub static ref EVAL_COUNT: Mutex<EvalCount> = Mutex::new(EvalCount::new());
     pub static ref RUN_LOG_FNAME: String = run_log_fname();
     #[warn(non_snake_case)]
-    pub static ref CONTROL: Control<'static> = {
+    pub static ref CONTROL: Control = {
         Control {
             funcs_rpb:          Box::new(get_functions_for_result_branches()),
             terms_rpb:          Box::new(get_terminals_for_result_branches()),

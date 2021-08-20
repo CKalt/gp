@@ -74,7 +74,7 @@ fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 
 #[cfg(gpopt_adf="yes")]
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let args: Vec<GpTyp> = Vec::new();
+    let args: Vec<GpType> = Vec::new();
     for b_i in 0..ADF_ARITY {
         args.push(Tree::exec_node(rc, &func.branch[b_i]));
     }
@@ -82,7 +82,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let adf_num =
         func.fnc.opt_adf_num.expect("branch not assigned for exec_adf0");
 
-    rc.exec_adf(adf_num, &args);
+    rc.exec_adf(adf_num, &args)
 }
 
 fn terminal_data(rc: &RunContext, term: &Terminal) -> GpType {
@@ -161,8 +161,8 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
 }
 
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
-    let branches = Vec<Vec<Function>>: = Vec::new();
-    for b_i in NUM_ADF {
+    let branches: Vec<Vec<Function>> = Vec::new();
+    for b_i in 0..NUM_ADF {
         let funcs = vec![
             Function {
                 fid:  0u8,
@@ -193,12 +193,12 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
                 opt_adf_num: None,
             },
         ];
-        for f_i in 0..NUM_ADF-1 {
+        for f_i in 0..b_i-1 {
             funcs.push(
                 Function {
-                    fid:  3u8,
+                    fid:  4u8 + f_i as u8,
                     name: &format!("ADF{}", f_i),
-                    arity: ADF_ARITY,
+                    arity: ADF_ARITY as u8,
                     code: function_adf,
                     opt_adf_num: Some(f_i),
                 },
@@ -331,9 +331,9 @@ impl<'a> RunContext<'_> {
             },
             Some(ref orig_args) => {
                 let save_args = orig_args.clone();
-                self.opt_adf_args = Some(args.clone());
+                self.opt_adf_args = Some(&args.clone());
                 let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(save_args.clone());
+                self.opt_adf_args = Some(&save_args.clone());
                 result
             }
         }
