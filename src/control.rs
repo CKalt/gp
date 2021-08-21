@@ -105,10 +105,12 @@ lazy_static! {
 pub fn run_log_fname() -> String {
     #[cfg(gpopt_adf="yes")]
     let val = format!(
-            "gp_run_even_{}_parity_adf.log", EVEN_PARITY_K_VALUE);
+            "gp_run_even_{}_parity_{}_adf_{}_arity.log", EVEN_PARITY_K_VALUE,
+            NUM_ADF, ADF_ARITY);
     #[cfg(gpopt_adf="no")]
     let val = format!(
-            "gp_run_even_{}_parity_no_adf.log", EVEN_PARITY_K_VALUE);
+            "gp_run_even_{}_parity_no_adf_{}_arity.log", 
+            EVEN_PARITY_K_VALUE, ADF_ARITY);
 
     val
 }

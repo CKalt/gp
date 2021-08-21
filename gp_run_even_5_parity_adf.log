@@ -1,1 +1,4 @@
 win=5, run=10, gen=23, effort=233235235
+win=1, run=1, gen=12, effort=50704, S=64
+win=1, run=1, gen=15, effort=63536, S=126
+win=1, run=1, gen=15, effort=60604, S=108

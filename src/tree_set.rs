@@ -263,7 +263,7 @@ impl TreeSet {
         for (i,t) in self.tree_vec.iter_mut().enumerate() {
             t.fitness.n = t.fitness.a() / sum_a;
             println!("TP1:i={}, tcid={}, hits={}, t.fitness.n={:10.9} a={:10.9} sum_a={:10.9}",
-                i, t.tcid, t.hits, t.fitness.n(), t.fitness.a(), sum_a);
+                i, t.tcid, t.fitness.hits, t.fitness.n(), t.fitness.a(), sum_a);
         }
         #[cfg(gpopt_trace="off")]
         for t in self.tree_vec.iter_mut() {

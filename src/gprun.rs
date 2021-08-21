@@ -193,7 +193,7 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
                 opt_adf_num: None,
             },
         ];
-        for f_i in 0..b_i-1 {
+        for f_i in 0..b_i {
             funcs.push(
                 Function {
                     fid:  4u8 + f_i as u8,

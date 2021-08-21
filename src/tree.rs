@@ -550,7 +550,8 @@ impl Tree {
     pub fn print(&self) {
         #[cfg(gpopt_trace="on")]
         {
-            let count = get_log_count();
+        //    let count = get_log_count();
+            let count = 0;
 
             println!("-log={:<10}------tree ({:?}/{})----------------",
                 count, self.tfid, self.tcid);
