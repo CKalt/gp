@@ -3,7 +3,7 @@
 # gpopt_trace := on | off
 # gpopt_adf := yes | no
 # gpopt_num_adf := 1 | 2 | 3 | 4 | 5
-# gpopt_adf_parity := 2 | 3 | 4
+# gpopt_adf_arity := 2 | 3 | 4
 # gpopt_mult_threaded := yes | no
 [build]
 rustflags = """
@@ -12,6 +12,6 @@ rustflags = """
     --cfg gpopt_trace="off"
     --cfg gpopt_mult_threaded="yes"
     --cfg gpopt_adf="yes"
-    --cfg gpopt_num_adf="2"
+    --cfg gpopt_num_adf="5"
     --cfg gpopt_adf_arity="3"
 """

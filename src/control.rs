@@ -89,7 +89,7 @@ lazy_static! {
             Pip:                0.90,       // Probability of cross over internal point
             GRc:                0.16,
             R:                  0,
-            W:                  1,
+            W:                  10,
             no_fitness_cases:   0,
             show_all_trees:     false,
             show_all_tree_results: false,
