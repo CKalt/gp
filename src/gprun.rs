@@ -361,6 +361,16 @@ pub fn init_run() { }
 pub mod tests {
     #[test]
     #[cfg(gpopt_adf="yes")]
+    /// It is designed to accept a tree that has been already evolved
+    /// and declared a winner. It will parse the tree and run
+    /// the tree for all fitness cases to confirm that it is indeed 
+    /// a valid tree that wins.
+    /// 
+    /// Success confirms that the parser works and has the ability
+    /// to run the tree independently against the complete set of
+    /// fitness cases.
+    /// It also confirms the fitness measure correctly establishes
+    /// tree is a Winner.
     pub fn test_eval_one_tree() {
         use crate::tree::*;
         // first build tree:
@@ -370,12 +380,59 @@ pub mod tests {
         assert_eq!(tree.eval_one_tree(), true);
     }
 
-    fn get_5_n_test() -> (&'static str, Vec<&'static str>) {
+    fn get_k_5_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
+(ADF0
+  (ADF0
+    (AND D3
+      (OR D0
+        (OR
+          (AND D4 D1)
+          (OR D3 D4))))
+    (ADF0
+      (OR D0 D0)
+      (ADF1 D2 D1)))
+  (ADF1
+    (ADF0
+      (NAND D1 D1)
+      (ADF1 D4 D1))
+    (OR
+      (NOR D2 D1)
+      (NAND D3 D4)))
+)
 "#;
         let adf0_str = r#"
+(AND
+  (NAND
+    (NAND
+      (AND ARG0 ARG1)
+      (AND ARG0 ARG1))
+    (OR
+      (AND ARG1 ARG1)
+      (OR ARG0 ARG0)))
+  (NAND
+    (AND
+      (OR ARG0 ARG0)
+      (NOR ARG0 ARG1))
+    (NOR
+      (AND ARG0 ARG1)
+      (AND ARG0 ARG0)))
+)
 "#;
         let adf1_str = r#"
+(ADF0
+  (ADF0
+    (NAND
+      (ADF0 ARG1 ARG0)
+      (ADF0 ARG1 ARG0))
+    (AND
+      (NOR ARG1 ARG1)
+      (ADF0 ARG0 ARG1)))
+  (OR ARG1
+    (OR
+      (NAND ARG0 ARG0)
+      (NOR ARG0 ARG0)))
+)
 "#;
         (rb_str, vec![adf0_str, adf1_str])
     }

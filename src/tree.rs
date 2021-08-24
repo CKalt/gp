@@ -371,7 +371,7 @@ pub enum GenerateMethod {
     Grow
 }
 
-type TreeNodeIndex = usize;
+pub type TreeNodeIndex = usize;
 
 pub enum BranchType {
     ResultProducing,
@@ -448,6 +448,21 @@ impl Tree {
             opt_func_def_branches,
             is_winner: false,
         }
+    }
+    /// mainly used for testing
+    pub fn new_empty()  -> Tree {
+        let terms = &CONTROL.terms_rpb[0];
+        let node = Node::TNode(&terms[0]);
+        let mut tree = Tree {
+            tfid: None,
+            tcid: 0,
+            fitness: Fitness::new(),
+            result_branch: TreeBranch::new(node),
+            opt_func_def_branches: None,
+            is_winner: true,
+        };
+        tree.count_nodes();
+        tree
     }
     pub fn clone(&self) -> Tree {
         match &self.opt_func_def_branches {
@@ -896,8 +911,8 @@ impl Tree {
             };
 
         let result_branch_root = 
-            Node::deep_new_from_parse_tree(&rb_node, CONTROL.funcs_rpb[0],
-                CONTROL.terms_rpb[0]);
+            Node::deep_new_from_parse_tree(&rb_node, &CONTROL.funcs_rpb[0],
+                &CONTROL.terms_rpb[0]);
 
         // There may or may not be a func def branch0
         let opt_func_def_branches = 
@@ -913,8 +928,8 @@ impl Tree {
                     let tb = TreeBranch::new(
                                 Node::deep_new_from_parse_tree(
                                     &fd_node,
-                                    CONTROL.funcs_fdb[b_i],
-                                    CONTROL.terms_fdb[b_i]));
+                                    &CONTROL.funcs_fdb[b_i],
+                                    &CONTROL.terms_fdb[b_i]));
                     branches.push(tb);
                 }
                 Some(branches)

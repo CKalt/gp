@@ -41,12 +41,16 @@ fn test_tee_to_run_log() {
             panic!("failed remove file: {}", e);
         }
     }
-    let win: i32 = 5;
-    let run: i32 = 10;
-    let gen: u16 = 23;
-    let e: u64 = 233235235;
+        
+    let winner = Winner{
+        win: 5,
+        tree: Tree::new_empty(),
+        run: 10,
+        gen: 23,
+        e: 233235235,
+    };
 
-    tee_to_run_log(win, run, gen, e);
+    tee_to_run_log(&winner);
 
     // Read
     let mut file = BufReader::new(File::open(CONTROL.run_log_file).unwrap());
@@ -55,10 +59,13 @@ fn test_tee_to_run_log() {
     let mut input = String::new();
     file.read_line(&mut input).unwrap();
     input.truncate(input.len() - 1);            // remove new line
-    let parsed = scanf!(input, "win={}, run={}, gen={}, effort={}",
-        i32, i32, u16, u64);
+    let parsed = scanf!(input, "win={}, run={}, gen={}, effort={}, S={}",
+        i32, i32, u16, u64, TreeNodeIndex);
 
-    assert_eq!(parsed, Some((win, run, gen, e)));
+    println!("******************************parsed={:?}", parsed);
+
+    assert_eq!(parsed, Some((winner.win, winner.run, winner.gen, winner.e,
+                        winner.structural_complexity())));
 }
 
 fn tee_to_run_log(winner: &Winner) {
