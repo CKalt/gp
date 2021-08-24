@@ -214,7 +214,7 @@ fn main() {
             rc.print_run_illustration(
                 &format!("Have Winner #{} - Run# {} Gen# {}",
                     win_number, run_number, winner.gen));
-            winner.tree.print_exec_one();
+            winner.tree.eval_one_tree();
             assert!(CONTROL.W >= win_number);
             if CONTROL.W > 0 && CONTROL.W == win_number {
                 println!("Win has reached max of {} runs ending.", CONTROL.W);

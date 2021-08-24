@@ -361,61 +361,16 @@ pub fn init_run() { }
 pub mod tests {
     #[test]
     #[cfg(gpopt_adf="yes")]
-    pub fn test_print_exec_one() {
+    pub fn test_eval_one_tree() {
         use crate::tree::*;
         // first build tree:
-        let (rb_str, fd_vec) = get_k_n_test();
+        let (rb_str, fd_vec) = get_k_5_test();
         let mut tree = Tree::parse(rb_str, fd_vec);
 
-        assert_eq!(tree.print_exec_one(), true);
+        assert_eq!(tree.eval_one_tree(), true);
     }
 
-    #[cfg(gpopt_even_parity_k="7")]
-    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
-        let rb_str = r#"
-"#;
-        let adf0_str = r#"
-"#;
-        let adf1_str = r#"
-"#;
-        (rb_str, vec![adf0_str, adf1_str])
-    }
-
-    #[cfg(gpopt_even_parity_k="8")]
-    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
-        let rb_str = r#"
-"#;
-        let adf0_str = r#"
-"#;
-        let adf1_str = r#"
-"#;
-        (rb_str, vec![adf0_str, adf1_str])
-    }
-
-    #[cfg(gpopt_even_parity_k="9")]
-    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
-        let rb_str = r#"
-"#;
-        let adf0_str = r#"
-"#;
-        let adf1_str = r#"
-"#;
-        (rb_str, vec![adf0_str, adf1_str])
-    }
-
-    #[cfg(gpopt_even_parity_k="10")]
-    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
-        let rb_str = r#"
-"#;
-        let adf0_str = r#"
-"#;
-        let adf1_str = r#"
-"#;
-        (rb_str, vec![adf0_str, adf1_str])
-    }
-
-    #[cfg(gpopt_even_parity_k="11")]
-    fn get_k_n_test() -> (&'static str, Vec<&'static str>) {
+    fn get_5_n_test() -> (&'static str, Vec<&'static str>) {
         let rb_str = r#"
 "#;
         let adf0_str = r#"

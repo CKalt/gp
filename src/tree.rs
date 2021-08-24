@@ -793,8 +793,9 @@ impl Tree {
         !self.tree_depth_gt(CONTROL.Dc)
     }
 
-    /// execute a single tree and print results.
-    pub fn print_exec_one(&mut self) -> bool {
+    /// execute a single tree for each fitness case, compute fitness and print
+    /// results.
+    pub fn eval_one_tree(&mut self) -> bool {
         self.print();
         let mut rc = RunContext::new();
         rc.prepare_run();
