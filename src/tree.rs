@@ -449,6 +449,7 @@ impl Tree {
             is_winner: false,
         }
     }
+    #[cfg(test)]
     /// mainly used for testing
     pub fn new_empty()  -> Tree {
         let terms = &CONTROL.terms_rpb[0];
@@ -808,8 +809,8 @@ impl Tree {
         !self.tree_depth_gt(CONTROL.Dc)
     }
 
-    /// execute a single tree for each fitness case, compute fitness and print
-    /// results.
+    /// Execute a single tree for each fitness case, compute fitness and print
+    /// results. Return true when tree is a winner, otherwise false.
     pub fn eval_one_tree(&mut self) -> bool {
         self.print();
         let mut rc = RunContext::new();
