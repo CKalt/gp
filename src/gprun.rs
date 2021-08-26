@@ -11,6 +11,11 @@ use crate::fitness::GpHits;
 use crate::fitness::GpRaw;
 
 pub type GpType = bool;
+pub const NUM_ADF: u8 = 5;
+pub const ADF_ARITY: u8 = 0;
+
+pub const RUN_CONTROL_NUM_FITNESS_CASES: usize =
+    2usize.pow(EVEN_PARITY_K_VALUE as u32);
 
 //fn fix_nan(num: GpType) -> GpType {
 //    if num.is_nan() {
@@ -80,30 +85,37 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     let mut funcs = vec![
         Function {
             fid:  0u8,
-            name: "AND".to_string(),
-            arity: 2,
-            code: function_and,
+            name: "IF".to_string(),
+            arity: 3,
+            code: function_if,
             opt_adf_num: None,
         },
         Function {
             fid:  1u8,
-            name: "OR".to_string(),
+            name: "AND".to_string(),
             arity: 2,
             code: function_or,
             opt_adf_num: None,
         },
         Function {
             fid:  2u8,
-            name: "NAND".to_string(),
+            name: "OR".to_string(),
             arity: 2,
-            code: function_nand,
+            code: function_or,
             opt_adf_num: None,
         },
         Function {
             fid:  3u8,
-            name: "NOR".to_string(),
-            arity: 2,
-            code: function_nor,
+            name: "NOT".to_string(),
+            arity: 1,
+            code: function_not,
+            opt_adf_num: None,
+        },
+        Function {
+            fid:  4u8,
+            name: "HOMING".to_string(),
+            arity: 1,
+            code: function_homing,
             opt_adf_num: None,
         },
     ];
@@ -209,28 +221,662 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
     branches
 }
 
-pub const RUN_CONTROL_NUM_FITNESS_CASES: usize =
-    2usize.pow(EVEN_PARITY_K_VALUE as u32);
-
 // FitnessCase
-pub struct FitnessCase {
-    input_bits: [bool; EVEN_PARITY_K_VALUE],
-    output_bit: bool,
+type FitnessCase = [[bool; 4]; 6];
+struct FitnessCases {
+    fc: [FitnessCase; 78],
 }
-impl FitnessCase {
-    fn new() -> FitnessCase {
-        FitnessCase {
-            input_bits: [false; EVEN_PARITY_K_VALUE],
-            output_bit: false,
-        }
-    }
-}
+const FITNESS_CASES: FitnessCases = FitnessCases {
+    fc: [
+            [ // 00
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 01
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 02
+                    [ false, false, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 03
+                    [ false, true, false, false],
+                    [ false, false, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 04
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, false, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 05
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, false, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 06
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, false, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 07
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, true],
+                    [ false, false, false, false],
+            ],
+            [ // 08
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, false],
+                    [ false, false, false, false],
+            ],
+            [ // 09
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, true, false, false],
+            ],
+            [ // 10
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, true, false],
+            ],
+            [ // 11
+                    [ false, true, true, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 12
+                    [ false, true, false, false],
+                    [ false, true, true, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 13
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 14
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 15
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, true],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 16
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ true, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 17
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ true, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 18
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ true, false, false, false],
+            ],
+            [ // 19
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, true],
+            ],
+            [ // 20
+                    [ true, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 21
+                    [ false, true, false, false],
+                    [ true, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 22
+                    [ false, true, false, false],
+                    [ false, true, false, false],
+                    [ true, true, false, false],
+                    [ false, true, false, false],
+                    [ false, true, true, true],
+                    [ false, false, false, false],
+            ],
+            [ // 23
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 24
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 25
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 26
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 27
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 28
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 29
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 30
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 31
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 32
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 33
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 34
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 35
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 36
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 37
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 38
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 39
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 40
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 41
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 42
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 43
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 44
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 45
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 46
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 47
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 48
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 49
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 50
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 51
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 52
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 53
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 54
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 55
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 56
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 57
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 58
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 59
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 60
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 61
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 62
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 63
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 64
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 65
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 66
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 67
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 68
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 69
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 70
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 71
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 72
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 73
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 74
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 75
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 76
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 77
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+            [ // 78
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+                    [ false, false, false, false],
+            ],
+    ],
+};
+
+
+
+
+
+
+
+
+
+
 
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
 /// where it can then access it's fitness case data and currency values.
 pub struct RunContext<'a> {
-    pub fitness_cases: Vec::<FitnessCase>,
     pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
     pub opt_adf_args: Option<Vec<GpType>>,
     pub cur_fc: usize,
@@ -250,20 +896,6 @@ impl<'a> RunContext<'_> {
             error: 0
         };
 
-        for i in 0..RUN_CONTROL_NUM_FITNESS_CASES {
-            let mut fc = FitnessCase::new();
-            let mut sum_of_bits = 0u16;
-            for bit in 0..EVEN_PARITY_K_VALUE {
-                let bit_value: bool = (i & 2u8.pow(bit as u32) as usize) != 0;
-                fc.input_bits[bit] = bit_value;
-                if bit_value {
-                    sum_of_bits += 1;
-                }
-            }
-            fc.output_bit = ( sum_of_bits % 2 ) == 0;
-            rc.fitness_cases.push(fc);
-        }
-
         rc
     }
     pub fn get_cur_fc(&self) -> &FitnessCase {
@@ -272,7 +904,7 @@ impl<'a> RunContext<'_> {
     pub fn print_run_illustration(&self, _label: &str) { }
     pub fn prepare_run(&mut self) { }
     pub fn get_hits_label() -> &'static str {
-        "num cases w/error lt 0.01"
+        "num hits"
     }
     /// computes fitness returns true if winner
     pub fn compute_fitness(&self) -> (Fitness, bool) {
@@ -294,7 +926,7 @@ impl<'a> RunContext<'_> {
     }
 
     /// exec_adf: executes and automatically defined function specified
-    /// by the func_def_branch arg.
+    /// by the adf_num arg
     #[cfg(gpopt_adf="yes")]
     pub fn exec_adf(&mut self, adf_num: usize, args: &Vec<GpType>)
             -> GpType {
