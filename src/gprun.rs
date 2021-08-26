@@ -20,56 +20,36 @@ pub type GpType = bool;
 //    }
 //}
 
-pub const EVEN_PARITY_K_VALUE: usize = 5;
-
-#[cfg(gpopt_adf="no")]
-pub const NUM_ADF: usize = 0;
-
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_num_adf="1")]
-pub const NUM_ADF: usize = 1;
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_num_adf="2")]
-pub const NUM_ADF: usize = 2;
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_num_adf="3")]
-pub const NUM_ADF: usize = 3;
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_num_adf="4")]
-pub const NUM_ADF: usize = 4;
-#[cfg(gpopt_adf="yes")]
-#[cfg(gpopt_num_adf="5")]
-pub const NUM_ADF: usize = 5;
-
-#[cfg(gpopt_adf_arity="2")]
-pub const ADF_ARITY: usize = 2;
-#[cfg(gpopt_adf_arity="3")]
-pub const ADF_ARITY: usize = 3;
-#[cfg(gpopt_adf_arity="4")]
-pub const ADF_ARITY: usize = 4;
+fn function_if(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    if Tree::exec_node(rc, &func.branch[0]) {
+        Tree::exec_node(rc, &func.branch[1])
+    } else {
+        Tree::exec_node(rc, &func.branch[2])
+    }
+}
 
 fn function_and(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = Tree::exec_node(rc, &func.branch[0]);
-    let val2 = Tree::exec_node(rc, &func.branch[1]);
-    val1 & val2
+    if Tree::exec_node(rc, &func.branch[0]) {
+        Tree::exec_node(rc, &func.branch[1]) 
+    } else {
+        false
+    }
 }
 
 fn function_or(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = Tree::exec_node(rc, &func.branch[0]);
-    let val2 = Tree::exec_node(rc, &func.branch[1]);
-    val1 | val2
+    if Tree::exec_node(rc, &func.branch[0]) {
+        true
+    } else {
+        Tree::exec_node(rc, &func.branch[1]) 
+    }
 }
 
-fn function_nand(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = Tree::exec_node(rc, &func.branch[0]);
-    let val2 = Tree::exec_node(rc, &func.branch[1]);
-    !(val1 & val2)
+fn function_not(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    !Tree::exec_node(rc, &func.branch[0])
 }
 
-fn function_nor(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    let val1 = Tree::exec_node(rc, &func.branch[0]);
-    let val2 = Tree::exec_node(rc, &func.branch[1]);
-    !(val1 | val2)
+fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    Tree::exec_node(rc, &func.branch[0])
 }
 
 #[cfg(gpopt_adf="yes")]
@@ -254,6 +234,7 @@ pub struct RunContext<'a> {
     pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
     pub opt_adf_args: Option<Vec<GpType>>,
     pub cur_fc: usize,
+    pub cur_pos: (u8, u8), // x,y position on 4x6 character grid
     pub hits: GpHits,
     pub error: GpRaw,
 }
@@ -261,6 +242,7 @@ impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
         let mut rc = RunContext {
             cur_fc: 0,
+            cur_pos: (0, 0),
             opt_func_def_branches: None,
             opt_adf_args: None,
             fitness_cases: Vec::new(),
