@@ -14,9 +14,6 @@ pub type GpType = bool;
 pub const NUM_ADF: u8 = 5;
 pub const ADF_ARITY: u8 = 0;
 
-pub const RUN_CONTROL_NUM_FITNESS_CASES: usize =
-    2usize.pow(EVEN_PARITY_K_VALUE as u32);
-
 //fn fix_nan(num: GpType) -> GpType {
 //    if num.is_nan() {
 //        0.0
@@ -24,38 +21,6 @@ pub const RUN_CONTROL_NUM_FITNESS_CASES: usize =
 //        num
 //    }
 //}
-
-fn function_if(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    if Tree::exec_node(rc, &func.branch[0]) {
-        Tree::exec_node(rc, &func.branch[1])
-    } else {
-        Tree::exec_node(rc, &func.branch[2])
-    }
-}
-
-fn function_and(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    if Tree::exec_node(rc, &func.branch[0]) {
-        Tree::exec_node(rc, &func.branch[1]) 
-    } else {
-        false
-    }
-}
-
-fn function_or(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    if Tree::exec_node(rc, &func.branch[0]) {
-        true
-    } else {
-        Tree::exec_node(rc, &func.branch[1]) 
-    }
-}
-
-fn function_not(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    !Tree::exec_node(rc, &func.branch[0])
-}
-
-fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    Tree::exec_node(rc, &func.branch[0])
-}
 
 #[cfg(gpopt_adf="yes")]
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
@@ -70,10 +35,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     rc.exec_adf(adf_num, &args)
 }
 
-fn terminal_data(rc: &RunContext, term: &Terminal) -> GpType {
-    rc.get_cur_fc().input_bits[term.index]
-}
-
+#[cfg(gpopt_adf="yes")]
 fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     match rc.opt_adf_args {
         None => panic!("terminal arg access with empty args list"),
@@ -82,7 +44,7 @@ fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
 }
 
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
-    let mut funcs = vec![
+    let funcs = vec![
         Function {
             fid:  0u8,
             name: "IF".to_string(),
@@ -119,38 +81,94 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             opt_adf_num: None,
         },
     ];
-
-    for a_i in 0..NUM_ADF {
-        funcs.push(
-            Function {
-                fid:  a_i as u8 + 4u8,
-                name: format!("ADF{}", a_i),
-                arity: ADF_ARITY as u8,
-                code: function_adf,
-                opt_adf_num: Some(a_i),   // ideintifies ADFn
-            }
-        );
-    }
-    vec![
-        // FUNCTIONS FOR RESULT BRANCH 0 (only one result branch)
-        funcs
-    ]
+    vec![funcs]
 }
+
+fn function_if(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    if Tree::exec_node(rc, &func.branch[0]) {
+        Tree::exec_node(rc, &func.branch[1])
+    } else {
+        Tree::exec_node(rc, &func.branch[2])
+    }
+}
+
+fn function_and(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    if Tree::exec_node(rc, &func.branch[0]) {
+        Tree::exec_node(rc, &func.branch[1]) 
+    } else {
+        false
+    }
+}
+
+fn function_or(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    if Tree::exec_node(rc, &func.branch[0]) {
+        true
+    } else {
+        Tree::exec_node(rc, &func.branch[1]) 
+    }
+}
+
+fn function_not(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    !Tree::exec_node(rc, &func.branch[0])
+}
+
+fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
+    Tree::exec_node(rc, &func.branch[0])
+}
+
 
 pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
-    let mut terms: Vec<Terminal> = Vec::new();
-    for tid in 0..EVEN_PARITY_K_VALUE {
-        terms.push(
-            Terminal {
-                tid:  tid as u8,
-                name: format!("D{}", tid),
-                code: terminal_data,
-                index: tid,
-            },
-        );
-    }
+    // Terminal Set: I,L, NIL, X, N, NE, E, SE, S, SW, W, NW, (GO-N),
+    //    (GO-NE), (GO-E), (GO-SE), (GO-S), (GO-SW), (GO-W), (G-W),
+    //    (GO-NW)
+    let terms = vec![
+        Terminal::new(0, "I", terminal_i),
+        Terminal::new(1, "L", terminal_l),
+        Terminal::new(2, "NIL", terminal_nil),
+        Terminal::new(3, "X", terminal_x),
+        Terminal::new(4, "N", terminal_n), 
+        Terminal::new(5, "NE", terminal_ne), 
+        Terminal::new(6, "E", terminal_e),
+        Terminal::new(7, "SE", terminal_se),
+        Terminal::new(8, "S", terminal_s),
+        Terminal::new(9, "SW", terminal_sw),
+        Terminal::new(10, "W", terminal_w),
+        Terminal::new(11, "NW", terminal_nw),
+        Terminal::new(12, "(GO-N)", terminal_go_n),
+        Terminal::new(13, "(GO-NE)", terminal_go_ne),
+        Terminal::new(14, "(GO-E)", terminal_go_e),
+        Terminal::new(15, "(GO-SE)", terminal_go_se),
+        Terminal::new(16, "(GO-S)", terminal_go_s),
+        Terminal::new(17, "(GO-SW)", terminal_go_sw),
+        Terminal::new(18, "(GO-W)", terminal_go_w),
+        Terminal::new(19, "(G-W)", terminal_w),
+        Terminal::new(20, "(GO-NW)", terminal_nw),
+    ];
     vec![terms]
 }
+
+
+fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.run_result = LetterIdentified('I');
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
 
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     let mut branches: Vec<Vec<Function>> = Vec::new();
@@ -855,6 +873,11 @@ const FITNESS_CASES: FitnessCases = FitnessCases {
     ],
 };
 
+enum IndividualRunResult {
+    Terminated,
+    LetterIdentified(char),
+};
+
 /// RunContext provides runtime control over a running individual. Each 
 /// node and terminal exec call recieves a reference to its RunContext
 /// where it can then access it's fitness case data and currency values.
@@ -865,6 +888,7 @@ pub struct RunContext<'a> {
     pub cur_pos: (u8, u8), // x,y position on 4x6 character grid
     pub hits: GpHits,
     pub error: GpRaw,
+    pub run_result: Option<IndividualRunResult>,   // Program is done when not None
 }
 impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
@@ -875,7 +899,8 @@ impl<'a> RunContext<'_> {
             opt_adf_args: None,
             fitness_cases: Vec::new(),
             hits: 0,
-            error: 0
+            error: 0,
+            run_result: None,
         };
 
         rc

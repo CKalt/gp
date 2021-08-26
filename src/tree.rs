@@ -276,6 +276,14 @@ pub struct Terminal {
     pub index:  usize,
 }
 impl Terminal {
+    fn new(tid: u8, name: &str, code: TermNodeCode) -> Terminal {
+        Terminal {
+            tid,
+            name: name.to_string(),
+            code,
+            index: 0,
+        }
+    }
     /// (Formerly called getRndTNode() in gp.c)
     pub fn get_rnd_ref(rng: &mut GpRng, terms: &'static [Terminal]) -> &'static Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
