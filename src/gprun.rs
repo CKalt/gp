@@ -14,6 +14,108 @@ pub type GpType = bool;
 pub const NUM_ADF: u8 = 5;
 pub const ADF_ARITY: u8 = 0;
 
+/// RunContext provides runtime control over a running individual. Each 
+/// node and terminal exec call recieves a reference to its RunContext
+/// where it can then access it's fitness case data and currency values.
+/// Since there is a one to one correspondence between threads and 
+/// running individual there will be one RunContext for each thread
+/// running for an Individual. 
+pub struct RunContext<'a> {
+    pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
+    pub opt_adf_args: Option<Vec<GpType>>,
+    pub cur_fc: usize,     // Current fitness case being processed.
+    pub cur_pos: (i8, i8), // x,y position on 4x6 character grid
+    pub hits: GpHits,
+    pub error: GpRaw,
+    pub opt_run_result: Option<IndividualRunResult>,   // Program is done when not None
+}
+impl<'a> RunContext<'_> {
+    pub fn new() -> RunContext<'static> {
+        let mut rc = RunContext {
+            cur_fc: 0,
+            cur_pos: (0, 0),
+            opt_func_def_branches: None,
+            opt_adf_args: None,
+            fitness_cases: Vec::new(),
+            hits: 0,
+            error: 0,
+            opt_run_result: None,
+        };
+
+        rc
+    }
+    pub fn get_cur_fc(&self) -> &FitnessCase {
+        &self.fitness_cases[self.cur_fc]
+    }
+    pub fn print_run_illustration(&self, _label: &str) { }
+    pub fn prepare_run(&mut self) { }
+    pub fn get_hits_label() -> &'static str {
+        "num hits"
+    }
+    /// computes fitness returns true if winner
+    pub fn compute_fitness(&self) -> (Fitness, bool) {
+        let mut f = Fitness::new();
+
+        f.r = self.error;
+        f.hits = self.hits;
+
+        f.n = -1.0;
+        f.nfr = -1.0;
+        f.raw = self.hits as GpFitness;
+        f.s = f.r;
+        f.a = 1.0 / (1.0 + f.s as GpFloat);
+
+        // if each fitness case was a hit then we have a winner.
+        let max_possible_hits = self.fitness_cases.len() as GpHits;
+        let is_winner = self.hits == max_possible_hits;
+        (f, is_winner)
+    }
+
+    /// exec_adf: executes and automatically defined function specified
+    /// by the adf_num arg
+    #[cfg(gpopt_adf="yes")]
+    pub fn exec_adf(&mut self, adf_num: usize, args: &Vec<GpType>)
+            -> GpType {
+        let func_def_branch = 
+            self
+                .opt_func_def_branches
+                .as_ref()
+                .expect("exec_adf with None set for branches.")[adf_num];
+
+        match self.opt_adf_args {
+            None => {
+                let passed_args = args.clone();
+                self.opt_adf_args = Some(passed_args);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.opt_adf_args = None;
+                result
+            },
+            Some(ref orig_args) => {
+                let save_args = orig_args.clone();
+                let passed_args = args.clone();
+                self.opt_adf_args = Some(passed_args);
+                let result = Tree::exec_node(self, &func_def_branch.root);
+                self.opt_adf_args = Some(save_args);
+                result
+            }
+        }
+    }
+
+    // compute error for a single fitness case
+    pub fn compute_error(&self, result: GpType) -> GpRaw {
+        // since GpType is bool
+        // only two possible values 0 or 1
+        // 0 means output matched the target, 1 means it missed.
+        let correct_result = self.fitness_cases[self.cur_fc].output_bit;
+        if correct_result == result {
+            0
+        } else {
+            1
+        }
+    }
+}
+
+
 //fn fix_nan(num: GpType) -> GpType {
 //    if num.is_nan() {
 //        0.0
@@ -113,7 +215,10 @@ fn function_not(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 }
 
 fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
-    Tree::exec_node(rc, &func.branch[0])
+    let save_pos = rc.cur_pos;
+    let val = Tree::exec_node(rc, &func.branch[0])
+    rc.cur_pos = save_pos;
+    val
 }
 
 
@@ -141,34 +246,93 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
         Terminal::new(16, "(GO-S)", terminal_go_s),
         Terminal::new(17, "(GO-SW)", terminal_go_sw),
         Terminal::new(18, "(GO-W)", terminal_go_w),
-        Terminal::new(19, "(G-W)", terminal_w),
-        Terminal::new(20, "(GO-NW)", terminal_nw),
+        Terminal::new(19, "(GO-NW)", terminal_go_nw),
     ];
     vec![terms]
 }
 
-
 fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.run_result = LetterIdentified('I');
-
-
-
-
-
-
-
+    rc.opt_run_result = Some(IsLetter('I'));
+    true
 }
 
+fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.opt_run_result = Some(IsLetter('L'));
+    true
+}
 
+fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.run_result = NotLetter;
+    true
+}
 
+fn terminal_x(rc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_pixel(rc.cur_fc, rc.cur_pos)
+}
 
+fn terminal_n(rc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (0, -1))
+}
 
+fn terminal_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (1, -1))
+}
 
+fn terminal_e(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (1, 0))
+}
 
+fn terminal_se(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (1, 1))
+}
 
+fn terminal_s(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (0, 1))
+}
 
+fn terminal_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (-1, 1))
+}
 
+fn terminal_w(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (-1, 0))
+}
 
+fn terminal_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.get_relative_pixel(rc.cur_fc, (-1, -1))
+}
+
+fn terminal_go_n(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (0, -1))
+}
+
+fn terminal_go_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (1, -1))
+}
+
+fn terminal_go_e(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (1, 0))
+}
+
+fn terminal_go_se(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (1, 1))
+}
+
+fn terminal_go_s(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (0, 1))
+}
+
+fn terminal_go_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (-1, 1))
+}
+
+fn terminal_go_w(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (-1, 0))
+}
+
+fn terminal_go_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
+    rc.move_relative_pixel(rc.cur_fc, (-1, -1))
+}
 
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     let mut branches: Vec<Vec<Function>> = Vec::new();
@@ -243,6 +407,23 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
 type FitnessCase = [[bool; 4]; 6];
 struct FitnessCases {
     fc: [FitnessCase; 78],
+}
+impl FitnessCases {
+    /// get pixel value for fitness case `fc`, `pos` tuple (x,y)
+    fn get_pixel(&self, fc: usize, pos(i8, i8)) -> bool {
+        self.fc[fc][pos.1 as usize][pos.0 as usize]
+    }
+    fn get_relative_pixel(&self, fc: usize, delta(i8, i8)) -> bool {
+        self.fc
+            [fc]
+            [(fc.cur_pos.1 + delta.1) as usize]
+            [(fc.cur_pos.0 + delta.0) as usize]
+    }
+    fn move_relative_pixel(&self, fc: usize, delta(i8, i8)) -> bool {
+        fc.cur_pos.0 += delta.0;
+        fc.cur_pos.1 += delta.1;
+        self.get_pixel(fc, fc.cur_pos)
+    }
 }
 const FITNESS_CASES: FitnessCases = FitnessCases {
     fc: [
@@ -874,107 +1055,9 @@ const FITNESS_CASES: FitnessCases = FitnessCases {
 };
 
 enum IndividualRunResult {
-    Terminated,
-    LetterIdentified(char),
+    IsLetter(char),
+    NotLetter,
 };
-
-/// RunContext provides runtime control over a running individual. Each 
-/// node and terminal exec call recieves a reference to its RunContext
-/// where it can then access it's fitness case data and currency values.
-pub struct RunContext<'a> {
-    pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
-    pub opt_adf_args: Option<Vec<GpType>>,
-    pub cur_fc: usize,
-    pub cur_pos: (u8, u8), // x,y position on 4x6 character grid
-    pub hits: GpHits,
-    pub error: GpRaw,
-    pub run_result: Option<IndividualRunResult>,   // Program is done when not None
-}
-impl<'a> RunContext<'_> {
-    pub fn new() -> RunContext<'static> {
-        let mut rc = RunContext {
-            cur_fc: 0,
-            cur_pos: (0, 0),
-            opt_func_def_branches: None,
-            opt_adf_args: None,
-            fitness_cases: Vec::new(),
-            hits: 0,
-            error: 0,
-            run_result: None,
-        };
-
-        rc
-    }
-    pub fn get_cur_fc(&self) -> &FitnessCase {
-        &self.fitness_cases[self.cur_fc]
-    }
-    pub fn print_run_illustration(&self, _label: &str) { }
-    pub fn prepare_run(&mut self) { }
-    pub fn get_hits_label() -> &'static str {
-        "num hits"
-    }
-    /// computes fitness returns true if winner
-    pub fn compute_fitness(&self) -> (Fitness, bool) {
-        let mut f = Fitness::new();
-
-        f.r = self.error;
-        f.hits = self.hits;
-
-        f.n = -1.0;
-        f.nfr = -1.0;
-        f.raw = self.hits as GpFitness;
-        f.s = f.r;
-        f.a = 1.0 / (1.0 + f.s as GpFloat);
-
-        // if each fitness case was a hit then we have a winner.
-        let max_possible_hits = self.fitness_cases.len() as GpHits;
-        let is_winner = self.hits == max_possible_hits;
-        (f, is_winner)
-    }
-
-    /// exec_adf: executes and automatically defined function specified
-    /// by the adf_num arg
-    #[cfg(gpopt_adf="yes")]
-    pub fn exec_adf(&mut self, adf_num: usize, args: &Vec<GpType>)
-            -> GpType {
-        let func_def_branch = 
-            self
-                .opt_func_def_branches
-                .as_ref()
-                .expect("exec_adf with None set for branches.")[adf_num];
-
-        match self.opt_adf_args {
-            None => {
-                let passed_args = args.clone();
-                self.opt_adf_args = Some(passed_args);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = None;
-                result
-            },
-            Some(ref orig_args) => {
-                let save_args = orig_args.clone();
-                let passed_args = args.clone();
-                self.opt_adf_args = Some(passed_args);
-                let result = Tree::exec_node(self, &func_def_branch.root);
-                self.opt_adf_args = Some(save_args);
-                result
-            }
-        }
-    }
-
-    // compute error for a single fitness case
-    pub fn compute_error(&self, result: GpType) -> GpRaw {
-        // since GpType is bool
-        // only two possible values 0 or 1
-        // 0 means output matched the target, 1 means it missed.
-        let correct_result = self.fitness_cases[self.cur_fc].output_bit;
-        if correct_result == result {
-            0
-        } else {
-            1
-        }
-    }
-}
 
 pub fn init_run() { }
 
