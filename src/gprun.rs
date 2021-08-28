@@ -23,7 +23,7 @@ pub const ADF_ARITY: u8 = 0;
 pub struct RunContext<'a> {
     pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
     pub opt_adf_args: Option<Vec<GpType>>,
-    pub cur_fc: usize,     // Current fitness case being processed.
+    pub cur_fc_index: usize,     // Current fitness case being processed.
     pub cur_pos: (i8, i8), // x,y position on 4x6 character grid
     pub hits: GpHits,
     pub error: GpRaw,
@@ -32,11 +32,10 @@ pub struct RunContext<'a> {
 impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
         let mut rc = RunContext {
-            cur_fc: 0,
+            cur_fc_index: 0,
             cur_pos: (0, 0),
             opt_func_def_branches: None,
             opt_adf_args: None,
-            fitness_cases: Vec::new(),
             hits: 0,
             error: 0,
             opt_run_result: None,
@@ -44,8 +43,8 @@ impl<'a> RunContext<'_> {
 
         rc
     }
-    pub fn get_cur_fc(&self) -> &FitnessCase {
-        &self.fitness_cases[self.cur_fc]
+    pub fn cur_fc(&self) -> &FitnessCase {
+        &FITNESS_CASES[self.cur_fc_index]
     }
     pub fn print_run_illustration(&self, _label: &str) { }
     pub fn prepare_run(&mut self) { }
@@ -114,7 +113,6 @@ impl<'a> RunContext<'_> {
         }
     }
 }
-
 
 //fn fix_nan(num: GpType) -> GpType {
 //    if num.is_nan() {
@@ -251,87 +249,91 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
     vec![terms]
 }
 
+/// Ends program with run_result indicating Letter I
 fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.opt_run_result = Some(IsLetter('I'));
     true
 }
 
+/// Ends program with run_result indicating Letter L
 fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.opt_run_result = Some(IsLetter('L'));
     true
 }
 
+/// Ends program with run_result indicating Not Letter
 fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.run_result = NotLetter;
     true
 }
 
+/// Returns pixel at current position for current fitness case
 fn terminal_x(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_pixel(rc.cur_fc, rc.cur_pos)
+    rc.cur_fc().get_absolute_pixel(rc.cur_pos)
 }
 
 fn terminal_n(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (0, -1))
+    rc.cur_fc().get_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (1, -1))
+    rc.get_fc().get_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_e(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (1, 0))
+    rc.get_fc().get_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_se(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (1, 1))
+    rc.get_fc().get_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_s(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (0, 1))
+    rc.get_fc().get_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (-1, 1))
+    rc.get_fc().get_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_w(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (-1, 0))
+    rc.get_fc().get_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_relative_pixel(rc.cur_fc, (-1, -1))
+    rc.get_fc().get_relative_pixel(rc, (-1, -1))
 }
 
 fn terminal_go_n(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (0, -1))
+    rc.get_fc().move_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_go_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (1, -1))
+    rc.get_fc().move_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_go_e(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (1, 0))
+    rc.get_fc().move_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_go_se(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (1, 1))
+    rc.get_fc().move_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_go_s(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (0, 1))
+    rc.get_fc().move_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_go_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (-1, 1))
+    rc.get_fc().move_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_go_w(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (-1, 0))
+    rc.get_fc().move_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_go_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.move_relative_pixel(rc.cur_fc, (-1, -1))
+    rc.get_fc().move_relative_pixel(rc, (-1, -1))
 }
 
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
@@ -405,26 +407,29 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
 
 // FitnessCase
 type FitnessCase = [[bool; 4]; 6];
+impl FitnessCaseTrait for FitnessCase {
+    /// get pixel value for fixed point at `pos` tuple (x,y)
+    fn get_absolute_pixel(&self, pos(i8, i8)) -> bool {
+        self[pos.1 as usize][pos.0 as usize]
+    }
+    /// get pixel relatative to RunContext cur_pos
+    fn get_relative_pixel(&self, rc: &RunContext, delta(i8, i8)) -> bool {
+        let pos = (rc.cur_pos.0 + delta.0, rc.cur_pos.1 + delta.1);
+        self.get_pixel(pos)
+    }
+    /// move cur_pos for RunContext to point relative to its current position
+    /// get pixel at that new location.
+    fn move_relative_pixel(&self, rc: &mut RunContext, delta(i8, i8)) -> bool {
+        rc.cur_pos.0 += delta.0;
+        rc.cur_pos.1 += delta.1;
+        self.get_pixel(rc.cur_pos)
+    }
+}
+
 struct FitnessCases {
     fc: [FitnessCase; 78],
 }
-impl FitnessCases {
-    /// get pixel value for fitness case `fc`, `pos` tuple (x,y)
-    fn get_pixel(&self, fc: usize, pos(i8, i8)) -> bool {
-        self.fc[fc][pos.1 as usize][pos.0 as usize]
-    }
-    fn get_relative_pixel(&self, fc: usize, delta(i8, i8)) -> bool {
-        self.fc
-            [fc]
-            [(fc.cur_pos.1 + delta.1) as usize]
-            [(fc.cur_pos.0 + delta.0) as usize]
-    }
-    fn move_relative_pixel(&self, fc: usize, delta(i8, i8)) -> bool {
-        fc.cur_pos.0 += delta.0;
-        fc.cur_pos.1 += delta.1;
-        self.get_pixel(fc, fc.cur_pos)
-    }
-}
+
 const FITNESS_CASES: FitnessCases = FitnessCases {
     fc: [
             [ // 00
