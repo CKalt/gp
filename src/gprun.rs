@@ -23,11 +23,11 @@ pub const ADF_ARITY: u8 = 0;
 pub struct RunContext<'a> {
     pub opt_func_def_branches: Option<Vec<&'a TreeBranch>>, // adf0, adf1,...
     pub opt_adf_args: Option<Vec<GpType>>,
-    pub cur_fc_index: usize,     // Current fitness case being processed.
+    pub cur_fc_index: usize,   // Index of current fitness case being processed.
     pub cur_pos: (i8, i8), // x,y position on 4x6 character grid
     pub hits: GpHits,
     pub error: GpRaw,
-    pub opt_run_result: Option<IndividualRunResult>,   // Program is done when not None
+    pub opt_run_result: Option<IndividualRunResult>, // Program is done when not None
 }
 impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
@@ -42,6 +42,11 @@ impl<'a> RunContext<'_> {
         };
 
         rc
+    }
+    pub fn init_new_fitness_case(&mut self, fc_i: usize) {
+        self.cur_fc = fc_i;
+        self.opt_run_result = None;
+        self.cur_pos = (0, 0);
     }
     pub fn cur_fc(&self) -> &FitnessCase {
         &FITNESS_CASES[self.cur_fc_index]
@@ -101,15 +106,32 @@ impl<'a> RunContext<'_> {
     }
 
     // compute error for a single fitness case
-    pub fn compute_error(&self, result: GpType) -> GpRaw {
-        // since GpType is bool
-        // only two possible values 0 or 1
-        // 0 means output matched the target, 1 means it missed.
-        let correct_result = self.fitness_cases[self.cur_fc].output_bit;
-        if correct_result == result {
-            0
-        } else {
-            1
+    // a value of 0 is treated as a hit
+    pub fn compute_error(&self, _result: GpType) -> GpRaw {
+        match self.opt_run_result {
+            IsLetter('I') => {
+                if self.cur_fc_index == FITNESS_CASE_I_INDEX {
+                    0     // true positive
+                } else {
+                    1     // false positive or wrong positive
+                }
+            },
+            IsLetter('L') => {
+                if self.cur_fc_index == FITNESS_CASE_L_INDEX {
+                    0   // true positive
+                } else {
+                    1   // false positive or wrong positive
+                }
+            },
+            _ => {
+                if self.cur_fc_index == FITNESS_CASE_I_INDEX {
+                    23  // false negative
+                } else if self.cur_fc_index == FITNESS_CASE_L_INDEX {
+                    23  // false negative
+                } else {
+                    0   // true negative
+                }
+            }
         }
     }
 }
@@ -143,6 +165,7 @@ fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     }
 }
 
+#[cfg(gpopt_adf="no")]
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     let funcs = vec![
         Function {
@@ -219,7 +242,7 @@ fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     val
 }
 
-
+#[cfg(gpopt_adf="no")]
 pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
     // Terminal Set: I,L, NIL, X, N, NE, E, SE, S, SW, W, NW, (GO-N),
     //    (GO-NE), (GO-E), (GO-SE), (GO-S), (GO-SW), (GO-W), (G-W),
@@ -237,14 +260,16 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
         Terminal::new(9, "SW", terminal_sw),
         Terminal::new(10, "W", terminal_w),
         Terminal::new(11, "NW", terminal_nw),
-        Terminal::new(12, "(GO-N)", terminal_go_n),
-        Terminal::new(13, "(GO-NE)", terminal_go_ne),
-        Terminal::new(14, "(GO-E)", terminal_go_e),
-        Terminal::new(15, "(GO-SE)", terminal_go_se),
-        Terminal::new(16, "(GO-S)", terminal_go_s),
-        Terminal::new(17, "(GO-SW)", terminal_go_sw),
-        Terminal::new(18, "(GO-W)", terminal_go_w),
-        Terminal::new(19, "(GO-NW)", terminal_go_nw),
+        // TODO: improve parser code to accept hyphens embeded in symbol names
+        // and then improve below names (e.g. GON => GO-N)
+        Terminal::new(12, "GON", terminal_go_n),
+        Terminal::new(13, "GONE", terminal_go_ne),
+        Terminal::new(14, "GOE", terminal_go_e),
+        Terminal::new(15, "GOSE", terminal_go_se),
+        Terminal::new(16, "GOS", terminal_go_s),
+        Terminal::new(17, "GOSW", terminal_go_sw),
+        Terminal::new(18, "GOW", terminal_go_w),
+        Terminal::new(19, "GONW", terminal_go_nw),
     ];
     vec![terms]
 }
@@ -276,103 +301,111 @@ fn terminal_n(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.cur_fc().get_relative_pixel(rc, (0, -1))
 }
 
-fn terminal_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (1, -1))
 }
 
-fn terminal_e(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_e(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (1, 0))
 }
 
-fn terminal_se(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_se(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (1, 1))
 }
 
-fn terminal_s(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_s(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (0, 1))
 }
 
-fn terminal_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (-1, 1))
 }
 
-fn terminal_w(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_w(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (-1, 0))
 }
 
-fn terminal_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().get_relative_pixel(rc, (-1, -1))
 }
 
-fn terminal_go_n(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_n(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (0, -1))
 }
 
-fn terminal_go_ne(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (1, -1))
 }
 
-fn terminal_go_e(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_e(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (1, 0))
 }
 
-fn terminal_go_se(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_se(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (1, 1))
 }
 
-fn terminal_go_s(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_s(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (0, 1))
 }
 
-fn terminal_go_sw(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (-1, 1))
 }
 
-fn terminal_go_w(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_w(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (-1, 0))
 }
 
-fn terminal_go_nw(fc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (-1, -1))
 }
 
+#[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     let mut branches: Vec<Vec<Function>> = Vec::new();
     for b_i in 0..NUM_ADF {
         let mut funcs = vec![
             Function {
                 fid:  0u8,
-                name: "AND".to_string(),
-                arity: 2,
-                code: function_and,
+                name: "IF".to_string(),
+                arity: 3,
+                code: function_if,
                 opt_adf_num: None,
             },
             Function {
                 fid:  1u8,
-                name: "OR".to_string(),
+                name: "AND".to_string(),
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
             },
             Function {
                 fid:  2u8,
-                name: "NAND".to_string(),
+                name: "OR".to_string(),
                 arity: 2,
-                code: function_nand,
+                code: function_or,
                 opt_adf_num: None,
             },
             Function {
                 fid:  3u8,
-                name: "NOR".to_string(),
-                arity: 2,
-                code: function_nor,
+                name: "NOT".to_string(),
+                arity: 1,
+                code: function_not,
+                opt_adf_num: None,
+            },
+            Function {
+                fid:  4u8,
+                name: "HOMING".to_string(),
+                arity: 1,
+                code: function_homing,
                 opt_adf_num: None,
             },
         ];
         for f_i in 0..b_i {
             funcs.push(
                 Function {
-                    fid:  4u8 + f_i as u8,
+                    fid:  funcs.len() as u8,
                     name: format!("ADF{}", f_i),
                     arity: ADF_ARITY as u8,
                     code: function_adf,
@@ -386,6 +419,7 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     branches
 }
 
+#[cfg(gpopt_adf="yes")]
 pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
     let mut branches: Vec<Vec<Terminal>> = Vec::new();
     for _b_i in 0..NUM_ADF {
@@ -430,6 +464,8 @@ struct FitnessCases {
     fc: [FitnessCase; 78],
 }
 
+const FITNESS_CASE_I_INDEX: usize = 0;
+const FITNESS_CASE_L_INDEX: usize = 1;
 const FITNESS_CASES: FitnessCases = FitnessCases {
     fc: [
             [ // 00
@@ -824,7 +860,8 @@ const FITNESS_CASES: FitnessCases = FitnessCases {
                     [ false, true, false, false],
                     [ false, false, false, false],
             ],
-            [ // 49 (Note: Koza II book shows copy of 45 here which seems like an error)
+            [ // 49 (Note: Koza II book shows copy of 45 here which seems like an error,
+              //  esepecically because this obvous case used instead below is missing.)
                     [ false, true, false, false],
                     [ false, true, false, false],
                     [ false, true, false, false],
@@ -1063,6 +1100,7 @@ enum IndividualRunResult {
     IsLetter(char),
     NotLetter,
 };
+use IndividualRunResult::*;
 
 pub fn init_run() { }
 

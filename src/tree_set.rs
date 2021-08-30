@@ -306,7 +306,7 @@ impl TreeSet {
             }
 
             for fc_i in 0..rc.fitness_cases.len() {
-                rc.cur_fc = fc_i;
+                rc.init_new_fitness_case(fc_i);
                 let result = tree.exec_tree(&mut rc);
 
                 let error = rc.compute_error(result);
