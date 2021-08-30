@@ -267,6 +267,15 @@ pub struct Function {
     pub code:   FuncNodeCode,
     pub opt_adf_num: Option<usize>, // if present, identifies adf number [0..n]
                                     // index into RunContext::opt_func_def_branches
+
+    // following two fields define optional syntactic constraints that
+    // when exist, define vector for each arg (i.e. 0..arity)
+    // each holding a vector of the subset of allowed fids or tids
+    // allowed (included in the function or terminal set)
+    // This filtering will be applied during tree_gen and crossover 
+    // to insure only child args conforming to these contstrains exist.
+    pub opt_func_incl_constraints Option<Vec<Vec<u8>>>;  // [argnum][fids]
+    pub opt_term_incl_constraints Option<Vec<Vec<u8>>>;  // [argnum][tids]
 }
 
 pub struct Terminal {

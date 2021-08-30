@@ -174,6 +174,16 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 3,
             code: function_if,
             opt_adf_num: None,
+            opt_func_incl_constraints: Some(vec![
+                vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
+                vec![0],         // arg1: IF
+                vec![0],         // arg2: IF
+            ]),
+            opt_term_incl_constraints: Some(vec![
+                vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
+                vec![0,1,2],                   // arg1: I,L,NIL
+                vec![0,1,2],                   // arg2: I,L,NIL
+            ]),
         },
         Function {
             fid:  1u8,
@@ -181,6 +191,8 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_or,
             opt_adf_num: None,
+            opt_func_incl_constraints: None,
+            opt_term_incl_constraints: None,
         },
         Function {
             fid:  2u8,
@@ -188,6 +200,8 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_or,
             opt_adf_num: None,
+            opt_func_incl_constraints: None,
+            opt_term_incl_constraints: None,
         },
         Function {
             fid:  3u8,
@@ -195,6 +209,8 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_not,
             opt_adf_num: None,
+            opt_func_incl_constraints: None,
+            opt_term_incl_constraints: None,
         },
         Function {
             fid:  4u8,
@@ -202,6 +218,8 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_homing,
             opt_adf_num: None,
+            opt_func_incl_constraints: None,
+            opt_term_incl_constraints: None,
         },
     ];
     vec![funcs]
@@ -276,19 +294,25 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
 
 /// Ends program with run_result indicating Letter I
 fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.opt_run_result = Some(IsLetter('I'));
+    if let None = rc.opt_run_result {
+        rc.opt_run_result = Some(IsLetter('I'))
+    }
     true
 }
 
 /// Ends program with run_result indicating Letter L
 fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.opt_run_result = Some(IsLetter('L'));
+    if let None = rc.opt_run_result {
+        rc.opt_run_result = Some(IsLetter('L'));
+    }
     true
 }
 
 /// Ends program with run_result indicating Not Letter
 fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.run_result = NotLetter;
+    if let None = rc.opt_run_result {
+        rc.run_result = NotLetter;
+    }
     true
 }
 
@@ -361,58 +385,45 @@ fn terminal_go_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
     rc.get_fc().move_relative_pixel(rc, (-1, -1))
 }
 
+#[cfg(gpopt_adf="no")]
+pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
+    let branches: Vec<Vec<Function>> = Vec::new();
+    branches
+}
+
+#[cfg(gpopt_adf="no")]
+pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
+    let branches: Vec<Vec<Terminal>> = Vec::new();
+    branches
+}
+
 #[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     let mut branches: Vec<Vec<Function>> = Vec::new();
     for b_i in 0..NUM_ADF {
-        let mut funcs = vec![
+        let funcs = vec![
             Function {
                 fid:  0u8,
-                name: "IF".to_string(),
-                arity: 3,
-                code: function_if,
-                opt_adf_num: None,
-            },
-            Function {
-                fid:  1u8,
                 name: "AND".to_string(),
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
             },
             Function {
-                fid:  2u8,
+                fid:  1u8,
                 name: "OR".to_string(),
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
             },
             Function {
-                fid:  3u8,
+                fid:  2u8,
                 name: "NOT".to_string(),
                 arity: 1,
                 code: function_not,
                 opt_adf_num: None,
             },
-            Function {
-                fid:  4u8,
-                name: "HOMING".to_string(),
-                arity: 1,
-                code: function_homing,
-                opt_adf_num: None,
-            },
         ];
-        for f_i in 0..b_i {
-            funcs.push(
-                Function {
-                    fid:  funcs.len() as u8,
-                    name: format!("ADF{}", f_i),
-                    arity: ADF_ARITY as u8,
-                    code: function_adf,
-                    opt_adf_num: Some(f_i),
-                },
-            );
-        }
 
         branches.push(funcs);
     }
@@ -421,20 +432,22 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
 
 #[cfg(gpopt_adf="yes")]
 pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
-    let mut branches: Vec<Vec<Terminal>> = Vec::new();
-    for _b_i in 0..NUM_ADF {
-        let mut terms = Vec::new();
-        for t_i in 0..ADF_ARITY {
-            terms.push(
-                Terminal {
-                    tid:  t_i as u8,
-                    name: format!("ARG{}", t_i),
-                    code: terminal_adf_arg,
-                    index: t_i
-                },
-            );
-        }
-        branches.push(terms);
+    let mut branches: Vec<Vec<Terminals>> = Vec::new();
+    for b_i in 0..NUM_ADF {
+        // X, N, NE, E, SE, S, SW, W and NW
+        let funcs = vec![
+            Terminal::new(0, "X", terminal_x),
+            Terminal::new(0, "N", terminal_n),
+            Terminal::new(0, "NE", terminal_ne),
+            Terminal::new(0, "E", terminal_e),
+            Terminal::new(0, "SE", terminal_se),
+            Terminal::new(0, "S", terminal_s),
+            Terminal::new(0, "SW", terminal_sw),
+            Terminal::new(0, "W", terminal_w),
+            Terminal::new(0, "NW", terminal_nw),
+        ];
+
+        branches.push(funcs);
     }
     branches
 }

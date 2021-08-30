@@ -69,6 +69,7 @@ impl TreeSet {
 
         let mut result_branch_root =
             FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
+
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
 
@@ -93,23 +94,66 @@ impl TreeSet {
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>) {
         if level >= depth {
-            for i in 0..func_node.fnc.arity {
-                // Always a Terminal Node
-                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                func_node.set_arg(i, TNode(rnd_tref));
+            // Always a Terminal Node
+            if let Some(term_constraints) =
+                    func_node.fnc.opt_term_incl_constraints {
+                for i in 0..func_node.fnc.arity {
+                    // We have syntactic terminal constraints for this function
+                    // so loop until the randomly selected terminal qualifies.
+                    loop {
+                        let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                        if term_constraints[i].iter().any(|&x| x == rnd_tref.tid) {
+                            func_node.set_arg(i, TNode(rnd_tref));
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // No terminal constraints so anything in terminal set (terms)
+                // is allowed.
+                for i in 0..func_node.fnc.arity {
+                    let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                    func_node.set_arg(i, TNode(rnd_tref));
+                }
             }
         } else {
             let c_depth = level+1;
-            for i in 0..func_node.fnc.arity { 
-                // Always a Funciton Node
-                let rnd_fn = FunctionNode::new_rnd(rng, funcs);
-                let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+            // Always a Function Node
+            if let Some(func_constraints) =
+                    func_node.fnc.opt_func_incl_constraints {
+                for i in 0..func_node.fnc.arity { 
+                    // We have syntactic function constraints for this function
+                    // so loop until the randomly selected FunctionNode qualifies
+                    loop {
+                        let rnd_fn = FunctionNode::new_rnd(rng, funcs);
 
-                match *node {
-                    FNode(ref mut fn_ref) =>
-                        Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
-                                depth, funcs, terms),
-                    _ => panic!("expected FunctionNode"),
+                        if func_constraints[i].iter().any(|&x| x == rnd_fn.fnc.fid) {
+                            let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+
+                            match *node {
+                                FNode(ref mut fn_ref) =>
+                                    Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
+                                            depth, funcs, terms),
+                                _ => panic!("expected FunctionNode"),
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                // No function constraints so anything in function set (funcs)
+                // is allowed.
+                for i in 0..func_node.fnc.arity { 
+                    let rnd_fn = FunctionNode::new_rnd(rng, funcs);
+                    let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+
+                    match *node {
+                        FNode(ref mut fn_ref) =>
+                            Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
+                                    depth, funcs, terms),
+                        _ => panic!("expected FunctionNode"),
+                    }
                 }
             }
         }
