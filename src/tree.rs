@@ -57,6 +57,25 @@ impl Node {
             FNode(FunctionNode::new(rand_fid, funcs))
         }
     }
+    pub fn new_rnd_with_constraints(rng: &mut GpRng,
+            funcs: &'static [Function], terms: &'static [Terminal],
+            term_constraints: &Vec<u8>, func_constraints: &Vec<u8>) -> Node {
+        let num_ft = funcs.len() + terms.len();
+        loop {
+            let r = rng.gen_range(0..num_ft as i32) as u8;
+            if r < terms.len() as u8 {
+                if term_constraints.iter().any(|&x| x == terms[r as usize].tid) {
+                    return TNode(&terms[r as usize])
+                }
+            }
+            else {
+                let rand_fid = r - terms.len() as u8;
+                if func_constraints.iter().any(|&x| x == rand_fid) {
+                    return FNode(FunctionNode::new(rand_fid, funcs))
+                }
+            }
+        }
+    }
     // performs a deep (recusrive) build of node tree from parsed input.
     #[cfg(test)]
     pub fn deep_new_from_parse_tree(parsed_node: &ParsedSNode,

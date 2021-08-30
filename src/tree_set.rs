@@ -187,21 +187,53 @@ impl TreeSet {
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static [Function], terms: &'static [Terminal]) {
         if level >= depth {
-            for i in 0..func_node.fnc.arity {
-                // Always a Terminal Node
-                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                func_node.set_arg(i, TNode(rnd_tref));
+            // Always a Terminal Node
+            if let Some(term_constraints) =
+                    func_node.fnc.opt_term_incl_constraints {
+                for i in 0..func_node.fnc.arity {
+                    loop {
+                        // pick random terminals until one qualifies
+                        let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                        if term_constraints[i].iter().any(|&x| x == fnd_tref.tid) {
+                            func_node.set_arg(i, TNode(rnd_tref));
+                            break;
+                        }
+                    }
+                }
+            } else {
+                for i in 0..func_node.fnc.arity {
+                    let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                    func_node.set_arg(i, TNode(rnd_tref));
+                }
             }
         }
         else {
             let c_depth = level+1;
-            for i in 0..func_node.fnc.arity {
-                // Either a Function or Terminal Node
-                let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
-                let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
-                if let FNode(ref mut fn_ref) = node {
-                    Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                    funcs, terms);
+
+            if let Some(term_constraints) =
+                func_node.fnc.opt_term_incl_constraints {
+                let func_constraints =
+                    func_node.fnc.opt_term_incl_constraints.unwrap();
+                for i in 0..func_node.fnc.arity {
+                    // Either a Function or Terminal Node
+                    let rnd_ft_node =
+                        Node::new_rnd_with_constraints(rng, funcs, terms,
+                            &term_constraints[i], &func_constraints[i]);
+                    let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+                    if let FNode(ref mut fn_ref) = node {
+                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
+                                        funcs, terms);
+                    }
+                }
+            } else {
+                for i in 0..func_node.fnc.arity {
+                    // Either a Function or Terminal Node
+                    let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
+                    let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+                    if let FNode(ref mut fn_ref) = node {
+                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
+                                        funcs, terms);
+                    }
                 }
             }
         }
