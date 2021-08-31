@@ -474,7 +474,6 @@ impl TreeSet {
 
         num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
-
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
@@ -482,11 +481,21 @@ impl TreeSet {
         let node:  &mut Node;
         let b_type: BranchType;
 
+        let opt_func_incl_constraints = None;
+        let opt_term_incl_constraints = None;
+
+        (UC)
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let nref_pair = t1.get_rnd_function_node_ref(rng);
                 b_type = nref_pair.0;
                 node = nref_pair.1;
+
+                if let FNode(func_node) = node {
+                    opt_func_incl_constraints = func_node.fnc.opt_func_incl_constraints;
+                    opt_term_incl_constraints = func_node.fnc.opt_term_incl_constraints;
+                }
+
                 node
             } else {
                 let nref_pair = t1.get_rnd_terminal_node_ref(rng);
