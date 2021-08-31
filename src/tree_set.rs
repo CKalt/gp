@@ -474,26 +474,40 @@ impl TreeSet {
 
         num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
-    fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
+    fn perform_crossover_with_syntatic_constraints(rng: &mut GpRng,
+                t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
 
         let node:  &mut Node;
         let b_type: BranchType;
+        let arg_num: usize = 0;  // assigned below if opt_ploc is not None.
 
         let opt_func_incl_constraints = None;
         let opt_term_incl_constraints = None;
 
-        (UC)
+        // (UC)
+        // For syntactic constraints we need to know the parent to the selected node
+        // point as well as which arg location. These two things are needed to obtain
+        // the correct constraints from the opt_func_incl_constraint and
+        // opt_term_incl_constraint vectors.
+        //
+
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
-                let nref_pair = t1.get_rnd_function_node_ref(rng);
-                b_type = nref_pair.0;
-                node = nref_pair.1;
+                let (l_btype, (l_node, opt_ploc)) = t1.get_rnd_function_node_ref_ploc(rng);
+                b_type = l_btype;
+                node = l_node;
 
-                if let FNode(func_node) = node {
-                    opt_func_incl_constraints = func_node.fnc.opt_func_incl_constraints;
-                    opt_term_incl_constraints = func_node.fnc.opt_term_incl_constraints;
+                if let Some(pnode, l_arg_num) = opt_ploc {
+                    // note that only when parent is root, above condition fails.
+                    if let FNode(parent_func_node) = pnode {
+                        opt_func_incl_constraints =
+                            parent_func_node.fnc.opt_func_incl_constraints;
+                        opt_term_incl_constraints =
+                            parent_func_node.fnc.opt_term_incl_constraints;
+                        arg_num = l_arg_num;
+                    }
                 }
 
                 node
@@ -504,12 +518,22 @@ impl TreeSet {
                 node
             };
 
-        let swap_target2 =
-            if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
-                t2.get_rnd_function_node_ref_bt(rng, &b_type)
-            } else {
-                t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
-            };
+        let swap_target2: &Node;
+        if let Some(func_incl_constraints) = opt_func_incl_constraints {
+            swap_target2 =
+                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+                    t2.get_rnd_function_node_ref_bt(rng, &b_type)
+                } else {
+                    t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+                };
+        } else {
+            swap_target2 =
+                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+                    t2.get_rnd_function_node_ref_bt(rng, &b_type)
+                } else {
+                    t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+                };
+        }
 
         mem::swap(swap_target1, swap_target2);
     }

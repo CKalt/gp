@@ -183,6 +183,23 @@ impl Node {
             }
         }
     }
+    /// always performed against a TreeBranch.root node
+    /// which is why a tree is used instead of a Node here.
+    /// It sets up the recursive call to find_function_node_ref_ploc_r.
+    fn find_function_node_ref_ploc(&mut self, fi: TreeNodeIndex) -> 
+            (&mut Node, Option<(&Node, usize)>) {
+        match self {
+            TNode(_) => panic!(
+              "Invalid attempt to find a Function node with a terminal tree."),
+            FNode(_) => {
+                let mut cur_fi: TreeNodeIndex = 0;
+                // Since root is not a parent, passing None for parent 
+                // locater (ploc) pair
+                self.find_function_node_ref_ploc_r(fi, &mut cur_fi, None)
+                    .unwrap()
+            }
+        }
+    }
     /// recursively iterate Node tree using depth first search to locate function
     /// node at index `fi`. At each entry `self` is a candidate function node.
     /// `*cur_fi` is incremented for each candidate and when equal to `fi`
@@ -204,6 +221,46 @@ impl Node {
                         if let FNode(_) = cn {
                             *cur_fi += 1;
                             let result = cn.find_function_node_ref_r(fi, cur_fi);
+                            if let Some(_) = result {
+                                return result;
+                            }
+                        }
+                    }
+                }
+                else {
+                    panic!("expected FNode.")
+                }
+            }
+            return None;
+        }
+        else {
+            panic!("expected function node");
+        }
+    }
+    /// recursively iterate Node tree using depth first search to locate function
+    /// node at index `fi`. At each entry `self` is a candidate function node.
+    /// `*cur_fi` is incremented for each candidate and when equal to `fi`
+    /// `self` is the found Some(result) returned up the recursive call stack,
+    /// recursive iteration continues for None return values.
+    fn find_function_node_ref_ploc_r(&mut self, fi: TreeNodeIndex,
+            cur_fi: &mut TreeNodeIndex,
+            ploc: Option<(&Node, arg_num: usize)>) -> Option<&mut Node> {
+        if let FNode(_) = self {
+            if fi == *cur_fi {
+                return Some(self, ploc);
+            }
+            else {
+                // not found yet, so recursively descend into each
+                // child function node of this function node (skiping
+                // terminal nodes). Before each call (descent) the `self`
+                // currencly values are set according to the location in tree.
+                if let FNode(ref mut fn_ref) = self {
+                    for (cn_i, cn) in fn_ref.branch.iter_mut().enumerate() {
+                        if let FNode(_) = cn {
+                            *cur_fi += 1;
+                            let result = 
+                                cn.find_function_node_ref_ploc_r(fi,
+                                    cur_fi, Some(self, cn_i));
                             if let Some(_) = result {
                                 return result;
                             }
@@ -666,7 +723,8 @@ impl Tree {
         }
     }
     /// get a random function node over all branches. return branch type and
-    /// mutable ref to node.
+    /// mutable ref to node. (use get_rnd_function_node_ref if parent node 
+    /// locater is also required.)
     pub fn get_rnd_function_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let fi = self.get_rnd_function_index(rng);
@@ -692,6 +750,38 @@ impl Tree {
                 (ResultProducing, 
                     self.result_branch.root
                         .find_function_node_ref(fi - fi_offset))
+            }
+        }
+    }
+    /// get a random function node over all branches. return branch type and
+    /// mutable ref to node and optional parent ref and arg_num
+    /// (use get_rnd_function_node_ref if parent node locater is not needed.)
+    pub fn get_rnd_function_node_ref_ploc(&mut self,
+            rng: &mut GpRng) ->
+                (BranchType, (&mut Node, Option<(&Node, arg_num: usize)>)) {
+        let fi = self.get_rnd_function_index(rng);
+        match &mut self.opt_func_def_branches {
+            // no adf case
+            None =>
+                (ResultProducing,
+                    self.result_branch.root.find_function_node_ref_ploc(fi)),
+            // adf case
+            Some(func_def_branches) => {
+                let mut sum_fnodes: TreeNodeIndex = 0;
+                let mut fi_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter_mut().enumerate() {
+                    sum_fnodes += func_def_branch.num_function_nodes.unwrap();
+                    if fi < sum_fnodes {
+                        return (FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_function_node_ref_ploc(fi - fi_offset))
+                    }
+                    fi_offset = sum_fnodes;
+                }
+                (ResultProducing, 
+                    self.result_branch.root
+                        .find_function_node_ref_ploc(fi - fi_offset))
             }
         }
     }
