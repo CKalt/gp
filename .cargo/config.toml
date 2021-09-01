@@ -5,6 +5,7 @@
 # gpopt_num_adf := 5
 # gpopt_adf_arity := 0
 # gpopt_mult_threaded := yes | no
+# gpopt_syntactic_constraints := yes | no
 [build]
 rustflags = """
     --cfg gpopt_select_method="tournament"
@@ -14,4 +15,5 @@ rustflags = """
     --cfg gpopt_adf="no"
     --cfg gpopt_num_adf="5"
     --cfg gpopt_adf_arity="0"
+    --cfg gpopt_syntactic_constraints="yes"
 """

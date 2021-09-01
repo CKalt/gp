@@ -474,6 +474,7 @@ impl TreeSet {
 
         num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
     fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
@@ -503,6 +504,7 @@ impl TreeSet {
 
         mem::swap(swap_target1, swap_target2);
     }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     fn perform_crossover_with_syntatic_constraints(rng: &mut GpRng,
                 t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
@@ -628,9 +630,25 @@ impl TreeSet {
                     nt1 = t1.clone();
                     nt2 = t2.clone();
 
-                    Self::perform_crossover(rng, &mut nt1, &mut nt2);
-                    if nt1.qualifies() && nt2.qualifies() {
-                        break;
+                    // when syntactic_constraints is off
+                    // we use both trees made with crossover
+                    // when syntactic_constraints is on
+                    // we toss the second, because constraints 
+                    //     may are only enforced for the first one.
+                    #[cfg(gpopt_syntactic_constraints="no")] 
+                    {
+                        Self::perform_crossover(rng, &mut nt1, &mut nt2);
+                        if nt1.qualifies() && nt2.qualifies() {
+                            break;
+                        }
+                    }
+                    #[cfg(gpopt_syntactic_constraints="no")] 
+                    {
+                        Self::perform_crossover_with_syntatic_constraints(rng,
+                            &mut nt1, &mut nt2);
+                        if nt1.qualifies() {
+                            break;
+                        }
                     }
                 }
                 nt1.clear_node_counts();
@@ -641,6 +659,7 @@ impl TreeSet {
                 #[cfg(gpopt_trace="on")]
                 new_trees.tree_vec[new_trees.tree_vec.len()-1].print();
 
+                #[cfg(gpopt_syntactic_constraints="no")] 
                 if new_trees.tree_vec.len() < CONTROL.M {
                     nt2.clear_node_counts();
                     nt2.count_nodes();
