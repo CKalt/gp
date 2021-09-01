@@ -474,6 +474,35 @@ impl TreeSet {
 
         num < CONTROL.Pip // if Pip is .90 then true for all values less than .90.
     }
+    fn perform_crossover(rng: &mut GpRng, t1: &mut Tree, t2: &mut Tree) {
+        assert_ne!(t1.get_num_terminal_nodes(), None);
+        assert_ne!(t2.get_num_terminal_nodes(), None);
+
+        let node:  &mut Node;
+        let b_type: BranchType;
+
+        let swap_target1 =
+            if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+                let nref_pair = t1.get_rnd_function_node_ref(rng);
+                b_type = nref_pair.0;
+                node = nref_pair.1;
+                node
+            } else {
+                let nref_pair = t1.get_rnd_terminal_node_ref(rng);
+                b_type = nref_pair.0;
+                node = nref_pair.1;
+                node
+            };
+
+        let swap_target2 =
+            if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+                t2.get_rnd_function_node_ref_bt(rng, &b_type)
+            } else {
+                t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+            };
+
+        mem::swap(swap_target1, swap_target2);
+    }
     fn perform_crossover_with_syntatic_constraints(rng: &mut GpRng,
                 t1: &mut Tree, t2: &mut Tree) {
         assert_ne!(t1.get_num_terminal_nodes(), None);
@@ -487,8 +516,8 @@ impl TreeSet {
         let opt_term_incl_constraints = None;
 
         // (UC)
-        // For syntactic constraints we need to know the parent to the selected node
-        // point as well as which arg location. These two things are needed to obtain
+        // For syntactic constraints we need to know the parent of the selected node
+        // point as well as the arg number. These two things are needed to obtain
         // the correct constraints from the opt_func_incl_constraint and
         // opt_term_incl_constraint vectors.
         //
@@ -518,22 +547,52 @@ impl TreeSet {
                 node
             };
 
-        let swap_target2: &Node;
-        if let Some(func_incl_constraints) = opt_func_incl_constraints {
-            swap_target2 =
-                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
-                    t2.get_rnd_function_node_ref_bt(rng, &b_type)
+        let swap_target2 =
+            if let Some(func_incl_constraints) = opt_func_incl_constraints {
+                // apply syntactic constraint
+                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0
+                   && Self::rnd_int_pt_decide(rng) {
+                    // loop until a random function node qulaifies as swap point 2
+                    loop {
+                        let node = t2.get_rnd_function_node_ref_bt(rng, &b_type)
+                        if let FNode(func_node) = node {
+                            if func_incl_constraints[arg_num]
+                                .iter()
+                                .any(|&x| x = func_node.fnc.fid) {
+                                break node;
+                            }
+                        }
+                        else {
+                            panic!("not func_node");
+                        }
+                    }
                 } else {
-                    t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
-                };
-        } else {
-            swap_target2 =
-                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+                    if let Some(term_incl_constraints) =
+                        opt_term_incl_constraints {
+                        // loop until a random terminal node qulaifies as swap point 2
+                        loop {
+                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+                            if let TNode(tn_ref) = node {
+                                if term_incl_constraints[arg_num]
+                                    .iter()
+                                    .any(|&x| x = tn_ref.tid) {
+                                    break node;
+                                }
+                            }
+                            else {
+                                panic!("not func_node");
+                            }
+                        }
+                    } else {
+                        panic!("opt_func_incl_constraints not None, but opt_func_incl_constraints None");
+                    }
+                }
+            } else if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0
+                && Self::rnd_int_pt_decide(rng) {
                     t2.get_rnd_function_node_ref_bt(rng, &b_type)
-                } else {
-                    t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
-                };
-        }
+            } else {
+                t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+            };
 
         mem::swap(swap_target1, swap_target2);
     }
