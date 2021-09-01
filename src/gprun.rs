@@ -31,7 +31,7 @@ pub struct RunContext<'a> {
 }
 impl<'a> RunContext<'_> {
     pub fn new() -> RunContext<'static> {
-        let mut rc = RunContext {
+        let rc = RunContext {
             cur_fc_index: 0,
             cur_pos: (0, 0),
             opt_func_def_branches: None,
@@ -108,7 +108,7 @@ impl<'a> RunContext<'_> {
     // compute error for a single fitness case
     // a value of 0 is treated as a hit
     pub fn compute_error(&self, _result: GpType) -> GpRaw {
-        match self.opt_run_result.unwrap() {
+        match self.opt_run_result.as_ref().unwrap() {
             IsLetter('I') => {
                 if self.cur_fc_index == FITNESS_CASE_I_INDEX {
                     0     // true positive
@@ -293,7 +293,7 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
 }
 
 /// Ends program with run_result indicating Letter I
-fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_i(rc: &mut RunContext, _term: &Terminal) -> GpType {
     if let None = rc.opt_run_result {
         rc.opt_run_result = Some(IsLetter('I'))
     }
@@ -301,7 +301,7 @@ fn terminal_i(rc: &mut RunContext, term: &Terminal) -> GpType {
 }
 
 /// Ends program with run_result indicating Letter L
-fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_l(rc: &mut RunContext, _term: &Terminal) -> GpType {
     if let None = rc.opt_run_result {
         rc.opt_run_result = Some(IsLetter('L'));
     }
@@ -309,7 +309,7 @@ fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
 }
 
 /// Ends program with run_result indicating Not Letter
-fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_nil(rc: &mut RunContext, _term: &Terminal) -> GpType {
     if let None = rc.opt_run_result {
         rc.opt_run_result = Some(NotLetter);
     }
@@ -317,71 +317,71 @@ fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
 }
 
 /// Returns pixel at current position for current fitness case
-fn terminal_x(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_x(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_absolute_pixel(rc.cur_pos)
 }
 
-fn terminal_n(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_n(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (0, -1))
 }
 
-fn terminal_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_ne(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (1, -1))
 }
 
-fn terminal_e(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_e(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (1, 0))
 }
 
-fn terminal_se(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_se(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (1, 1))
 }
 
-fn terminal_s(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_s(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (0, 1))
 }
 
-fn terminal_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_sw(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (-1, 1))
 }
 
-fn terminal_w(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_w(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (-1, 0))
 }
 
-fn terminal_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_nw(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().get_relative_pixel(rc, (-1, -1))
 }
 
-fn terminal_go_n(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_n(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (0, -1))
 }
 
-fn terminal_go_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_ne(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (1, -1))
 }
 
-fn terminal_go_e(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_e(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (1, 0))
 }
 
-fn terminal_go_se(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_se(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (1, 1))
 }
 
-fn terminal_go_s(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_s(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (0, 1))
 }
 
-fn terminal_go_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_sw(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (-1, 1))
 }
 
-fn terminal_go_w(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_w(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (-1, 0))
 }
 
-fn terminal_go_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
+fn terminal_go_nw(rc: &mut RunContext, _term: &Terminal) -> GpType {
     rc.get_cur_fc().move_relative_pixel(rc, (-1, -1))
 }
 
