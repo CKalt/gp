@@ -103,14 +103,10 @@ lazy_static! {
 
 /// Called by lazy_static! macro to set RUN_LOG_FNAME
 pub fn run_log_fname() -> String {
-    #[cfg(gpopt_adf="yes")]
-    let val = format!(
-            "gp_run_even_{}_parity_{}_adf_{}_arity.log", EVEN_PARITY_K_VALUE,
-            NUM_ADF, ADF_ARITY);
     #[cfg(gpopt_adf="no")]
-    let val = format!(
-            "gp_run_even_{}_parity_no_adf_{}_arity.log", 
-            EVEN_PARITY_K_VALUE, ADF_ARITY);
+    let val = "gp_run_letter_recognition_no_adf.log"; 
+    #[cfg(gpopt_adf="yes")]
+    let val = "gp_run_letter_recognition_adf.log"; 
 
-    val
+    val.to_string()
 }

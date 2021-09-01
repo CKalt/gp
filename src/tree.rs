@@ -18,7 +18,7 @@ use gp::parsers::ParsedSNode::*;
 use Node::*;
 
 type FuncNodeCode = fn (rc: &mut RunContext, fnc: &FunctionNode) -> GpType;
-pub type TermNodeCode = fn (rc: &RunContext, &Terminal) -> GpType;
+pub type TermNodeCode = fn (rc: &mut RunContext, &Terminal) -> GpType;
 
 pub struct Winner {
     pub win: i32,   // Win number (among sequence of runs)
@@ -57,6 +57,7 @@ impl Node {
             FNode(FunctionNode::new(rand_fid, funcs))
         }
     }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static [Function], terms: &'static [Terminal],
             term_constraints: &Vec<u8>, func_constraints: &Vec<u8>) -> Node {
@@ -183,9 +184,14 @@ impl Node {
             }
         }
     }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     /// always performed against a TreeBranch.root node
     /// which is why a tree is used instead of a Node here.
     /// It sets up the recursive call to find_function_node_ref_ploc_r.
+    /// This is an extended version of find_function_node_ref() that returns
+    /// an optional ploc (parent locater value) that defines the found node's
+    /// parent and child arg position that is required for syntactic
+    /// constraints.
     fn find_function_node_ref_ploc(&mut self, fi: TreeNodeIndex) -> 
             (&mut Node, Option<(&Node, usize)>) {
         match self {
@@ -237,17 +243,25 @@ impl Node {
             panic!("expected function node");
         }
     }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     /// recursively iterate Node tree using depth first search to locate function
     /// node at index `fi`. At each entry `self` is a candidate function node.
     /// `*cur_fi` is incremented for each candidate and when equal to `fi`
     /// `self` is the found Some(result) returned up the recursive call stack,
     /// recursive iteration continues for None return values.
+    /// ploc: optional tuple consisting of : (parent node, zero based child
+    /// arg position of node inside parent node branch vector)
+    /// This is an extended version of find_function_node_ref_r() that returns
+    /// an optional ploc (parent locater value) that defines the found node's
+    /// parent and child arg position that is required for syntactic
+    /// constraints.
     fn find_function_node_ref_ploc_r(&mut self, fi: TreeNodeIndex,
             cur_fi: &mut TreeNodeIndex,
-            ploc: Option<(&Node, arg_num: usize)>) -> Option<&mut Node> {
+            ploc: Option<(&Node, usize)>) -> 
+                  Option<(&mut Node, Option<(&Node, usize)>)> {
         if let FNode(_) = self {
             if fi == *cur_fi {
-                return Some(self, ploc);
+                return Some((self, ploc));
             }
             else {
                 // not found yet, so recursively descend into each
@@ -260,7 +274,7 @@ impl Node {
                             *cur_fi += 1;
                             let result = 
                                 cn.find_function_node_ref_ploc_r(fi,
-                                    cur_fi, Some(self, cn_i));
+                                    cur_fi, Some((self, cn_i)));
                             if let Some(_) = result {
                                 return result;
                             }
@@ -350,8 +364,11 @@ pub struct Function {
     // allowed (included in the function or terminal set)
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.
-    pub opt_func_incl_constraints Option<Vec<Vec<u8>>>;  // [argnum][fids]
-    pub opt_term_incl_constraints Option<Vec<Vec<u8>>>;  // [argnum][tids]
+                    
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    pub opt_func_incl_constraints: Option<Vec<Vec<u8>>>,  // [argnum][fids]
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    pub opt_term_incl_constraints: Option<Vec<Vec<u8>>>,  // [argnum][tids]
 }
 
 pub struct Terminal {
@@ -361,7 +378,7 @@ pub struct Terminal {
     pub index:  usize,
 }
 impl Terminal {
-    fn new(tid: u8, name: &str, code: TermNodeCode) -> Terminal {
+    pub fn new(tid: u8, name: &str, code: TermNodeCode) -> Terminal {
         Terminal {
             tid,
             name: name.to_string(),
@@ -753,12 +770,17 @@ impl Tree {
             }
         }
     }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     /// get a random function node over all branches. return branch type and
     /// mutable ref to node and optional parent ref and arg_num
     /// (use get_rnd_function_node_ref if parent node locater is not needed.)
+    /// This is an extended version of get_rnd_function_node_ref() that returns
+    /// an optional ploc (parent locater value) that defines the found node's
+    /// parent and child arg position that is required for syntactic
+    /// constraints.
     pub fn get_rnd_function_node_ref_ploc(&mut self,
             rng: &mut GpRng) ->
-                (BranchType, (&mut Node, Option<(&Node, arg_num: usize)>)) {
+                (BranchType, (&mut Node, Option<(&Node, usize)>)) {
         let fi = self.get_rnd_function_index(rng);
         match &mut self.opt_func_def_branches {
             // no adf case

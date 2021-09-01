@@ -158,6 +158,33 @@ impl TreeSet {
             }
         }
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
+    fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
+        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+        let mut result_branch_root =
+            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
+        Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
+
+        if CONTROL.terms_fdb.len() > 0 {
+            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
+            for i in 0..CONTROL.funcs_fdb.len() {
+                let mut func_def_branch_root =
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+                Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
+                        2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                func_def_branches
+                    .push(TreeBranch::new(FNode(func_def_branch_root)));
+            }
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)),
+                Some(func_def_branches))
+        } else {
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), None)
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
         let mut result_branch_root =
@@ -194,7 +221,7 @@ impl TreeSet {
                     loop {
                         // pick random terminals until one qualifies
                         let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                        if term_constraints[i].iter().any(|&x| x == fnd_tref.tid) {
+                        if term_constraints[i].iter().any(|&x| x == rnd_tref.tid) {
                             func_node.set_arg(i, TNode(rnd_tref));
                             break;
                         }
@@ -517,13 +544,10 @@ impl TreeSet {
         let opt_func_incl_constraints = None;
         let opt_term_incl_constraints = None;
 
-        // (UC)
         // For syntactic constraints we need to know the parent of the selected node
         // point as well as the arg number. These two things are needed to obtain
         // the correct constraints from the opt_func_incl_constraint and
         // opt_term_incl_constraint vectors.
-        //
-
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let (l_btype, (l_node, opt_ploc)) = t1.get_rnd_function_node_ref_ploc(rng);
@@ -556,7 +580,7 @@ impl TreeSet {
                    && Self::rnd_int_pt_decide(rng) {
                     // loop until a random function node qulaifies as swap point 2
                     loop {
-                        let node = t2.get_rnd_function_node_ref_bt(rng, &b_type)
+                        let node = t2.get_rnd_function_node_ref_bt(rng, &b_type);
                         if let FNode(func_node) = node {
                             if func_incl_constraints[arg_num]
                                 .iter()
@@ -573,7 +597,7 @@ impl TreeSet {
                         opt_term_incl_constraints {
                         // loop until a random terminal node qulaifies as swap point 2
                         loop {
-                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &b_type);
                             if let TNode(tn_ref) = node {
                                 if term_incl_constraints[arg_num]
                                     .iter()
@@ -634,7 +658,7 @@ impl TreeSet {
                     // we use both trees made with crossover
                     // when syntactic_constraints is on
                     // we toss the second, because constraints 
-                    //     may are only enforced for the first one.
+                    // are only enforced for the first one.
                     #[cfg(gpopt_syntactic_constraints="no")] 
                     {
                         Self::perform_crossover(rng, &mut nt1, &mut nt2);
@@ -642,7 +666,7 @@ impl TreeSet {
                             break;
                         }
                     }
-                    #[cfg(gpopt_syntactic_constraints="no")] 
+                    #[cfg(gpopt_syntactic_constraints="yes")] 
                     {
                         Self::perform_crossover_with_syntatic_constraints(rng,
                             &mut nt1, &mut nt2);

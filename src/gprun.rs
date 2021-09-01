@@ -44,12 +44,12 @@ impl<'a> RunContext<'_> {
         rc
     }
     pub fn init_new_fitness_case(&mut self, fc_i: usize) {
-        self.cur_fc = fc_i;
+        self.cur_fc_index = fc_i;
         self.opt_run_result = None;
         self.cur_pos = (0, 0);
     }
-    pub fn cur_fc(&self) -> &FitnessCase {
-        &FITNESS_CASES[self.cur_fc_index]
+    pub fn get_cur_fc(&self) -> &FitnessCase {
+        &FITNESS_CASES.fc[self.cur_fc_index]
     }
     pub fn print_run_illustration(&self, _label: &str) { }
     pub fn prepare_run(&mut self) { }
@@ -70,7 +70,7 @@ impl<'a> RunContext<'_> {
         f.a = 1.0 / (1.0 + f.s as GpFloat);
 
         // if each fitness case was a hit then we have a winner.
-        let max_possible_hits = self.fitness_cases.len() as GpHits;
+        let max_possible_hits = FITNESS_CASES.fc.len() as GpHits;
         let is_winner = self.hits == max_possible_hits;
         (f, is_winner)
     }
@@ -108,7 +108,7 @@ impl<'a> RunContext<'_> {
     // compute error for a single fitness case
     // a value of 0 is treated as a hit
     pub fn compute_error(&self, _result: GpType) -> GpRaw {
-        match self.opt_run_result {
+        match self.opt_run_result.unwrap() {
             IsLetter('I') => {
                 if self.cur_fc_index == FITNESS_CASE_I_INDEX {
                     0     // true positive
@@ -255,7 +255,7 @@ fn function_not(rc: &mut RunContext, func: &FunctionNode) -> GpType {
 
 fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let save_pos = rc.cur_pos;
-    let val = Tree::exec_node(rc, &func.branch[0])
+    let val = Tree::exec_node(rc, &func.branch[0]);
     rc.cur_pos = save_pos;
     val
 }
@@ -311,78 +311,78 @@ fn terminal_l(rc: &mut RunContext, term: &Terminal) -> GpType {
 /// Ends program with run_result indicating Not Letter
 fn terminal_nil(rc: &mut RunContext, term: &Terminal) -> GpType {
     if let None = rc.opt_run_result {
-        rc.run_result = NotLetter;
+        rc.opt_run_result = Some(NotLetter);
     }
     true
 }
 
 /// Returns pixel at current position for current fitness case
 fn terminal_x(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.cur_fc().get_absolute_pixel(rc.cur_pos)
+    rc.get_cur_fc().get_absolute_pixel(rc.cur_pos)
 }
 
 fn terminal_n(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.cur_fc().get_relative_pixel(rc, (0, -1))
+    rc.get_cur_fc().get_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (1, -1))
+    rc.get_cur_fc().get_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_e(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (1, 0))
+    rc.get_cur_fc().get_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_se(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (1, 1))
+    rc.get_cur_fc().get_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_s(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (0, 1))
+    rc.get_cur_fc().get_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (-1, 1))
+    rc.get_cur_fc().get_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_w(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (-1, 0))
+    rc.get_cur_fc().get_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().get_relative_pixel(rc, (-1, -1))
+    rc.get_cur_fc().get_relative_pixel(rc, (-1, -1))
 }
 
 fn terminal_go_n(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (0, -1))
+    rc.get_cur_fc().move_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_go_ne(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (1, -1))
+    rc.get_cur_fc().move_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_go_e(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (1, 0))
+    rc.get_cur_fc().move_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_go_se(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (1, 1))
+    rc.get_cur_fc().move_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_go_s(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (0, 1))
+    rc.get_cur_fc().move_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_go_sw(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (-1, 1))
+    rc.get_cur_fc().move_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_go_w(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (-1, 0))
+    rc.get_cur_fc().move_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_go_nw(rc: &mut RunContext, term: &Terminal) -> GpType {
-    rc.get_fc().move_relative_pixel(rc, (-1, -1))
+    rc.get_cur_fc().move_relative_pixel(rc, (-1, -1))
 }
 
 #[cfg(gpopt_adf="no")]
@@ -453,23 +453,35 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
 }
 
 // FitnessCase
-type FitnessCase = [[bool; 4]; 6];
+pub type FitnessCase = [[bool; 4]; 6];
+pub trait FitnessCaseTrait {
+    /// get pixel value for fixed point at `pos` tuple (x,y)
+    fn get_absolute_pixel(&self, pos: (i8, i8)) -> bool;
+    /// get pixel relatative to RunContext cur_pos
+    fn get_relative_pixel(&self, rc: &RunContext, delta: (i8, i8)) -> bool;
+    /// move cur_pos for RunContext to point relative to its current position
+    /// get pixel at that new location.
+    fn move_relative_pixel(&self, rc: &mut RunContext, delta: (i8, i8))
+            -> bool;
+}
+
 impl FitnessCaseTrait for FitnessCase {
     /// get pixel value for fixed point at `pos` tuple (x,y)
-    fn get_absolute_pixel(&self, pos(i8, i8)) -> bool {
+    fn get_absolute_pixel(&self, pos: (i8, i8)) -> bool {
         self[pos.1 as usize][pos.0 as usize]
     }
     /// get pixel relatative to RunContext cur_pos
-    fn get_relative_pixel(&self, rc: &RunContext, delta(i8, i8)) -> bool {
+    fn get_relative_pixel(&self, rc: &RunContext, delta: (i8, i8)) -> bool {
         let pos = (rc.cur_pos.0 + delta.0, rc.cur_pos.1 + delta.1);
-        self.get_pixel(pos)
+        self.get_absolute_pixel(pos)
     }
     /// move cur_pos for RunContext to point relative to its current position
     /// get pixel at that new location.
-    fn move_relative_pixel(&self, rc: &mut RunContext, delta(i8, i8)) -> bool {
+    fn move_relative_pixel(&self, rc: &mut RunContext, delta: (i8, i8))
+            -> bool {
         rc.cur_pos.0 += delta.0;
         rc.cur_pos.1 += delta.1;
-        self.get_pixel(rc.cur_pos)
+        self.get_absolute_pixel(rc.cur_pos)
     }
 }
 
@@ -1109,10 +1121,12 @@ const FITNESS_CASES: FitnessCases = FitnessCases {
     ],
 };
 
+/// IndividualRunResult returns results as type for RunContext::run_result
+/// as a side affect not requiring for recursive return result.
 enum IndividualRunResult {
     IsLetter(char),
     NotLetter,
-};
+}
 use IndividualRunResult::*;
 
 pub fn init_run() { }
