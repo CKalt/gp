@@ -102,7 +102,7 @@ impl TreeSet {
                     // so loop until the randomly selected terminal qualifies.
                     loop {
                         let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                        if term_constraints[i].iter().any(|&x| x == rnd_tref.tid) {
+                        if term_constraints[i as usize].iter().any(|&x| x == rnd_tref.tid) {
                             func_node.set_arg(i, TNode(rnd_tref));
                             break;
                         }
@@ -127,7 +127,7 @@ impl TreeSet {
                     loop {
                         let rnd_fn = FunctionNode::new_rnd(rng, funcs);
 
-                        if func_constraints[i].iter().any(|&x| x == rnd_fn.fnc.fid) {
+                        if func_constraints[i as usize].iter().any(|&x| x == rnd_fn.fnc.fid) {
                             let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
 
                             match *node {
@@ -221,7 +221,7 @@ impl TreeSet {
                     loop {
                         // pick random terminals until one qualifies
                         let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                        if term_constraints[i].iter().any(|&x| x == rnd_tref.tid) {
+                        if term_constraints[i as usize].iter().any(|&x| x == rnd_tref.tid) {
                             func_node.set_arg(i, TNode(rnd_tref));
                             break;
                         }
@@ -245,7 +245,8 @@ impl TreeSet {
                     // Either a Function or Terminal Node
                     let rnd_ft_node =
                         Node::new_rnd_with_constraints(rng, funcs, terms,
-                            &term_constraints[i], &func_constraints[i]);
+                            &term_constraints[i as usize],
+                            &func_constraints[i as usize]);
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
                         Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
@@ -408,7 +409,7 @@ impl TreeSet {
                 rc.opt_func_def_branches = None;
             }
 
-            for fc_i in 0..rc.fitness_cases.len() {
+            for fc_i in 0..FITNESS_CASES.fc.len() {
                 rc.init_new_fitness_case(fc_i);
                 let result = tree.exec_tree(&mut rc);
 
@@ -554,7 +555,7 @@ impl TreeSet {
                 b_type = l_btype;
                 node = l_node;
 
-                if let Some(pnode, l_arg_num) = opt_ploc {
+                if let Some((pnode, l_arg_num)) = opt_ploc {
                     // note that only when parent is root, above condition fails.
                     if let FNode(parent_func_node) = pnode {
                         opt_func_incl_constraints =
@@ -584,7 +585,7 @@ impl TreeSet {
                         if let FNode(func_node) = node {
                             if func_incl_constraints[arg_num]
                                 .iter()
-                                .any(|&x| x = func_node.fnc.fid) {
+                                .any(|&x| x == func_node.fnc.fid) {
                                 break node;
                             }
                         }
@@ -601,7 +602,7 @@ impl TreeSet {
                             if let TNode(tn_ref) = node {
                                 if term_incl_constraints[arg_num]
                                     .iter()
-                                    .any(|&x| x = tn_ref.tid) {
+                                    .any(|&x| x == tn_ref.tid) {
                                     break node;
                                 }
                             }
@@ -814,4 +815,3 @@ impl SelectMethod for TreeSet {
         best_tree
     }
 }
-

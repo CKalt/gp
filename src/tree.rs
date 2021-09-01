@@ -255,10 +255,10 @@ impl Node {
     /// an optional ploc (parent locater value) that defines the found node's
     /// parent and child arg position that is required for syntactic
     /// constraints.
-    fn find_function_node_ref_ploc_r(&mut self, fi: TreeNodeIndex,
+    fn find_function_node_ref_ploc_r<'a>(&'a mut self, fi: TreeNodeIndex,
             cur_fi: &mut TreeNodeIndex,
-            ploc: Option<(&Node, usize)>) -> 
-                  Option<(&mut Node, Option<(&Node, usize)>)> {
+            ploc: Option<(&'a Node, usize)>) -> 
+                  Option<(&'a mut Node, Option<(&'a Node, usize)>)> {
         if let FNode(_) = self {
             if fi == *cur_fi {
                 return Some((self, ploc));
@@ -978,7 +978,7 @@ impl Tree {
             rc.opt_func_def_branches = None;
         }
 
-        for fc_i in 0..rc.fitness_cases.len() {
+        for fc_i in 0..FITNESS_CASES.fc.len() {
             rc.init_new_fitness_case(fc_i);
             let result = Tree::exec_node(&mut rc, &self.result_branch.root);
 

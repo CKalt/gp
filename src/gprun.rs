@@ -485,13 +485,13 @@ impl FitnessCaseTrait for FitnessCase {
     }
 }
 
-struct FitnessCases {
-    fc: [FitnessCase; 78],
+pub struct FitnessCases {
+    pub fc: [FitnessCase; 78],
 }
 
 const FITNESS_CASE_I_INDEX: usize = 0;
 const FITNESS_CASE_L_INDEX: usize = 1;
-const FITNESS_CASES: FitnessCases = FitnessCases {
+pub const FITNESS_CASES: FitnessCases = FitnessCases {
     fc: [
             [ // 00
                     [ false, true, false, false],
