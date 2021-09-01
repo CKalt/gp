@@ -48,7 +48,7 @@ impl<'a> RunContext<'_> {
         self.opt_run_result = None;
         self.cur_pos = (0, 0);
     }
-    pub fn get_cur_fc(&self) -> &FitnessCase {
+    pub fn get_cur_fc(&mut self) -> &FitnessCase {
         &FITNESS_CASES.fc[self.cur_fc_index]
     }
     pub fn print_run_illustration(&self, _label: &str) { }
@@ -318,71 +318,88 @@ fn terminal_nil(rc: &mut RunContext, _term: &Terminal) -> GpType {
 
 /// Returns pixel at current position for current fitness case
 fn terminal_x(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_absolute_pixel(rc.cur_pos)
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_absolute_pixel(rc.cur_pos)
 }
 
 fn terminal_n(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (0, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_ne(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (1, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_e(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (1, 0))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_se(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (1, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_s(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (0, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_sw(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (-1, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_w(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (-1, 0))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_nw(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().get_relative_pixel(rc, (-1, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.get_relative_pixel(rc, (-1, -1))
 }
 
 fn terminal_go_n(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (0, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (0, -1))
 }
 
 fn terminal_go_ne(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (1, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (1, -1))
 }
 
 fn terminal_go_e(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (1, 0))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (1, 0))
 }
 
 fn terminal_go_se(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (1, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (1, 1))
 }
 
 fn terminal_go_s(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (0, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (0, 1))
 }
 
 fn terminal_go_sw(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (-1, 1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (-1, 1))
 }
 
 fn terminal_go_w(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (-1, 0))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (-1, 0))
 }
 
 fn terminal_go_nw(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    rc.get_cur_fc().move_relative_pixel(rc, (-1, -1))
+    let cur_fc = &FITNESS_CASES.fc[rc.cur_fc_index];
+    cur_fc.move_relative_pixel(rc, (-1, -1))
 }
 
 #[cfg(gpopt_adf="no")]

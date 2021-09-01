@@ -268,6 +268,7 @@ impl Node {
                 // child function node of this function node (skiping
                 // terminal nodes). Before each call (descent) the `self`
                 // currencly values are set according to the location in tree.
+
                 if let FNode(ref mut fn_ref) = self {
                     for (cn_i, cn) in fn_ref.branch.iter_mut().enumerate() {
                         if let FNode(_) = cn {
