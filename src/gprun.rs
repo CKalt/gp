@@ -11,7 +11,10 @@ use crate::fitness::GpHits;
 use crate::fitness::GpRaw;
 
 pub type GpType = bool;
+    
+#[cfg(gpopt_adf="yes")]
 pub const NUM_ADF: u8 = 5;
+#[cfg(gpopt_adf="yes")]
 pub const ADF_ARITY: u8 = 0;
 
 /// RunContext provides runtime control over a running individual. Each 
@@ -47,9 +50,6 @@ impl<'a> RunContext<'_> {
         self.cur_fc_index = fc_i;
         self.opt_run_result = None;
         self.cur_pos = (0, 0);
-    }
-    pub fn get_cur_fc(&mut self) -> &FitnessCase {
-        &FITNESS_CASES.fc[self.cur_fc_index]
     }
     pub fn print_run_illustration(&self, _label: &str) { }
     pub fn prepare_run(&mut self) { }
@@ -189,7 +189,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             fid:  1u8,
             name: "AND".to_string(),
             arity: 2,
-            code: function_or,
+            code: function_and,
             opt_adf_num: None,
             opt_func_incl_constraints: None,
             opt_term_incl_constraints: None,
@@ -1140,7 +1140,7 @@ pub const FITNESS_CASES: FitnessCases = FitnessCases {
 
 /// IndividualRunResult returns results as type for RunContext::run_result
 /// as a side affect not requiring for recursive return result.
-enum IndividualRunResult {
+pub enum IndividualRunResult {
     IsLetter(char),
     NotLetter,
 }

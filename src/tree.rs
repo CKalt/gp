@@ -193,7 +193,7 @@ impl Node {
     /// parent and child arg position that is required for syntactic
     /// constraints.
     fn find_function_node_ref_ploc(&mut self, fi: TreeNodeIndex) -> 
-            (&mut Node, Option<(&Node, usize)>) {
+            (&mut Node, Option<(&Function, usize)>) {
         match self {
             TNode(_) => panic!(
               "Invalid attempt to find a Function node with a terminal tree."),
@@ -257,8 +257,8 @@ impl Node {
     /// constraints.
     fn find_function_node_ref_ploc_r<'a>(&'a mut self, fi: TreeNodeIndex,
             cur_fi: &mut TreeNodeIndex,
-            ploc: Option<(&'a Node, usize)>) -> 
-                  Option<(&'a mut Node, Option<(&'a Node, usize)>)> {
+            ploc: Option<(&'a Function, usize)>) -> 
+                  Option<(&'a mut Node, Option<(&'a Function, usize)>)> {
         if let FNode(_) = self {
             if fi == *cur_fi {
                 return Some((self, ploc));
@@ -275,7 +275,7 @@ impl Node {
                             *cur_fi += 1;
                             let result = 
                                 cn.find_function_node_ref_ploc_r(fi,
-                                    cur_fi, Some((self, cn_i)));
+                                    cur_fi, Some((fn_ref.fnc, cn_i)));
                             if let Some(_) = result {
                                 return result;
                             }
@@ -740,6 +740,7 @@ impl Tree {
             }
         }
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
     /// get a random function node over all branches. return branch type and
     /// mutable ref to node. (use get_rnd_function_node_ref if parent node 
     /// locater is also required.)
@@ -781,7 +782,7 @@ impl Tree {
     /// constraints.
     pub fn get_rnd_function_node_ref_ploc(&mut self,
             rng: &mut GpRng) ->
-                (BranchType, (&mut Node, Option<(&Node, usize)>)) {
+                (BranchType, (&mut Node, Option<(&Function, usize)>)) {
         let fi = self.get_rnd_function_index(rng);
         match &mut self.opt_func_def_branches {
             // no adf case

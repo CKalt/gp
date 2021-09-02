@@ -95,7 +95,7 @@ impl TreeSet {
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>) {
         if level >= depth {
             // Always a Terminal Node
-            if let Some(term_constraints) =
+            if let Some(ref term_constraints) =
                     func_node.fnc.opt_term_incl_constraints {
                 for i in 0..func_node.fnc.arity {
                     // We have syntactic terminal constraints for this function
@@ -119,7 +119,7 @@ impl TreeSet {
         } else {
             let c_depth = level+1;
             // Always a Function Node
-            if let Some(func_constraints) =
+            if let Some(ref func_constraints) =
                     func_node.fnc.opt_func_incl_constraints {
                 for i in 0..func_node.fnc.arity { 
                     // We have syntactic function constraints for this function
@@ -215,7 +215,7 @@ impl TreeSet {
             funcs: &'static [Function], terms: &'static [Terminal]) {
         if level >= depth {
             // Always a Terminal Node
-            if let Some(term_constraints) =
+            if let Some(ref term_constraints) =
                     func_node.fnc.opt_term_incl_constraints {
                 for i in 0..func_node.fnc.arity {
                     loop {
@@ -237,21 +237,25 @@ impl TreeSet {
         else {
             let c_depth = level+1;
 
-            if let Some(term_constraints) =
+            if let Some(ref term_constraints) =
                 func_node.fnc.opt_term_incl_constraints {
-                let func_constraints =
-                    func_node.fnc.opt_term_incl_constraints.unwrap();
-                for i in 0..func_node.fnc.arity {
-                    // Either a Function or Terminal Node
-                    let rnd_ft_node =
-                        Node::new_rnd_with_constraints(rng, funcs, terms,
-                            &term_constraints[i as usize],
-                            &func_constraints[i as usize]);
-                    let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
-                    if let FNode(ref mut fn_ref) = node {
-                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                        funcs, terms);
+                if let Some(ref func_constraints) =
+                    func_node.fnc.opt_term_incl_constraints {
+                    for i in 0..func_node.fnc.arity {
+                        // Either a Function or Terminal Node
+                        let rnd_ft_node =
+                            Node::new_rnd_with_constraints(rng, funcs, terms,
+                                &term_constraints[i as usize],
+                                &func_constraints[i as usize]);
+                        let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+                        if let FNode(ref mut fn_ref) = node {
+                            Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
+                                            funcs, terms);
+                        }
                     }
+                }
+                else {
+                    panic!("expected func_constraints");
                 }
             } else {
                 for i in 0..func_node.fnc.arity {
@@ -540,10 +544,10 @@ impl TreeSet {
 
         let node:  &mut Node;
         let b_type: BranchType;
-        let arg_num: usize = 0;  // assigned below if opt_ploc is not None.
+        let mut arg_num: usize = 0;  // assigned below if opt_ploc is not None.
 
-        let opt_func_incl_constraints = None;
-        let opt_term_incl_constraints = None;
+        let mut opt_func_incl_constraints: Option<&Vec<Vec<u8>>> = None;
+        let mut opt_term_incl_constraints: Option<&Vec<Vec<u8>>> = None;
 
         // For syntactic constraints we need to know the parent of the selected node
         // point as well as the arg number. These two things are needed to obtain
@@ -555,15 +559,17 @@ impl TreeSet {
                 b_type = l_btype;
                 node = l_node;
 
-                if let Some((pnode, l_arg_num)) = opt_ploc {
+                if let Some((fnc, l_arg_num)) = opt_ploc {
                     // note that only when parent is root, above condition fails.
-                    if let FNode(parent_func_node) = pnode {
-                        opt_func_incl_constraints =
-                            parent_func_node.fnc.opt_func_incl_constraints;
-                        opt_term_incl_constraints =
-                            parent_func_node.fnc.opt_term_incl_constraints;
-                        arg_num = l_arg_num;
+                    if let Some(ref func_incl_constraint) =
+                        fnc.opt_func_incl_constraints {
+                        opt_func_incl_constraints = Some(func_incl_constraint);
                     }
+                    if let Some(ref term_incl_constraint) =
+                        fnc.opt_term_incl_constraints {
+                        opt_term_incl_constraints = Some(term_incl_constraint);
+                    }
+                    arg_num = l_arg_num;
                 }
 
                 node
