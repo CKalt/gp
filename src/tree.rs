@@ -365,11 +365,10 @@ pub struct Function {
     // allowed (included in the function or terminal set)
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.
-                    
     #[cfg(gpopt_syntactic_constraints="yes")] 
-    pub opt_func_incl_constraints: Option<Vec<Vec<u8>>>,  // [argnum][fids]
-    #[cfg(gpopt_syntactic_constraints="yes")] 
-    pub opt_term_incl_constraints: Option<Vec<Vec<u8>>>,  // [argnum][tids]
+    pub opt_incl_constraints: Option<(
+        Vec<Vec<u8>>,   // func constraints [argnum][tids]
+        Vec<Vec<u8>>,)>, // term constraints [argnum][tids]
 }
 
 pub struct Terminal {

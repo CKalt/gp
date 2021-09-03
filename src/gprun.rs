@@ -174,16 +174,18 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 3,
             code: function_if,
             opt_adf_num: None,
-            opt_func_incl_constraints: Some(vec![
-                vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
-                vec![0],         // arg1: IF
-                vec![0],         // arg2: IF
-            ]),
-            opt_term_incl_constraints: Some(vec![
-                vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
-                vec![0,1,2],                   // arg1: I,L,NIL
-                vec![0,1,2],                   // arg2: I,L,NIL
-            ]),
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: Some((
+                vec![
+                    vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
+                    vec![0],         // arg1: IF
+                    vec![0],         // arg2: IF
+                ],
+                vec![
+                    vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
+                    vec![0,1,2],                   // arg1: I,L,NIL
+                    vec![0,1,2],                   // arg2: I,L,NIL
+                ])), 
         },
         Function {
             fid:  1u8,
@@ -191,8 +193,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_and,
             opt_adf_num: None,
-            opt_func_incl_constraints: None,
-            opt_term_incl_constraints: None,
+            opt_incl_constraints: None,
         },
         Function {
             fid:  2u8,
@@ -200,8 +201,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_or,
             opt_adf_num: None,
-            opt_func_incl_constraints: None,
-            opt_term_incl_constraints: None,
+            opt_incl_constraints: None,
         },
         Function {
             fid:  3u8,
@@ -209,8 +209,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_not,
             opt_adf_num: None,
-            opt_func_incl_constraints: None,
-            opt_term_incl_constraints: None,
+            opt_incl_constraints: None,
         },
         Function {
             fid:  4u8,
@@ -218,8 +217,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_homing,
             opt_adf_num: None,
-            opt_func_incl_constraints: None,
-            opt_term_incl_constraints: None,
+            opt_incl_constraints: None,
         },
     ];
     vec![funcs]
