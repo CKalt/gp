@@ -540,8 +540,7 @@ impl TreeSet {
         let b_type: BranchType;
         let mut arg_num: usize = 0;  // assigned below if opt_ploc is not None.
 
-        let mut opt_incl_constraints: 
-            Option<&(Vec<Vec<u8>>,Vec<Vec<u8>>)> = None;
+        let mut opt_incl_constraints: Option<&NodeConsFTPair> = None;
 
         // For syntactic constraints we need to know the parent of the selected node
         // point as well as the arg number. These two things are needed to obtain
