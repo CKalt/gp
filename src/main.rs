@@ -125,7 +125,7 @@ fn run(rng: &mut GpRng, run_number: i32) -> Option<Winner> {
     trees.gen = 0u16;
     let mut header_need: bool = true;
     // when gen == CONTROL.G we are done because gen starts with 0
-    // ie. we do not process gen == 51 if G==51
+    // i.e. we do not process gen == 51 if G==51
     while trees.gen < CONTROL.G && trees.winning_index == None {
         let hits = trees.exec_all();
         if trees.winning_index != None {
