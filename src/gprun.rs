@@ -108,30 +108,34 @@ impl<'a> RunContext<'_> {
     // compute error for a single fitness case
     // a value of 0 is treated as a hit
     pub fn compute_error(&self, _result: GpType) -> GpRaw {
-        match self.opt_run_result.as_ref().unwrap() {
-            IsLetter('I') => {
-                if self.cur_fc_index == FITNESS_CASE_I_INDEX {
-                    0     // true positive
-                } else {
-                    1     // false positive or wrong positive
-                }
-            },
-            IsLetter('L') => {
-                if self.cur_fc_index == FITNESS_CASE_L_INDEX {
-                    0   // true positive
-                } else {
-                    1   // false positive or wrong positive
-                }
-            },
-            _ => {
-                if self.cur_fc_index == FITNESS_CASE_I_INDEX {
-                    23  // false negative
-                } else if self.cur_fc_index == FITNESS_CASE_L_INDEX {
-                    23  // false negative
-                } else {
-                    0   // true negative
+        if let Some(run_result) = &self.opt_run_result {
+            match run_result {
+                IsLetter('I') => {
+                    if self.cur_fc_index == FITNESS_CASE_I_INDEX {
+                        0     // true positive
+                    } else {
+                        1     // false positive or wrong positive
+                    }
+                },
+                IsLetter('L') => {
+                    if self.cur_fc_index == FITNESS_CASE_L_INDEX {
+                        0   // true positive
+                    } else {
+                        1   // false positive or wrong positive
+                    }
+                },
+                _ => {
+                    if self.cur_fc_index == FITNESS_CASE_I_INDEX {
+                        23  // false negative
+                    } else if self.cur_fc_index == FITNESS_CASE_L_INDEX {
+                        23  // false negative
+                    } else {
+                        0   // true negative
+                    }
                 }
             }
+        } else {
+            panic!("expected run_result got None");
         }
     }
 }
@@ -468,7 +472,10 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
 }
 
 // FitnessCase
-pub type FitnessCase = [[bool; 4]; 6];
+const LETTER_WIDTH:  i8 = 4;
+const LETTER_HEIGHT: i8 = 6;
+pub type FitnessCase =
+    [[bool; LETTER_WIDTH as usize]; LETTER_HEIGHT as usize];
 pub trait FitnessCaseTrait {
     /// get pixel value for fixed point at `pos` tuple (x,y)
     fn get_absolute_pixel(&self, pos: (i8, i8)) -> bool;
@@ -487,15 +494,21 @@ impl FitnessCaseTrait for FitnessCase {
     }
     /// get pixel relatative to RunContext cur_pos
     fn get_relative_pixel(&self, rc: &RunContext, delta: (i8, i8)) -> bool {
-        let pos = (rc.cur_pos.0 + delta.0, rc.cur_pos.1 + delta.1);
+        let pos =
+            ((rc.cur_pos.0 + delta.0 + LETTER_WIDTH) % LETTER_WIDTH,
+            (rc.cur_pos.1 + delta.1 + LETTER_HEIGHT) % LETTER_HEIGHT);
+
         self.get_absolute_pixel(pos)
     }
     /// move cur_pos for RunContext to point relative to its current position
     /// get pixel at that new location.
     fn move_relative_pixel(&self, rc: &mut RunContext, delta: (i8, i8))
             -> bool {
-        rc.cur_pos.0 += delta.0;
-        rc.cur_pos.1 += delta.1;
+        rc.cur_pos.0 = (rc.cur_pos.0 + delta.0 + LETTER_WIDTH)
+            % LETTER_WIDTH;
+        rc.cur_pos.1 = (rc.cur_pos.1 + delta.1 + LETTER_HEIGHT) 
+            % LETTER_HEIGHT;
+
         self.get_absolute_pixel(rc.cur_pos)
     }
 }
