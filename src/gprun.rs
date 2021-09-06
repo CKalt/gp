@@ -14,6 +14,7 @@ pub type GpType = bool;
     
 #[cfg(gpopt_adf="yes")]
 pub const NUM_ADF: u8 = 5;
+
 #[cfg(gpopt_adf="yes")]
 pub const ADF_ARITY: u8 = 0;
 
@@ -135,7 +136,14 @@ impl<'a> RunContext<'_> {
                 }
             }
         } else {
-            panic!("expected run_result got None");
+            // treat like Nil
+            if self.cur_fc_index == FITNESS_CASE_I_INDEX {
+                23  // false negative
+            } else if self.cur_fc_index == FITNESS_CASE_L_INDEX {
+                23  // false negative
+            } else {
+                0   // true negative
+            }
         }
     }
 }
@@ -152,7 +160,7 @@ impl<'a> RunContext<'_> {
 fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     let mut args: Vec<GpType> = Vec::new();
     for b_i in 0..ADF_ARITY {
-        args.push(Tree::exec_node(rc, &func.branch[b_i]));
+        args.push(Tree::exec_node(rc, &func.branch[b_i as usize]));
     }
 
     let adf_num =
@@ -161,6 +169,7 @@ fn function_adf(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     rc.exec_adf(adf_num, &args)
 }
 
+#[cfg(not(gpopt_adf_arity="0"))]
 #[cfg(gpopt_adf="yes")]
 fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     match rc.opt_adf_args {
@@ -169,9 +178,8 @@ fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     }
 }
 
-#[cfg(gpopt_adf="no")]
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
-    let funcs = vec![
+    let mut funcs = vec![
         Function {
             fid:  0u8,
             name: "IF".to_string(),
@@ -197,6 +205,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_and,
             opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_incl_constraints: None,
         },
         Function {
@@ -205,6 +214,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 2,
             code: function_or,
             opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_incl_constraints: None,
         },
         Function {
@@ -213,6 +223,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_not,
             opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_incl_constraints: None,
         },
         Function {
@@ -221,9 +232,24 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             arity: 1,
             code: function_homing,
             opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_incl_constraints: None,
         },
     ];
+
+    for adf_num in 0..ADF_ARITY {
+        funcs.push(
+            Function {
+                fid:  5u8 + adf_num,
+                name: format!("ADF{}", adf_num),
+                arity: 0,
+                code: function_adf,
+                opt_adf_num: Some(adf_num as usize),
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                opt_incl_constraints: None,
+            }
+        );
+    }
     vec![funcs]
 }
 
@@ -262,7 +288,6 @@ fn function_homing(rc: &mut RunContext, func: &FunctionNode) -> GpType {
     val
 }
 
-#[cfg(gpopt_adf="no")]
 pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
     // Terminal Set: I,L, NIL, X, N, NE, E, SE, S, SW, W, NW, (GO-N),
     //    (GO-NE), (GO-E), (GO-SE), (GO-S), (GO-SW), (GO-W), (G-W),
@@ -294,27 +319,29 @@ pub fn get_terminals_for_result_branches() -> Vec<Vec<Terminal>> {
     vec![terms]
 }
 
-/// Ends program with run_result indicating Letter I
-fn terminal_i(rc: &mut RunContext, _term: &Terminal) -> GpType {
+/// assigns final run_result for program
+/// TODO : terminate program since result is known.
+fn set_run_result(rc: &mut RunContext, rr: IndividualRunResult) {
+    // set result if not already set, otherwise do nothing
     if let None = rc.opt_run_result {
-        rc.opt_run_result = Some(IsLetter('I'))
+        rc.opt_run_result = Some(rr);
     }
+}
+
+fn terminal_i(rc: &mut RunContext, _term: &Terminal) -> GpType {
+    set_run_result(rc, IsLetter('I'));
     true
 }
 
 /// Ends program with run_result indicating Letter L
 fn terminal_l(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    if let None = rc.opt_run_result {
-        rc.opt_run_result = Some(IsLetter('L'));
-    }
+    set_run_result(rc, IsLetter('L'));
     true
 }
 
 /// Ends program with run_result indicating Not Letter
 fn terminal_nil(rc: &mut RunContext, _term: &Terminal) -> GpType {
-    if let None = rc.opt_run_result {
-        rc.opt_run_result = Some(NotLetter);
-    }
+    set_run_result(rc, NotLetter);
     true
 }
 
@@ -419,7 +446,7 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
 #[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
     let mut branches: Vec<Vec<Function>> = Vec::new();
-    for b_i in 0..NUM_ADF {
+    for _b_i in 0..NUM_ADF {
         let funcs = vec![
             Function {
                 fid:  0u8,
@@ -427,6 +454,8 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                opt_incl_constraints: None,
             },
             Function {
                 fid:  1u8,
@@ -434,6 +463,8 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
                 arity: 2,
                 code: function_or,
                 opt_adf_num: None,
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                opt_incl_constraints: None,
             },
             Function {
                 fid:  2u8,
@@ -441,6 +472,8 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
                 arity: 1,
                 code: function_not,
                 opt_adf_num: None,
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                opt_incl_constraints: None,
             },
         ];
 
@@ -451,8 +484,8 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
 
 #[cfg(gpopt_adf="yes")]
 pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
-    let mut branches: Vec<Vec<Terminals>> = Vec::new();
-    for b_i in 0..NUM_ADF {
+    let mut branches: Vec<Vec<Terminal>> = Vec::new();
+    for _b_i in 0..NUM_ADF {
         // X, N, NE, E, SE, S, SW, W and NW
         let funcs = vec![
             Terminal::new(0, "X", terminal_x),

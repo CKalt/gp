@@ -80,7 +80,7 @@ lazy_static! {
             terms_rpb:          Box::new(get_terminals_for_result_branches()),
             funcs_fdb:          Box::new(get_functions_for_func_def_branches()),
             terms_fdb:          Box::new(get_terminals_for_func_def_branches()),
-            M:                  4000,      // Number of individuals in each generation
+            M:                  8000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree
             Dc:                 17,         // Maximum depth of S Expressions for a created tree
