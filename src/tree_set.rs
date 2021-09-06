@@ -90,6 +90,33 @@ impl TreeSet {
                 TreeBranch::new(FNode(result_branch_root)), None)
         }
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
+    fn gen_tree_full_method_r(rng: &mut GpRng,
+            func_node: &mut FunctionNode, level: u16, depth: u16,
+            funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>) {
+        if level >= depth {
+            for i in 0..func_node.fnc.arity {
+                // Always a Terminal Node
+                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                func_node.set_arg(i, TNode(rnd_tref));
+            }
+        } else {
+            let c_depth = level+1;
+            for i in 0..func_node.fnc.arity { 
+                // Always a Funciton Node
+                let rnd_fn = FunctionNode::new_rnd(rng, funcs);
+                let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
+
+                match *node {
+                    FNode(ref mut fn_ref) =>
+                        Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
+                                depth, funcs, terms),
+                    _ => panic!("expected FunctionNode"),
+                }
+            }
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>) {
@@ -210,6 +237,31 @@ impl TreeSet {
                 TreeBranch::new(FNode(result_branch_root)), None)
         }
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
+    fn gen_tree_grow_method_r(rng: &mut GpRng, 
+            func_node: &mut FunctionNode, level: u16, depth: u16,
+            funcs: &'static [Function], terms: &'static [Terminal]) {
+        if level >= depth {
+            for i in 0..func_node.fnc.arity {
+                // Always a Terminal Node
+                let rnd_tref = Terminal::get_rnd_ref(rng, terms);
+                func_node.set_arg(i, TNode(rnd_tref));
+            }
+        }
+        else {
+            let c_depth = level+1;
+            for i in 0..func_node.fnc.arity {
+                // Either a Function or Terminal Node
+                let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
+                let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
+                if let FNode(ref mut fn_ref) = node {
+                    Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
+                                    funcs, terms);
+                }
+            }
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static [Function], terms: &'static [Terminal]) {
