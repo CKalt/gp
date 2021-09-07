@@ -185,33 +185,6 @@ impl TreeSet {
             }
         }
     }
-    #[cfg(gpopt_syntactic_constraints="no")] 
-    fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
-        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
-        let mut result_branch_root =
-            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
-        Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
-                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
-
-        if CONTROL.terms_fdb.len() > 0 {
-            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
-            for i in 0..CONTROL.funcs_fdb.len() {
-                let mut func_def_branch_root =
-                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
-                Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
-                        2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
-                func_def_branches
-                    .push(TreeBranch::new(FNode(func_def_branch_root)));
-            }
-            Tree::new(
-                TreeBranch::new(FNode(result_branch_root)),
-                Some(func_def_branches))
-        } else {
-            Tree::new(
-                TreeBranch::new(FNode(result_branch_root)), None)
-        }
-    }
-    #[cfg(gpopt_syntactic_constraints="yes")] 
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
         let mut result_branch_root =
