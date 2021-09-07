@@ -138,7 +138,7 @@ impl Node {
             }
         }
     }
-    pub fn print(&self) {
+    pub fn print_node(&self) {
         self.print_r(0)
     }
     /// Print node recursively decending tree.
@@ -676,7 +676,7 @@ impl Tree {
         }
     }
     /// print tree
-    pub fn print(&self) {
+    pub fn print_tree(&self) {
         #[cfg(gpopt_trace="on")]
         {
         //    let count = get_log_count();
@@ -697,13 +697,13 @@ impl Tree {
                     func_def_branches.iter().enumerate() {
                 println!("\n-------------------\n");
                 println!("Function Def ADF{}:", adf_num);
-                func_def_branch.root.print();
+                func_def_branch.root.print_node();
             }
         }
                 
         println!("\n-------------------\n");
         println!("Result Branch0:");
-        self.result_branch.root.print();
+        self.result_branch.root.print_node();
         println!("");
     }
     /// get a random function node over all branches. return node index, branch
@@ -964,7 +964,7 @@ impl Tree {
     /// Execute a single tree for each fitness case, compute fitness and print
     /// results. Return true when tree is a winner, otherwise false.
     pub fn eval_one_tree(&mut self) -> bool {
-        self.print();
+        self.print_tree();
         let mut rc = RunContext::new();
         rc.prepare_run();
         rc.print_run_illustration("Before Run");

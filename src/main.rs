@@ -171,7 +171,7 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
     for i in 1..=10 {
         println!("=============\n| Trial {:3} |\n=============", i);
         let t = trees.get_rnd_tree(rng);
-        t.print();
+        t.print_tree();
 
         let (fi, bt, fnode) = t.get_rnd_function_node_ref_i(rng);
 
@@ -181,10 +181,10 @@ fn run_tests(rng: &mut GpRng, trees: &mut TreeSet) {
                 FunctionDefining(adf_num) => 
                     format!("Function Def ADF{}", adf_num),
             });
-        fnode.print();
+        fnode.print_node();
 
         let (_, tnode) = t.get_rnd_terminal_node_ref(rng);
-        tnode.print();
+        tnode.print_node();
         println!("\n--------");
     }
 }

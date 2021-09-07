@@ -392,7 +392,7 @@ impl TreeSet {
     }
     pub fn print(&self) {
         for tree in self.tree_vec.iter() {
-            tree.print();
+            tree.print_tree();
         }
     }
     /// for each tree compute the n_functions, n_terminals
