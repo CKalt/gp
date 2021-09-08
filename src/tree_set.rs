@@ -66,12 +66,21 @@ impl TreeSet {
     }
     fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+
+        #[cfg(gpopt_syntactic_constraints="no")] 
+        let rb_f_set: &FSet = &CONTROL.funcs_rpb;
+        #[cfg(gpopt_syntactic_constraints="yes")] 
         let rb_f_set: &FSet = 
             if let Some(f_set) = &CONTROL.opt_rpb_root_cnst {
                 &f_set
             } else {
                 &CONTROL.funcs_rpb
             };
+
+
+
+
+
         let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
 
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
@@ -191,14 +200,19 @@ impl TreeSet {
     }
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+
+        #[cfg(gpopt_syntactic_constraints="no")] 
+        let rb_f_set: &FSet = &CONTROL.funcs_rpb;
+ 
+        #[cfg(gpopt_syntactic_constraints="yes")] 
         let rb_f_set: &FSet = 
             if let Some(f_set) = &CONTROL.opt_rpb_root_cnst {
                 &f_set
             } else {
                 &CONTROL.funcs_rpb
             };
-        let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
 
+       let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
 

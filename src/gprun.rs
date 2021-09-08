@@ -505,6 +505,7 @@ pub fn get_terminals_for_func_def_branches() -> TSet {
     branches
 }
 
+#[cfg(gpopt_syntactic_constraints="yes")] 
 pub fn get_functions_for_result_root_constraints() ->
         Option<Box<FSet>> {
     Some(Box::new(
