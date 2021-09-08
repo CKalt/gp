@@ -6,12 +6,22 @@ use crate::tree::*;
 
 pub type TreeDepth = u16;
 
+
+pub type FSet = Vec<Vec<Function>>;
+pub type TSet = Vec<Vec<Terminal>>;
+pub type FTSet = (FSet, TSet);
+
 #[allow(non_snake_case)]
 pub struct Control {
-    pub funcs_rpb:              Box<Vec<Vec<Function>>>,
-    pub terms_rpb:              Box<Vec<Vec<Terminal>>>,
-    pub funcs_fdb:              Box<Vec<Vec<Function>>>,
-    pub terms_fdb:              Box<Vec<Vec<Terminal>>>,
+    pub funcs_rpb:              Box<FSet>,
+    pub terms_rpb:              Box<TSet>,
+    pub funcs_fdb:              Box<FSet>,
+    pub terms_fdb:              Box<TSet>,
+
+    /// syntactic constraints
+    /// Result branch root constraint. Optional FSet
+    /// for just root node. (eg. used for Koza II Chpt 15)
+    pub opt_rpb_root_cnst:      Option<Box<FSet>>,
     pub M:   usize,             // Number of individuals in each generation
     pub G:   u16,               // Number of generations to run
     pub Di:  TreeDepth,         // Maximum depth of S Expressions for an initial tree
