@@ -4,6 +4,7 @@ use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
+use crate::control::*;
 
 use crate::fitness::GpFloat;
 use crate::fitness::GpFitness;
@@ -432,20 +433,20 @@ fn terminal_go_nw(rc: &mut RunContext, _term: &Terminal) -> GpType {
 }
 
 #[cfg(gpopt_adf="no")]
-pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
-    let branches: Vec<Vec<Function>> = Vec::new();
+pub fn get_functions_for_func_def_branches() -> FSet {
+    let branches: FSet = Vec::new();
     branches
 }
 
 #[cfg(gpopt_adf="no")]
-pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
-    let branches: Vec<Vec<Terminal>> = Vec::new();
+pub fn get_terminals_for_func_def_branches() -> TSet {
+    let branches: TSet = Vec::new();
     branches
 }
 
 #[cfg(gpopt_adf="yes")]
-pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
-    let mut branches: Vec<Vec<Function>> = Vec::new();
+pub fn get_functions_for_func_def_branches() -> FSet {
+    let mut branches: FSet = Vec::new();
     for _b_i in 0..NUM_ADF {
         let funcs = vec![
             Function {
@@ -483,8 +484,8 @@ pub fn get_functions_for_func_def_branches() -> Vec<Vec<Function>> {
 }
 
 #[cfg(gpopt_adf="yes")]
-pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
-    let mut branches: Vec<Vec<Terminal>> = Vec::new();
+pub fn get_terminals_for_func_def_branches() -> TSet {
+    let mut branches: TSet = Vec::new();
     for _b_i in 0..NUM_ADF {
         // X, N, NE, E, SE, S, SW, W and NW
         let funcs = vec![
@@ -502,6 +503,34 @@ pub fn get_terminals_for_func_def_branches() -> Vec<Vec<Terminal>> {
         branches.push(funcs);
     }
     branches
+}
+
+pub fn get_functions_for_result_root_constraints() ->
+        Option<Box<FSet>> {
+    Some(Box::new(
+        vec![
+            vec![
+                Function {
+                    fid:  0u8,
+                    name: "IF".to_string(),
+                    arity: 3,
+                    code: function_if,
+                    opt_adf_num: None,
+                    #[cfg(gpopt_syntactic_constraints="yes")] 
+                    opt_incl_constraints: Some((
+                        vec![
+                            vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
+                            vec![0],         // arg1: IF
+                            vec![0],         // arg2: IF
+                        ],
+                        vec![
+                            vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
+                            vec![0,1,2],                   // arg1: I,L,NIL
+                            vec![0,1,2],                   // arg2: I,L,NIL
+                        ])), 
+                },
+            ]
+        ]))
 }
 
 // FitnessCase

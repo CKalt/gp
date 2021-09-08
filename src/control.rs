@@ -6,10 +6,15 @@ use crate::tree::*;
 
 pub type TreeDepth = u16;
 
-
-pub type FSet = Vec<Vec<Function>>;
-pub type TSet = Vec<Vec<Terminal>>;
-pub type FTSet = (FSet, TSet);
+// FSet and TSet define vector of vectors.
+// Outside Vector indexed by branch number.
+//   for Function defining branches this would be for
+//   ADF0, ADF1...ADFN
+//   for Result producint branches this would be for
+//   RPB0, RPB1...RPBN
+pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
+pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
+//pub type FTSet = (FSet, TSet);
 
 #[allow(non_snake_case)]
 pub struct Control {
@@ -90,6 +95,7 @@ lazy_static! {
             terms_rpb:          Box::new(get_terminals_for_result_branches()),
             funcs_fdb:          Box::new(get_functions_for_func_def_branches()),
             terms_fdb:          Box::new(get_terminals_for_func_def_branches()),
+            opt_rpb_root_cnst:  get_functions_for_result_root_constraints(),
             M:                  8000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
             Di:                 6,          // Maximum depth of S Expressions for an initial tree
