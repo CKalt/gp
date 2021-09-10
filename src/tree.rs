@@ -60,21 +60,17 @@ impl Node {
     #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static [Function], terms: &'static [Terminal],
-            term_constraints: &Vec<u8>, func_constraints: &Vec<u8>) -> Node {
-        let num_ft = funcs.len() + terms.len();
-        loop {
-            let r = rng.gen_range(0..num_ft as i32) as u8;
-            if r < terms.len() as u8 {
-                if term_constraints.iter().any(|&x| x == terms[r as usize].tid) {
-                    return TNode(&terms[r as usize])
-                }
-            }
-            else {
-                let rand_fid = r - terms.len() as u8;
-                if func_constraints.iter().any(|&x| x == rand_fid) {
-                    return FNode(FunctionNode::new(rand_fid, funcs))
-                }
-            }
+            constraints: &NodeConsFTPair) -> Node {
+        let (func_cons, term_cons) = *constraints;
+        let num_ft = func_cons.len() + term_cons.len();
+        let r = rng.gen_range(0..num_ft);
+        if r < term_cons.len() {
+            let r_tid = term_cons[r] as usize;
+            TNode(&terms[r_tid])
+        }
+        else {
+            let r_fid = func_cons[r - term_cons.len()];
+            FNode(FunctionNode::new(r_fid, funcs))
         }
     }
     // performs a deep (recusrive) build of node tree from parsed input.
@@ -367,6 +363,8 @@ type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
 type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
 #[cfg(gpopt_syntactic_constraints="yes")] 
 pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
+#[cfg(gpopt_syntactic_constraints="yes")] 
+pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
 
 pub struct Function {
     #[allow(dead_code)]

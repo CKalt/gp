@@ -121,8 +121,9 @@ impl TreeSet {
             }
         } else {
             let c_depth = level+1;
+            // Full method always a Funciton Node at this c_depth level
             for i in 0..func_node.fnc.arity { 
-                // Always a Funciton Node
+                // Full method always a Funciton Node at this c_depth level
                 let rnd_fn = FunctionNode::new_rnd(rng, funcs);
                 let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
 
@@ -140,7 +141,6 @@ impl TreeSet {
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>,
             opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
-
         // If the current func_node has constraints, use them,
         // otherwise fallback to previously used constraints if any.
         let opt_constraints =
@@ -156,9 +156,10 @@ impl TreeSet {
         if level >= depth {
             // Always a Terminal Node
             if let Some((_, ref term_constraints)) = opt_constraints {
+                assert_ne!(term_constraints.len(), 0);
                 for i in 0..func_node.fnc.arity {
                     // We have syntactic terminal constraints for this function
-                    // so loop until the randomly selected terminal qualifies.
+                    // so get the random node with get_rnd_ref_with_constraints
                     let rnd_tref =
                         Terminal::get_rnd_ref_with_constraints(rng, terms,
                             &term_constraints[i as usize]);
@@ -174,7 +175,7 @@ impl TreeSet {
             }
         } else {
             let c_depth = level+1;
-            // Always a Function Node
+            // Full method always a Funciton Node at this c_depth level
             if let Some((ref func_constraints,_)) = opt_constraints {
                 for i in 0..func_node.fnc.arity { 
                     // We have syntactic function constraints for this function
@@ -222,17 +223,26 @@ impl TreeSet {
                 &CONTROL.funcs_rpb
             };
 
-       let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
+        let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
+        #[cfg(gpopt_syntactic_constraints="no")] 
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
+        #[cfg(gpopt_syntactic_constraints="yes")] 
+        Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0], &None);
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+                #[cfg(gpopt_syntactic_constraints="no")] 
                 Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
                         2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
+                        2, depth, &CONTROL.funcs_fdb[i],
+                        &CONTROL.terms_fdb[i], &None);
                 func_def_branches
                     .push(TreeBranch::new(FNode(func_def_branch_root)));
             }
@@ -258,7 +268,7 @@ impl TreeSet {
         else {
             let c_depth = level+1;
             for i in 0..func_node.fnc.arity {
-                // Either a Function or Terminal Node
+                // For Grow method it's either a Function or Terminal Node here
                 let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
                 let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                 if let FNode(ref mut fn_ref) = node {
@@ -271,43 +281,51 @@ impl TreeSet {
     #[cfg(gpopt_syntactic_constraints="yes")] 
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
-            funcs: &'static [Function], terms: &'static [Terminal]) {
+            funcs: &'static [Function], terms: &'static [Terminal],
+            opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
+        // If the current func_node has constraints, use them,
+        // otherwise fallback to previously used constraints if any.
+        let opt_constraints =
+            if let Some(_) = func_node.fnc.opt_constraints {
+                &func_node.fnc.opt_constraints
+            } else if let Some(_) = *opt_prev_constraints {
+                opt_prev_constraints
+            }
+            else {
+                &None
+            };
+            
         if level >= depth {
             // Always a Terminal Node
-            if let Some((_, ref term_constraints)) =
-                    func_node.fnc.opt_constraints {
+            if let Some((_, ref term_constraints)) = opt_constraints {
+                assert_ne!(term_constraints.len(), 0);
                 for i in 0..func_node.fnc.arity {
-                    loop {
-                        // pick random terminals until one qualifies
-                        let rnd_tref = Terminal::get_rnd_ref(rng, terms);
-                        if term_constraints[i as usize].iter().any(|&x| x == rnd_tref.tid) {
-                            func_node.set_arg(i, TNode(rnd_tref));
-                            break;
-                        }
-                    }
+                    // We have syntactic terminal constraints for this function
+                    // so get the random node with get_rnd_ref_with_constraints
+                    let rnd_tref =
+                        Terminal::get_rnd_ref_with_constraints(rng, terms,
+                            &term_constraints[i as usize]);
+                    func_node.set_arg(i, TNode(rnd_tref));
                 }
             } else {
+                // No terminal constraints so anything in terminal set (terms)
+                // is allowed.
                 for i in 0..func_node.fnc.arity {
                     let rnd_tref = Terminal::get_rnd_ref(rng, terms);
                     func_node.set_arg(i, TNode(rnd_tref));
                 }
             }
-        }
-        else {
+        } else {
             let c_depth = level+1;
-
-            if let Some((ref term_constraints, ref func_constraints)) =
-                func_node.fnc.opt_constraints {
+            if let Some(ref constraints) = opt_constraints {
                 for i in 0..func_node.fnc.arity {
                     // Either a Function or Terminal Node
-                    let rnd_ft_node =
-                        Node::new_rnd_with_constraints(rng, funcs, terms,
-                            &term_constraints[i as usize],
-                            &func_constraints[i as usize]);
+                    let rnd_ft_node = Node::new_rnd_with_constraints(rng,
+                                funcs, terms, constraints);
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
-                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                        funcs, terms);
+                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth,
+                                depth, funcs, terms, opt_constraints);
                     }
                 }
             } else {
@@ -316,8 +334,8 @@ impl TreeSet {
                     let rnd_ft_node = Node::new_rnd(rng, funcs, terms);
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
-                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                        funcs, terms);
+                        Self::gen_tree_grow_method_r(rng, fn_ref, c_depth,
+                                depth, funcs, terms, opt_constraints);
                     }
                 }
             }
