@@ -60,7 +60,7 @@ impl Node {
     #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static [Function], terms: &'static [Terminal],
-            constraints: &NodeConsFTPair) -> Node {
+            constraints: &FTConsPair) -> Node {
         let (func_cons, term_cons) = *constraints;
         let num_ft = func_cons.len() + term_cons.len();
         let r = rng.gen_range(0..num_ft);
@@ -358,13 +358,10 @@ impl Node {
 pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
 pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
 //pub type FTSet = (FSet, TSet);
-#[cfg(gpopt_syntactic_constraints="yes")] 
-type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
-type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
-#[cfg(gpopt_syntactic_constraints="yes")] 
-pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
-#[cfg(gpopt_syntactic_constraints="yes")] 
-pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
+
+type ArgFTConsPairs = Vec<FTConsPair>;
+type FTConsPair = (FTConstraints, FTConstraints);
+type FTConstraints = Vec<u8>;
 
 pub struct Function {
     #[allow(dead_code)]
@@ -375,14 +372,14 @@ pub struct Function {
     pub opt_adf_num: Option<usize>, // if present, identifies adf number [0..n]
                                     // index into RunContext::opt_func_def_branches
 
-    // following two fields define optional syntactic constraints that
-    // when exist, define vector for each arg (i.e. 0..arity)
-    // each holding a vector of the subset of allowed fids or tids
+    // following field defines optional syntactic constraints that
+    // when exist, define vector of args (i.e. 0..arity)
+    // each holding a pair of vectors for subset of allowed fids or tids
     // allowed (included in the function or terminal set)
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.
     #[cfg(gpopt_syntactic_constraints="yes")] 
-    pub opt_constraints: Option<ArgNodeConsFTPair>,
+    pub opt_arg_constraints: Option<ArgFTConsPairs>,
 }
 
 pub struct Terminal {
@@ -407,7 +404,7 @@ impl Terminal {
     }
     #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn get_rnd_ref_with_constraints(rng: &mut GpRng,
-            terms: &'static [Terminal], constraints: &Vec<u8>)
+            terms: &'static [Terminal], constraints: &FTConstraints)
                 -> &'static Terminal {
         let tc_id = rng.gen_range(0..constraints.len() as i32) as usize;
         let t_id = constraints[tc_id] as usize;

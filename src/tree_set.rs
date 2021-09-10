@@ -140,14 +140,14 @@ impl TreeSet {
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>,
-            opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
+            opt_prev_arg_constraints: &Option<ArgFTConsPairs>) {
         // If the current func_node has constraints, use them,
         // otherwise fallback to previously used constraints if any.
-        let opt_constraints =
-            if let Some(_) = func_node.fnc.opt_constraints {
+        let opt_arg_constraints =
+            if let Some(_) = func_node.fnc.opt_arg_constraints {
                 &func_node.fnc.opt_constraints
-            } else if let Some(_) = *opt_prev_constraints {
-                opt_prev_constraints
+            } else if let Some(_) = *opt_pre_argv_constraints {
+                opt_prev_arg_constraints
             }
             else {
                 &None
@@ -155,14 +155,15 @@ impl TreeSet {
             
         if level >= depth {
             // Always a Terminal Node
-            if let Some((_, ref term_constraints)) = opt_constraints {
-                assert_ne!(term_constraints.len(), 0);
+            if let Some(ref arg_constraints)) = opt_arg_constraints {
                 for i in 0..func_node.fnc.arity {
+                    let term_constraints = arg_constraints[i].1;
+                    assert_ne!(term_constraints.len(), 0);
                     // We have syntactic terminal constraints for this function
                     // so get the random node with get_rnd_ref_with_constraints
                     let rnd_tref =
                         Terminal::get_rnd_ref_with_constraints(rng, terms,
-                            &term_constraints[i as usize]);
+                            &term_constraints);
                     func_node.set_arg(i, TNode(rnd_tref));
                 }
             } else {
@@ -176,18 +177,22 @@ impl TreeSet {
         } else {
             let c_depth = level+1;
             // Full method always a Funciton Node at this c_depth level
-            if let Some((ref func_constraints,_)) = opt_constraints {
+            if let Some(ref arg_constraints) = opt_arg_constraints {
                 for i in 0..func_node.fnc.arity { 
+                    let func_constraints = arg_constraints[i].0;
+                    assert_ne!(func_constraints.len(), 0);
+
                     // We have syntactic function constraints for this function
-                    // so loop until the randomly selected FunctionNode qualifies
+                    // so create random function node constrainted by 
+                    // func_constraints
                     let rnd_fn = FunctionNode::new_rnd_with_constraints(
-                                rng, funcs, &func_constraints[i as usize]);
+                                rng, funcs, &func_constraints);
 
                     let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
                     match *node {
                         FNode(ref mut fn_ref) =>
                             Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
-                                    depth, funcs, terms, opt_constraints),
+                                    depth, funcs, terms, opt_arg_constraints),
                         _ => panic!("expected FunctionNode"),
                     }
                 }
@@ -202,7 +207,7 @@ impl TreeSet {
                     match *node {
                         FNode(ref mut fn_ref) =>
                             Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
-                                    depth, funcs, terms, opt_constraints),
+                                    depth, funcs, terms, opt_arg_constraints),
                         _ => panic!("expected FunctionNode"),
                     }
                 }

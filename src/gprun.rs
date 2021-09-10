@@ -188,17 +188,21 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_if,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_constraints: Some((
+            opt_arg_constraints: Some(
                 vec![
-                    vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
-                    vec![0],         // arg1: IF
-                    vec![0],         // arg2: IF
-                ],
-                vec![
-                    vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
-                    vec![0,1,2],                   // arg1: I,L,NIL
-                    vec![0,1,2],                   // arg2: I,L,NIL
-                ])), 
+                    ( // arg0
+                        vec![1,2,3,4], // funcs: AND,OR,NOT,HOMING
+                        vec![12,13,14,15,16,17,18,19], // terms: GON, GONE...GONW
+                    ),
+                    ( // arg1
+                        vec![0], // funcs: IF
+                        vec![0,1,2], // terms: I,L,NIL
+                    ),
+                    ( // arg1
+                        vec![0], // funcs: IF
+                        vec![0,1,2], // terms: I,L,NIL
+                    ),
+                ]),
         },
         Function {
             fid:  1u8,
