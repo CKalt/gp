@@ -4,7 +4,7 @@ use crate::tree::Function;
 use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
-use crate::control::*;
+use crate::tree::{FSet,TSet};
 
 use crate::fitness::GpFloat;
 use crate::fitness::GpFitness;
@@ -188,7 +188,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_if,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_incl_constraints: Some((
+            opt_constraints: Some((
                 vec![
                     vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
                     vec![0],         // arg1: IF
@@ -207,7 +207,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_and,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_incl_constraints: None,
+            opt_constraints: None,
         },
         Function {
             fid:  2u8,
@@ -216,7 +216,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_or,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_incl_constraints: None,
+            opt_constraints: None,
         },
         Function {
             fid:  3u8,
@@ -225,7 +225,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_not,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_incl_constraints: None,
+            opt_constraints: None,
         },
         Function {
             fid:  4u8,
@@ -234,7 +234,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_homing,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_incl_constraints: None,
+            opt_constraints: None,
         },
     ];
 
@@ -247,7 +247,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
                 code: function_adf,
                 opt_adf_num: Some(adf_num as usize),
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_incl_constraints: None,
+                opt_constraints: None,
             }
         );
     }
@@ -456,7 +456,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_or,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_incl_constraints: None,
+                opt_constraints: None,
             },
             Function {
                 fid:  1u8,
@@ -465,7 +465,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_or,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_incl_constraints: None,
+                opt_constraints: None,
             },
             Function {
                 fid:  2u8,
@@ -474,7 +474,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_not,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_incl_constraints: None,
+                opt_constraints: None,
             },
         ];
 
@@ -518,7 +518,7 @@ pub fn get_functions_for_result_root_constraints() ->
                     code: function_if,
                     opt_adf_num: None,
                     #[cfg(gpopt_syntactic_constraints="yes")] 
-                    opt_incl_constraints: Some((
+                    opt_constraints: Some((
                         vec![
                             vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
                             vec![0],         // arg1: IF
