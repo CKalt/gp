@@ -145,8 +145,8 @@ impl TreeSet {
         // otherwise fallback to previously used constraints if any.
         let opt_arg_constraints =
             if let Some(_) = func_node.fnc.opt_arg_constraints {
-                &func_node.fnc.opt_constraints
-            } else if let Some(_) = *opt_pre_argv_constraints {
+                &func_node.fnc.opt_arg_constraints
+            } else if let Some(_) = *opt_prev_arg_constraints {
                 opt_prev_arg_constraints
             }
             else {
@@ -155,7 +155,7 @@ impl TreeSet {
             
         if level >= depth {
             // Always a Terminal Node
-            if let Some(ref arg_constraints)) = opt_arg_constraints {
+            if let Some(ref arg_constraints) = opt_arg_constraints {
                 for i in 0..func_node.fnc.arity {
                     let term_constraints = arg_constraints[i].1;
                     assert_ne!(term_constraints.len(), 0);
@@ -287,14 +287,14 @@ impl TreeSet {
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static [Function], terms: &'static [Terminal],
-            opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
+            opt_prev_arg_constraints: &Option<ArgFTConsPairs>) {
         // If the current func_node has constraints, use them,
         // otherwise fallback to previously used constraints if any.
-        let opt_constraints =
-            if let Some(_) = func_node.fnc.opt_constraints {
-                &func_node.fnc.opt_constraints
-            } else if let Some(_) = *opt_prev_constraints {
-                opt_prev_constraints
+        let opt_arg_constraints =
+            if let Some(_) = func_node.fnc.opt_arg_constraints {
+                &func_node.fnc.opt_arg_constraints
+            } else if let Some(_) = *opt_prev_arg_constraints {
+                opt_prev_arg_constraints
             }
             else {
                 &None
@@ -302,14 +302,15 @@ impl TreeSet {
             
         if level >= depth {
             // Always a Terminal Node
-            if let Some((_, ref term_constraints)) = opt_constraints {
-                assert_ne!(term_constraints.len(), 0);
+            if let Some(arg_constraints) = opt_arg_constraints {
                 for i in 0..func_node.fnc.arity {
+                    let term_constraints = arg_constraints[i].1;
+                    assert_ne!(term_constraints.len(), 0);
                     // We have syntactic terminal constraints for this function
                     // so get the random node with get_rnd_ref_with_constraints
                     let rnd_tref =
                         Terminal::get_rnd_ref_with_constraints(rng, terms,
-                            &term_constraints[i as usize]);
+                            &term_constraints);
                     func_node.set_arg(i, TNode(rnd_tref));
                 }
             } else {
@@ -322,15 +323,16 @@ impl TreeSet {
             }
         } else {
             let c_depth = level+1;
-            if let Some(ref constraints) = opt_constraints {
+            if let Some(ref arg_constraints) = opt_arg_constraints {
                 for i in 0..func_node.fnc.arity {
                     // Either a Function or Terminal Node
+                    let constraints = arg_constraints[i];
                     let rnd_ft_node = Node::new_rnd_with_constraints(rng,
-                                funcs, terms, constraints);
+                                funcs, terms, &constraints);
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
                         Self::gen_tree_grow_method_r(rng, fn_ref, c_depth,
-                                depth, funcs, terms, opt_constraints);
+                                depth, funcs, terms, opt_arg_constraints);
                     }
                 }
             } else {
@@ -340,7 +342,7 @@ impl TreeSet {
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
                         Self::gen_tree_grow_method_r(rng, fn_ref, c_depth,
-                                depth, funcs, terms, opt_constraints);
+                                depth, funcs, terms, opt_arg_constraints);
                     }
                 }
             }
@@ -622,11 +624,11 @@ impl TreeSet {
         let b_type: BranchType;
         let mut arg_num: usize = 0;  // assigned below if opt_ploc is not None.
 
-        let mut opt_constraints: Option<&ArgNodeConsFTPair> = None;
+        let mut opt_arg_constraints: Option<&ArgFTConsPairs> = None;
 
         // For syntactic constraints we need to know the parent of the selected node
         // point as well as the arg number. These two things are needed to obtain
-        // the correct constraints from the opt_constraints vector pair.
+        // the correct constraints from the opt_arg_constraints vector.
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let (l_btype, (l_node, opt_ploc)) = t1.get_rnd_function_node_ref_ploc(rng);
@@ -635,9 +637,10 @@ impl TreeSet {
 
                 if let Some((fnc, l_arg_num)) = opt_ploc {
                     // note that only when parent is root, above condition fails.
-                    if let Some(ref constraints) =
-                        fnc.opt_constraints {
-                        opt_constraints = Some(constraints);
+                    // because all other nodes have a parent node.
+                    if let Some(ref arg_constraints) =
+                        fnc.opt_arg_constraints {
+                        opt_arg_constraints = Some(arg_constraints);
                     }
                     arg_num = l_arg_num;
                 }

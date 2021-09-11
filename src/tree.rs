@@ -60,7 +60,7 @@ impl Node {
     #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static [Function], terms: &'static [Terminal],
-            constraints: &FTConsPair) -> Node {
+            constraints: &FTConstraints) -> Node {
         let (func_cons, term_cons) = *constraints;
         let num_ft = func_cons.len() + term_cons.len();
         let r = rng.gen_range(0..num_ft);
@@ -359,7 +359,7 @@ pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
 pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
 //pub type FTSet = (FSet, TSet);
 
-type ArgFTConsPairs = Vec<FTConsPair>;
+pub type ArgFTConsPairs = Vec<FTConsPair>;
 type FTConsPair = (FTConstraints, FTConstraints);
 type FTConstraints = Vec<u8>;
 
@@ -477,7 +477,7 @@ impl FunctionNode {
     /// (formerly called newRndFNode() in gp.c)
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static Vec<Function>,
-            constraints: &NodeConstraints) -> FunctionNode {
+            constraints: &FTConstraints) -> FunctionNode {
         assert_ne!(funcs.len(), 0);
         let rand_cfid = rng.gen_range(0..constraints.len());
         let rand_fid = constraints[rand_cfid];
