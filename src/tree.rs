@@ -60,7 +60,7 @@ impl Node {
     #[cfg(gpopt_syntactic_constraints="yes")] 
     pub fn new_rnd_with_constraints(rng: &mut GpRng,
             funcs: &'static [Function], terms: &'static [Terminal],
-            constraints: &FTConstraints) -> Node {
+            constraints: &FTConsPair) -> Node {
         let (func_cons, term_cons) = *constraints;
         let num_ft = func_cons.len() + term_cons.len();
         let r = rng.gen_range(0..num_ft);
@@ -343,6 +343,29 @@ impl Node {
                 false
             }
         }
+    }
+    fn collect_function_nodes_w_constraints_bt_r<'node,'res,'cons>
+            (&'node self, result: &'res mut Vec<&'node Node>,
+                constraints: &'cons FTConstraints) {
+        if let FNode(func_node) = self {
+            if constraints.iter().any(|&x| x == func_node.fnc.fid) {
+                result.push(self);
+            }
+            self.collect_function_nodes_w_constraints_bt_r(result, constraints);
+        }
+    }
+}
+
+pub type NodeRefs<'node> = Vec<&'node Node>;
+trait NodesTrait {
+    fn get_rnd_node(&self, rng: &mut GpRng) -> Node;
+}
+impl NodesTrait for NodeRefs<'_> {
+    fn get_rnd_node<'node>(&'node self, rng: &mut GpRng) -> &'node Node {
+        let num_f = self.len();
+        assert_ne!(num_f, 0);
+        let r = rng.gen_range(0..num_f as i32) as usize;
+        &self[r]
     }
 }
 
@@ -808,7 +831,7 @@ impl Tree {
     /// (use get_rnd_function_node_ref if parent node locater is not needed.)
     /// This is an extended version of get_rnd_function_node_ref() that returns
     /// an optional ploc (parent locater value) that defines the found node's
-    /// parent and child arg position that is required for syntactic
+    /// parent Function and child arg position that is required for syntactic
     /// constraints.
     pub fn get_rnd_function_node_ref_ploc(&mut self,
             rng: &mut GpRng) ->
@@ -849,6 +872,23 @@ impl Tree {
                 .result_branch.root.find_function_node_ref(fi),
             FunctionDefining(adf_num) => self.opt_func_def_branches
                 .as_mut().unwrap()[*adf_num].root.find_function_node_ref(fi),
+        }
+    }
+    /// add to target vector a list of function node references that
+    /// from tree branch type that matches constraint list.
+    pub fn collect_function_nodes_w_constraints_bt<'node,'res, 'bt,'cons>
+            (&'node self, result: &'res mut Vec<&'node Node>,
+                b_type: &'bt BranchType, constraints: &'cons FTConstraints) {
+        match b_type {
+            ResultProducing => self
+                .result_branch
+                    .root
+                    .collect_function_nodes_w_constraints_bt_r(
+                        result, constraints),
+            FunctionDefining(adf_num) => self.opt_func_def_branches
+                .unwrap()[*adf_num]
+                .root.collect_function_nodes_w_constraints_bt_r(
+                        result, constraints),
         }
     }
     /// get a random function index for a specific branch type.

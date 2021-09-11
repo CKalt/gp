@@ -211,7 +211,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_and,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_constraints: None,
+            opt_arg_constraints: None,
         },
         Function {
             fid:  2u8,
@@ -220,7 +220,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_or,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_constraints: None,
+            opt_arg_constraints: None,
         },
         Function {
             fid:  3u8,
@@ -229,7 +229,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_not,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_constraints: None,
+            opt_arg_constraints: None,
         },
         Function {
             fid:  4u8,
@@ -238,7 +238,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             code: function_homing,
             opt_adf_num: None,
             #[cfg(gpopt_syntactic_constraints="yes")] 
-            opt_constraints: None,
+            opt_arg_constraints: None,
         },
     ];
 
@@ -251,7 +251,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
                 code: function_adf,
                 opt_adf_num: Some(adf_num as usize),
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_constraints: None,
+                opt_arg_constraints: None,
             }
         );
     }
@@ -460,7 +460,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_or,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_constraints: None,
+                opt_arg_constraints: None,
             },
             Function {
                 fid:  1u8,
@@ -469,7 +469,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_or,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_constraints: None,
+                opt_arg_constraints: None,
             },
             Function {
                 fid:  2u8,
@@ -478,7 +478,7 @@ pub fn get_functions_for_func_def_branches() -> FSet {
                 code: function_not,
                 opt_adf_num: None,
                 #[cfg(gpopt_syntactic_constraints="yes")] 
-                opt_constraints: None,
+                opt_arg_constraints: None,
             },
         ];
 
@@ -522,17 +522,21 @@ pub fn get_functions_for_result_root_constraints() ->
                     code: function_if,
                     opt_adf_num: None,
                     #[cfg(gpopt_syntactic_constraints="yes")] 
-                    opt_constraints: Some((
+                    opt_arg_constraints: Some(
                         vec![
-                            vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
-                            vec![0],         // arg1: IF
-                            vec![0],         // arg2: IF
-                        ],
-                        vec![
-                            vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
-                            vec![0,1,2],                   // arg1: I,L,NIL
-                            vec![0,1,2],                   // arg2: I,L,NIL
-                        ])), 
+                            ( // arg0
+                                vec![1,2,3,4], // funcs: AND,OR,NOT,HOMING
+                                vec![12,13,14,15,16,17,18,19], // terms: GON, GONE...GONW
+                            ),
+                            ( // arg1
+                                vec![0], // funcs: IF
+                                vec![0,1,2], // terms: I,L,NIL
+                            ),
+                            ( // arg1
+                                vec![0], // funcs: IF
+                                vec![0,1,2], // terms: I,L,NIL
+                            ),
+                        ]),
                 },
             ]
         ]))
