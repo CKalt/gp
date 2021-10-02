@@ -178,6 +178,70 @@ fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
     }
 }
 
+#[cfg(gpopt_adf="no")]
+pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
+    let funcs = vec![
+        Function {
+            fid:  0u8,
+            name: "IF".to_string(),
+            arity: 3,
+            code: function_if,
+            opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: Some((
+                vec![
+                    vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
+                    vec![0],         // arg1: IF
+                    vec![0],         // arg2: IF
+                ],
+                vec![
+                    vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
+                    vec![0,1,2],                   // arg1: I,L,NIL
+                    vec![0,1,2],                   // arg2: I,L,NIL
+                ])), 
+        },
+        Function {
+            fid:  1u8,
+            name: "AND".to_string(),
+            arity: 2,
+            code: function_and,
+            opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: None,
+        },
+        Function {
+            fid:  2u8,
+            name: "OR".to_string(),
+            arity: 2,
+            code: function_or,
+            opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: None,
+        },
+        Function {
+            fid:  3u8,
+            name: "NOT".to_string(),
+            arity: 1,
+            code: function_not,
+            opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: None,
+        },
+        Function {
+            fid:  4u8,
+            name: "HOMING".to_string(),
+            arity: 1,
+            code: function_homing,
+            opt_adf_num: None,
+            #[cfg(gpopt_syntactic_constraints="yes")] 
+            opt_incl_constraints: None,
+        },
+    ];
+
+    vec![funcs]
+}
+
+#[cfg(gpopt_adf="yes")]
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     let mut funcs = vec![
         Function {
@@ -237,7 +301,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
         },
     ];
 
-    for adf_num in 0..ADF_ARITY {
+    for adf_num in 0..NUM_ADF {
         funcs.push(
             Function {
                 fid:  5u8 + adf_num,
