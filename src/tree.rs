@@ -350,10 +350,23 @@ impl Node {
     }
 }
 
+// Types used in Function and Terminal Set constraint
+// management.
+//
+// FSet and TSet define vector of vectors.
+// Outside Vector indexed by branch number.
+//   for Function defining branches this would be for
+//   ADF0, ADF1...ADFN
+//   for Result producint branches this would be for
+//   RPB0, RPB1...RPBN
+pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
+pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
+//pub type FTSet = (FSet, TSet);
 #[cfg(gpopt_syntactic_constraints="yes")] 
-type NodeConstraints = Vec<Vec<u8>>; // constraints [argnum][tids]
+type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
+type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
 #[cfg(gpopt_syntactic_constraints="yes")] 
-pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
+pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
 
 pub struct Function {
     #[allow(dead_code)]
@@ -371,7 +384,7 @@ pub struct Function {
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.
     #[cfg(gpopt_syntactic_constraints="yes")] 
-    pub opt_constraints: Option<NodeConsFTPair>,
+    pub opt_constraints: Option<ArgNodeConsFTPair>,
 }
 
 pub struct Terminal {
@@ -398,9 +411,9 @@ impl Terminal {
     pub fn get_rnd_ref_with_constraints(rng: &mut GpRng,
             terms: &'static [Terminal], constraints: &Vec<u8>)
                 -> &'static Terminal {
-        let tc_id: u8 = rng.gen_range(0..constraints.len() as i32) as u8;
-        let t_id = constraints[tc_id];
-        &terms[t_id as usize]
+        let tc_id = rng.gen_range(0..constraints.len() as i32) as usize;
+        let t_id = constraints[tc_id] as usize;
+        &terms[t_id]
     }
     #[cfg(test)]
     pub fn get_ref_by_name(t_name: &str, terms: &'static [Terminal])
@@ -456,11 +469,23 @@ impl FunctionNode {
         new_func_node
     }
 
-    /// create a new FunctionNode choosing which one at random.
+    /// create a new FunctionNode choosing which Function at random.
     /// (formerly called newRndFNode() in gp.c)
     pub fn new_rnd(rng: &mut GpRng, funcs: &'static Vec<Function>) -> FunctionNode {
         assert_ne!(funcs.len(), 0);
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
+        FunctionNode::new(rand_fid, funcs)
+    }
+
+    /// create a new FunctionNode choosing which Function from a subset of 
+    /// available Function's indicated by constraints vector.
+    /// (formerly called newRndFNode() in gp.c)
+    pub fn new_rnd_with_constraints(rng: &mut GpRng,
+            funcs: &'static Vec<Function>,
+            constraints: &NodeConstraints) -> FunctionNode {
+        assert_ne!(funcs.len(), 0);
+        let rand_cfid = rng.gen_range(0..constraints.len());
+        let rand_fid = constraints[rand_cfid];
         FunctionNode::new(rand_fid, funcs)
     }
 

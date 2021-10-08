@@ -80,21 +80,25 @@ impl TreeSet {
         let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
 
         #[cfg(gpopt_syntactic_constraints="no")] 
-        /// call version without constraints arg
+        // call version without constraints arg
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
         #[cfg(gpopt_syntactic_constraints="yes")] 
-        /// call version with constraints arg set to None
+        // call version with constraints arg set to None
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
-                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0], None);
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0], &None);
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+                #[cfg(gpopt_syntactic_constraints="no")] 
                 Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
                     2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
+                    2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i], &None);
                 func_def_branches.push(TreeBranch::new(FNode(func_def_branch_root)));
             }
             Tree::new(
@@ -135,31 +139,29 @@ impl TreeSet {
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>,
-            opt_prev_constraints: Option<&NodeConsFTPair>) {
+            opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
 
-        /// If the current func_node has constraints, use them,
-        /// otherwise default to previous used constraints if any.
+        // If the current func_node has constraints, use them,
+        // otherwise fallback to previously used constraints if any.
         let opt_constraints =
-            if let Some(ref func_cs, ref term_cs) =
-                    func_node.fnc.opt_constraints {
-                Some(func_cs, term_cs)
-            } else if let Some(ref func_cs, ref term_cs) =
-                opt_prev_constraints {
-                Some(func_cs, term_cs)
+            if let Some(_) = func_node.fnc.opt_constraints {
+                &func_node.fnc.opt_constraints
+            } else if let Some(_) = *opt_prev_constraints {
+                opt_prev_constraints
             }
             else {
-                None
+                &None
             };
             
         if level >= depth {
             // Always a Terminal Node
-            if let Some((_, ref term_constraints)) = fnc.opt_constraints {
+            if let Some((_, ref term_constraints)) = opt_constraints {
                 for i in 0..func_node.fnc.arity {
                     // We have syntactic terminal constraints for this function
                     // so loop until the randomly selected terminal qualifies.
                     let rnd_tref =
                         Terminal::get_rnd_ref_with_constraints(rng, terms,
-                            &term_constraints[i]);
+                            &term_constraints[i as usize]);
                     func_node.set_arg(i, TNode(rnd_tref));
                 }
             } else {
@@ -177,9 +179,8 @@ impl TreeSet {
                 for i in 0..func_node.fnc.arity { 
                     // We have syntactic function constraints for this function
                     // so loop until the randomly selected FunctionNode qualifies
-                        
                     let rnd_fn = FunctionNode::new_rnd_with_constraints(
-                                rng, funcs, &func_constraints[i]);
+                                rng, funcs, &func_constraints[i as usize]);
 
                     let node: &mut Node = func_node.set_arg(i, FNode(rnd_fn));
                     match *node {
@@ -200,7 +201,7 @@ impl TreeSet {
                     match *node {
                         FNode(ref mut fn_ref) =>
                             Self::gen_tree_full_method_r(rng, fn_ref, c_depth,
-                                    depth, funcs, terms),
+                                    depth, funcs, terms, opt_constraints),
                         _ => panic!("expected FunctionNode"),
                     }
                 }
@@ -598,7 +599,7 @@ impl TreeSet {
         let b_type: BranchType;
         let mut arg_num: usize = 0;  // assigned below if opt_ploc is not None.
 
-        let mut opt_constraints: Option<&NodeConsFTPair> = None;
+        let mut opt_constraints: Option<&ArgNodeConsFTPair> = None;
 
         // For syntactic constraints we need to know the parent of the selected node
         // point as well as the arg number. These two things are needed to obtain
