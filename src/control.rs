@@ -26,6 +26,7 @@ pub struct Control {
     /// syntactic constraints
     /// Result branch root constraint. Optional FSet
     /// for just root node. (eg. used for Koza II Chpt 15)
+    #[cfg(gpopt_syntactic_constraints="yes")] 
     pub opt_rpb_root_cnst:      Option<Box<FSet>>,
     pub M:   usize,             // Number of individuals in each generation
     pub G:   u16,               // Number of generations to run
@@ -95,6 +96,7 @@ lazy_static! {
             terms_rpb:          Box::new(get_terminals_for_result_branches()),
             funcs_fdb:          Box::new(get_functions_for_func_def_branches()),
             terms_fdb:          Box::new(get_terminals_for_func_def_branches()),
+            #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_rpb_root_cnst:  get_functions_for_result_root_constraints(),
             M:                  8000,      // Number of individuals in each generation
             G:                  51,         // Number of generations to run
