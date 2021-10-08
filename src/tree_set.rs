@@ -77,10 +77,6 @@ impl TreeSet {
                 &CONTROL.funcs_rpb
             };
 
-
-
-
-
         let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
 
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
