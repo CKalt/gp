@@ -1,13 +1,11 @@
 /target
 ant
-build.log
+*.log
 play
 .idea
-choice.log
 foo
 gp.out
-src/choice.log
-src/gp.out
+src/*.log
+src/*.out
 diff.txt
 foo*
-rng.log
