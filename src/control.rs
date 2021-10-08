@@ -10,7 +10,7 @@ pub type TreeDepth = u16;
 // Outside Vector indexed by branch number.
 //   for Function defining branches this would be for
 //   ADF0, ADF1...ADFN
-//   for Result producint branches this would be for
+//   for Result producing branches this would be for
 //   RPB0, RPB1...RPBN
 pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
 pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
