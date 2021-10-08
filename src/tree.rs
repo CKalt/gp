@@ -371,7 +371,7 @@ pub struct Function {
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.
     #[cfg(gpopt_syntactic_constraints="yes")] 
-    pub opt_incl_constraints: Option<NodeConsFTPair>,
+    pub opt_constraints: Option<NodeConsFTPair>,
 }
 
 pub struct Terminal {
@@ -392,6 +392,14 @@ impl Terminal {
     /// (Formerly called getRndTNode() in gp.c)
     pub fn get_rnd_ref(rng: &mut GpRng, terms: &'static [Terminal]) -> &'static Terminal {
         let t_id: u8 = rng.gen_range(0..terms.len() as i32) as u8;
+        &terms[t_id as usize]
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    pub fn get_rnd_ref_with_constraints(rng: &mut GpRng,
+            terms: &'static [Terminal], constraints: &Vec<u8>)
+                -> &'static Terminal {
+        let tc_id: u8 = rng.gen_range(0..constraints.len() as i32) as u8;
+        let t_id = constraints[tc_id];
         &terms[t_id as usize]
     }
     #[cfg(test)]
