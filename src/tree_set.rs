@@ -187,8 +187,15 @@ impl TreeSet {
     }
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
-        let mut result_branch_root =
-            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
+        let rb_f_set: &FSet = 
+            if let Some(ref f_set) = CONTROL.opt_rpb_root_cnst {
+                f_set
+            } else {
+                &CONTROL.funcs_rpb[0]
+            };
+
+        let mut result_branch_root = FunctionNode::new_rnd(rng, rb_f_set);
+
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
 
@@ -365,7 +372,7 @@ impl TreeSet {
     }
     pub fn print(&self) {
         for tree in self.tree_vec.iter() {
-            tree.print();
+            tree.print_tree();
         }
     }
     /// for each tree compute the n_functions, n_terminals
