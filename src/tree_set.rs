@@ -71,7 +71,7 @@ impl TreeSet {
         let rb_f_set: &FSet = &CONTROL.funcs_rpb;
         #[cfg(gpopt_syntactic_constraints="yes")] 
         let rb_f_set: &FSet = 
-            if let Some(f_set) = &CONTROL.opt_rpb_root_cnst {
+            if let Some(f_set) = &CONTROL.opt_rpb_root_fset {
                 &f_set
             } else {
                 &CONTROL.funcs_rpb
@@ -136,6 +136,9 @@ impl TreeSet {
         }
     }
     #[cfg(gpopt_syntactic_constraints="yes")] 
+    // opt_prev_constraints is used here to implement a deep application
+    // of a constraint. Initial state is None, and subsequent states are
+    // either a continuance of the previous state, or a change to a new one.
     fn gen_tree_full_method_r(rng: &mut GpRng,
             func_node: &mut FunctionNode, level: u16, depth: u16,
             funcs: &'static Vec<Function>, terms: &'static Vec<Terminal>,
@@ -216,7 +219,7 @@ impl TreeSet {
  
         #[cfg(gpopt_syntactic_constraints="yes")] 
         let rb_f_set: &FSet = 
-            if let Some(f_set) = &CONTROL.opt_rpb_root_cnst {
+            if let Some(f_set) = &CONTROL.opt_rpb_root_fset {
                 &f_set
             } else {
                 &CONTROL.funcs_rpb
@@ -591,54 +594,80 @@ impl TreeSet {
     }
     #[cfg(gpopt_syntactic_constraints="yes")] 
     fn perform_crossover_with_syntatic_constraints(rng: &mut GpRng,
-                t1: &mut Tree, t2: &mut Tree) {
+                t1: &mut Tree, t2: &mut Tree) -> bool {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
 
-        let node:  &mut Node;
-        let b_type: BranchType;
-        let mut arg_num: usize = 0;  // assigned below if opt_ploc is not None.
+        let mut opt_f_set: Option<> = None;
+        let mut opt_t_set = None;
 
-        let mut opt_constraints: Option<&ArgNodeConsFTPair> = None;
-
-        // For syntactic constraints we need to know the parent of the selected node
-        // point as well as the arg number. These two things are needed to obtain
-        // the correct constraints from the opt_constraints vector pair.
+        // Swap target1 Node is randomly chosen with across all t1 nodes ( favoring internal nodes
+        // per rnd_int_pt_decide control. If the selection is t1's root node, then the Syntactic
+        // constraints come from Control.opt_rpb_root_constraints, otherwise the parent FunctionNode along
+        // with the Node's argument position determine the Function and Terminal set (FTSet) of
+        // qualifying candidates to confirm.
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
-                let (l_btype, (l_node, opt_ploc)) = t1.get_rnd_function_node_ref_ploc(rng);
-                b_type = l_btype;
-                node = l_node;
+                let fnode_loc: (BranchType, (&mut Node, Option<(&Function, usize)>))
+                            = t1.get_rnd_function_node_ref_ploc(rng);
 
-                if let Some((fnc, l_arg_num)) = opt_ploc {
-                    // note that only when parent is root, above condition fails.
-                    if let Some(ref constraints) =
-                        fnc.opt_constraints {
-                        opt_constraints = Some(constraints);
+                let node:  &mut Node;
+                let btype: BranchType;
+                let opt_ploc: Option<(&Function, usize)>;
+                {
+                    // In future following unpack will only require one
+                    // statement.
+                    // (Currently only unstable Rust permits doing this without
+                    //  temporary variables.)
+                    let (t_btype, (t_node, t_opt_ploc)) = fnode_loc;
+                    btype = t_b_type;
+                    node = t_node;
+                    opt_ploc = t_opt_ploc;
+                }
+
+                if let Some((fnc, arg_num)) = opt_ploc {
+                    // Note: this branch is taken unless node is a root node.
+                    let constraints: &ArgNodeConsFTPair;
+                    if let Some(ref constraints) = fnc.opt_constraints {
+                        let (f_cons, t_cons) = *constraints;
+                        opt_f_set = Some(&f_cons[arg_num]);
+                        opt_t_set = Some(&t_cons[arg_num]);
                     }
-                    arg_num = l_arg_num;
+                } else {
+                    // Note: node is a root node
+                    // only rpb can have root level constraints (for now)
+                    // eventually all roots should have a possible fset in Control.
+                    if let ResultProducing = btype {
+                        if let Some(ref f_cons, _) =
+                                &Control.opt_rpb_root_constraints[0] {
+                            opt_f_set = Some(&f_cons);
+                        }
+                    }
                 }
 
                 node
             } else {
                 let nref_pair = t1.get_rnd_terminal_node_ref(rng);
-                b_type = nref_pair.0;
+                btype = nref_pair.0;
                 node = nref_pair.1;
                 node
             };
 
         let swap_target2 =
-            if let Some((func_constraints, _)) = opt_constraints {
+            if let Some(f_set) = opt_f_set {
                 // apply syntactic constraint
-                if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0
+                if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
                    && Self::rnd_int_pt_decide(rng) {
                     // loop until a random function node qulaifies as swap point 2
+                    // note that we currently do a shallow (avoid deep) check as it's not
+                    // required for this program. Future versions may require
+                    // both a deep and a shallow check at this point depending on 
+                    // the makeup of the constraints.
                     loop {
-                        let node = t2.get_rnd_function_node_ref_bt(rng, &b_type);
+                        let node = t2.get_rnd_function_node_ref_bt(rng, &btype);
                         if let FNode(func_node) = node {
-                            if func_constraints[arg_num]
-                                .iter()
-                                .any(|&x| x == func_node.fnc.fid) {
+                            if f_set.iter()
+                                    .any(|&x| x == func_node.fnc.fid) {
                                 break node;
                             }
                         }
@@ -647,14 +676,13 @@ impl TreeSet {
                         }
                     }
                 } else {
-                    if let Some((_, term_constraints)) = opt_constraints {
+                    if let Some(t_set) = opt_t_set {
                         // loop until a random terminal node qulaifies as swap point 2
                         loop {
-                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &b_type);
+                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
                             if let TNode(tn_ref) = node {
-                                if term_constraints[arg_num]
-                                    .iter()
-                                    .any(|&x| x == tn_ref.tid) {
+                                if t_set.iter()
+                                        .any(|&x| x == tn_ref.tid) {
                                     break node;
                                 }
                             }
@@ -663,14 +691,14 @@ impl TreeSet {
                             }
                         }
                     } else {
-                        panic!("opt_func_constraints not None, but opt_func_constraints None");
+                        panic!("opt_f_set not None, but opt_t_set None");
                     }
                 }
-            } else if t2.get_num_function_nodes_bt(&b_type).unwrap() > 0
+            } else if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
                 && Self::rnd_int_pt_decide(rng) {
-                    t2.get_rnd_function_node_ref_bt(rng, &b_type)
+                    t2.get_rnd_function_node_ref_bt(rng, &btype)
             } else {
-                t2.get_rnd_terminal_node_ref_bt(rng, &b_type)
+                t2.get_rnd_terminal_node_ref_bt(rng, &btype)
             };
 
         mem::swap(swap_target1, swap_target2);

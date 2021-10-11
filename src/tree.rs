@@ -367,6 +367,7 @@ type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
 type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
 #[cfg(gpopt_syntactic_constraints="yes")] 
 pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
+pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
 
 pub struct Function {
     #[allow(dead_code)]
@@ -377,9 +378,9 @@ pub struct Function {
     pub opt_adf_num: Option<usize>, // if present, identifies adf number [0..n]
                                     // index into RunContext::opt_func_def_branches
 
-    // following two fields define optional syntactic constraints that
+    // following optional pair defines syntactic constraints that
     // when exist, define vector for each arg (i.e. 0..arity)
-    // each holding a vector of the subset of allowed fids or tids
+    // each holding a vector of the subset of fids and tids
     // allowed (included in the function or terminal set)
     // This filtering will be applied during tree_gen and crossover 
     // to insure only child args conforming to these contstrains exist.

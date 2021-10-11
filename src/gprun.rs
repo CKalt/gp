@@ -506,32 +506,14 @@ pub fn get_terminals_for_func_def_branches() -> TSet {
 }
 
 #[cfg(gpopt_syntactic_constraints="yes")] 
-pub fn get_functions_for_result_root_constraints() ->
-        Option<Box<FSet>> {
+pub fn get_result_root_constraints() -> Option<Box<FSet>> {
     Some(Box::new(
         vec![
-            vec![
-                Function {
-                    fid:  0u8,
-                    name: "IF".to_string(),
-                    arity: 3,
-                    code: function_if,
-                    opt_adf_num: None,
-                    #[cfg(gpopt_syntactic_constraints="yes")] 
-                    opt_constraints: Some((
-                        vec![
-                            vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
-                            vec![0],         // arg1: IF
-                            vec![0],         // arg2: IF
-                        ],
-                        vec![
-                            vec![12,13,14,15,16,17,18,19], // arg0: GON, GONE...GONW
-                            vec![0,1,2],                   // arg1: I,L,NIL
-                            vec![0,1,2],                   // arg2: I,L,NIL
-                        ])), 
-                },
-            ]
-        ]))
+            // Result Branch 0
+            (
+                vec![0],   // IF Function is only option allowed 
+                vec![]     // No terminals are allowed
+            )]))
 }
 
 // FitnessCase
