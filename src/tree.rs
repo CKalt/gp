@@ -364,7 +364,7 @@ pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
 //pub type FTSet = (FSet, TSet);
 #[cfg(gpopt_syntactic_constraints="yes")] 
 type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
-type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
+pub type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
 #[cfg(gpopt_syntactic_constraints="yes")] 
 pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
 pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
@@ -475,6 +475,13 @@ impl FunctionNode {
     pub fn new_rnd(rng: &mut GpRng, funcs: &'static Vec<Function>) -> FunctionNode {
         assert_ne!(funcs.len(), 0);
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
+        FunctionNode::new(rand_fid, funcs)
+    }
+    pub fn new_rnd_constrained(rng: &mut GpRng, funcs: &'static Vec<Function>,
+            func_constraints: &'static NodeConstraints) -> FunctionNode {
+        assert_ne!(funcs.len(), 0);
+        let cons_idx = rng.gen_range(0..func_constraints.len());
+        let rand_fid = func_constraints[cons_idx];
         FunctionNode::new(rand_fid, funcs)
     }
 

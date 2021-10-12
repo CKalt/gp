@@ -506,14 +506,18 @@ pub fn get_terminals_for_func_def_branches() -> TSet {
 }
 
 #[cfg(gpopt_syntactic_constraints="yes")] 
-pub fn get_result_root_constraints() -> Option<Box<FSet>> {
-    Some(Box::new(
-        vec![
-            // Result Branch 0
-            (
-                vec![0],   // IF Function is only option allowed 
-                vec![]     // No terminals are allowed
-            )]))
+use crate::tree::NodeConsFTPair;
+#[cfg(gpopt_syntactic_constraints="yes")] 
+pub fn get_result_root_constraints() -> Option<Box<Vec<NodeConsFTPair>>> {
+    let constraints: Vec<NodeConsFTPair> = vec![
+        // Result Branch 0
+        (
+            vec![0],   // IF (only function allowed)
+            vec![]     // (No terminals)
+        )
+    ];
+
+    Some(Box::new(constraints))
 }
 
 // FitnessCase

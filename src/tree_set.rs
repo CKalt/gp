@@ -64,26 +64,50 @@ impl TreeSet {
         }
         return false;
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
     fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
 
-        #[cfg(gpopt_syntactic_constraints="no")] 
-        let rb_f_set: &FSet = &CONTROL.funcs_rpb;
-        #[cfg(gpopt_syntactic_constraints="yes")] 
-        let rb_f_set: &FSet = 
-            if let Some(f_set) = &CONTROL.opt_rpb_root_fset {
-                &f_set
-            } else {
-                &CONTROL.funcs_rpb
-            };
+        let mut result_branch_root =
+            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
 
-        let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
-
-        #[cfg(gpopt_syntactic_constraints="no")] 
         // call version without constraints arg
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
-        #[cfg(gpopt_syntactic_constraints="yes")] 
+
+        if CONTROL.terms_fdb.len() > 0 {
+            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
+            for i in 0..CONTROL.funcs_fdb.len() {
+                let mut func_def_branch_root =
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+
+                Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
+                    2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                func_def_branches.push(TreeBranch::new(FNode(func_def_branch_root)));
+            }
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), 
+                Some(func_def_branches))
+        } else {
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), None)
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    fn gen_tree_full_method(rng: &mut GpRng, depth: u16) -> Tree {
+        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+
+        let mut result_branch_root = {
+                let root_constraints: Box<Vec<NodeConsFTPair>>;
+                if let Some(root_constraints) = &CONTROL.opt_rpb_root_constraints {
+                    let (f_set, _) = root_constraints[0];
+                    FunctionNode::new_rnd_constrained(
+                        rng, &CONTROL.funcs_rpb[0], &f_set)
+                } else {
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0])
+                }
+            };
+
         // call version with constraints arg set to None
         Self::gen_tree_full_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0], &None);
@@ -93,10 +117,7 @@ impl TreeSet {
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
-                #[cfg(gpopt_syntactic_constraints="no")] 
-                Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
-                    2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
-                #[cfg(gpopt_syntactic_constraints="yes")] 
+
                 Self::gen_tree_full_method_r(rng, &mut func_def_branch_root,
                     2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i], &None);
                 func_def_branches.push(TreeBranch::new(FNode(func_def_branch_root)));
@@ -211,23 +232,48 @@ impl TreeSet {
             }
         }
     }
+    #[cfg(gpopt_syntactic_constraints="no")] 
     fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
 
-        #[cfg(gpopt_syntactic_constraints="no")] 
-        let rb_f_set: &FSet = &CONTROL.funcs_rpb;
- 
-        #[cfg(gpopt_syntactic_constraints="yes")] 
-        let rb_f_set: &FSet = 
-            if let Some(f_set) = &CONTROL.opt_rpb_root_fset {
-                &f_set
-            } else {
-                &CONTROL.funcs_rpb
-            };
+        let mut result_branch_root =
+            FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0]);
 
-       let mut result_branch_root = FunctionNode::new_rnd(rng, &rb_f_set[0]);
         Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
                 &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0]);
+
+        if CONTROL.terms_fdb.len() > 0 {
+            let mut func_def_branches: Vec<TreeBranch> = Vec::new();
+            for i in 0..CONTROL.funcs_fdb.len() {
+                let mut func_def_branch_root =
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+                Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
+                        2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                func_def_branches
+                    .push(TreeBranch::new(FNode(func_def_branch_root)));
+            }
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)),
+                Some(func_def_branches))
+        } else {
+            Tree::new(
+                TreeBranch::new(FNode(result_branch_root)), None)
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    fn gen_tree_grow_method(rng: &mut GpRng, depth: u16) -> Tree {
+        assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
+
+        let mut result_branch_root = {
+                let root_constraints: Box<Vec<NodeConsFTPair>>;
+                if let Some(root_constraints) = &CONTROL.opt_rpb_root_constraints {
+                    let (f_set, _) = root_constraints[0];
+                    FunctionNode::new_rnd_constrained(
+                        rng, &CONTROL.funcs_rpb[0], &f_set)
+                } else {
+                    FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0])
+                }
+            };
 
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
@@ -598,21 +644,21 @@ impl TreeSet {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
 
-        let mut opt_f_set: Option<> = None;
-        let mut opt_t_set = None;
+        let mut opt_f_set: Option<&NodeConstraints> = None;
+        let mut opt_t_set: Option<&NodeConstraints> = None;
 
         // Swap target1 Node is randomly chosen with across all t1 nodes ( favoring internal nodes
         // per rnd_int_pt_decide control. If the selection is t1's root node, then the Syntactic
         // constraints come from Control.opt_rpb_root_constraints, otherwise the parent FunctionNode along
         // with the Node's argument position determine the Function and Terminal set (FTSet) of
         // qualifying candidates to confirm.
+        let node:  &mut Node;
+        let btype: BranchType;
         let swap_target1 =
             if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let fnode_loc: (BranchType, (&mut Node, Option<(&Function, usize)>))
                             = t1.get_rnd_function_node_ref_ploc(rng);
 
-                let node:  &mut Node;
-                let btype: BranchType;
                 let opt_ploc: Option<(&Function, usize)>;
                 {
                     // In future following unpack will only require one
@@ -620,7 +666,7 @@ impl TreeSet {
                     // (Currently only unstable Rust permits doing this without
                     //  temporary variables.)
                     let (t_btype, (t_node, t_opt_ploc)) = fnode_loc;
-                    btype = t_b_type;
+                    btype = t_btype;
                     node = t_node;
                     opt_ploc = t_opt_ploc;
                 }
@@ -637,10 +683,19 @@ impl TreeSet {
                     // Note: node is a root node
                     // only rpb can have root level constraints (for now)
                     // eventually all roots should have a possible fset in Control.
+                    let rpb_root_constraints: Box<Vec<NodeConsFTPair>>;
                     if let ResultProducing = btype {
-                        if let Some(ref f_cons, _) =
-                                &Control.opt_rpb_root_constraints[0] {
-                            opt_f_set = Some(&f_cons);
+                        if let Some(rpb_root_constraints) =
+                                CONTROL.opt_rpb_root_constraints {
+
+                            let (ref f_cons, ref t_cons)
+                                = rpb_root_constraints[0];
+                            if f_cons.len() > 0 {
+                                opt_f_set = Some(f_cons);
+                            }
+                            if t_cons.len() > 0 {
+                                opt_t_set = Some(t_cons);
+                            }
                         }
                     }
                 }
@@ -663,6 +718,9 @@ impl TreeSet {
                     // required for this program. Future versions may require
                     // both a deep and a shallow check at this point depending on 
                     // the makeup of the constraints.
+                    // OR until attempts_left hits zero.
+                    let mut attempts_left = t2.get_num_function_nodes_bt(&btype)
+                            .unwrap() * 2usize;
                     loop {
                         let node = t2.get_rnd_function_node_ref_bt(rng, &btype);
                         if let FNode(func_node) = node {
@@ -674,10 +732,17 @@ impl TreeSet {
                         else {
                             panic!("not func_node");
                         }
+                        attempts_left -= 1;
+                        if attempts_left == 0 {
+                            return false;
+                        }
                     }
                 } else {
                     if let Some(t_set) = opt_t_set {
                         // loop until a random terminal node qulaifies as swap point 2
+                        // OR until attempts_left hits zero.
+                        let mut attempts_left = t2.get_num_terminal_nodes_bt(&btype)
+                            .unwrap() * 2usize;
                         loop {
                             let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
                             if let TNode(tn_ref) = node {
@@ -688,6 +753,10 @@ impl TreeSet {
                             }
                             else {
                                 panic!("not func_node");
+                            }
+                            attempts_left -= 1;
+                            if attempts_left == 0 {
+                                return false;
                             }
                         }
                     } else {
@@ -702,6 +771,7 @@ impl TreeSet {
             };
 
         mem::swap(swap_target1, swap_target2);
+        true
     }
     pub fn breed_new_generation(&mut self, rng: &mut GpRng) -> TreeSet {
         let mut new_trees = Self::new(self.gen);
