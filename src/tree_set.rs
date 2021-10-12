@@ -16,6 +16,7 @@ use crate::fitness::GpHits;
 use crate::fitness::GpRaw;
 
 use Node::*;
+use BranchType::*;
 
 pub struct TreeSet {
     pub winning_index:  Option<usize>,
@@ -98,9 +99,9 @@ impl TreeSet {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
 
         let mut result_branch_root = {
-                let root_constraints: Box<Vec<NodeConsFTPair>>;
-                if let Some(root_constraints) = &CONTROL.opt_rpb_root_constraints {
-                    let (f_set, _) = root_constraints[0];
+                if let Some(root_constraints) =
+                        &CONTROL.opt_rpb_root_constraints {
+                    let (f_set, _) = &root_constraints[0];
                     FunctionNode::new_rnd_constrained(
                         rng, &CONTROL.funcs_rpb[0], &f_set)
                 } else {
@@ -265,9 +266,8 @@ impl TreeSet {
         assert_eq!(CONTROL.terms_fdb.len(), CONTROL.funcs_fdb.len());
 
         let mut result_branch_root = {
-                let root_constraints: Box<Vec<NodeConsFTPair>>;
                 if let Some(root_constraints) = &CONTROL.opt_rpb_root_constraints {
-                    let (f_set, _) = root_constraints[0];
+                    let (f_set, _) = &root_constraints[0];
                     FunctionNode::new_rnd_constrained(
                         rng, &CONTROL.funcs_rpb[0], &f_set)
                 } else {
@@ -275,13 +275,19 @@ impl TreeSet {
                 }
             };
 
+        // call version with constraints arg set to None
+        Self::gen_tree_grow_method_r(rng, &mut result_branch_root, 2, depth,
+                &CONTROL.funcs_rpb[0], &CONTROL.terms_rpb[0], &None);
+
         if CONTROL.terms_fdb.len() > 0 {
             let mut func_def_branches: Vec<TreeBranch> = Vec::new();
             for i in 0..CONTROL.funcs_fdb.len() {
                 let mut func_def_branch_root =
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_fdb[i]);
+
                 Self::gen_tree_grow_method_r(rng, &mut func_def_branch_root,
-                        2, depth, &CONTROL.funcs_fdb[i], &CONTROL.terms_fdb[i]);
+                        2, depth, &CONTROL.funcs_fdb[i],
+                            &CONTROL.terms_fdb[i], &None);
                 func_def_branches
                     .push(TreeBranch::new(FNode(func_def_branch_root)));
             }
@@ -318,13 +324,29 @@ impl TreeSet {
         }
     }
     #[cfg(gpopt_syntactic_constraints="yes")] 
+    // opt_prev_constraints is used here to implement a deep application
+    // of a constraint. Initial state is None, and subsequent states are
+    // either a continuance of the previous state, or a change to a new one.
     fn gen_tree_grow_method_r(rng: &mut GpRng, 
             func_node: &mut FunctionNode, level: u16, depth: u16,
-            funcs: &'static [Function], terms: &'static [Terminal]) {
+            funcs: &'static [Function], terms: &'static [Terminal],
+            opt_prev_constraints: &Option<ArgNodeConsFTPair>) {
+
+        // If the current func_node has constraints, use them,
+        // otherwise fallback to previously used constraints if any.
+        let opt_constraints =
+            if let Some(_) = func_node.fnc.opt_constraints {
+                &func_node.fnc.opt_constraints
+            } else if let Some(_) = *opt_prev_constraints {
+                opt_prev_constraints
+            }
+            else {
+                &None
+            };
+            
         if level >= depth {
             // Always a Terminal Node
-            if let Some((_, ref term_constraints)) =
-                    func_node.fnc.opt_constraints {
+            if let Some((_, ref term_constraints)) = opt_constraints {
                 for i in 0..func_node.fnc.arity {
                     loop {
                         // pick random terminals until one qualifies
@@ -346,7 +368,7 @@ impl TreeSet {
             let c_depth = level+1;
 
             if let Some((ref term_constraints, ref func_constraints)) =
-                func_node.fnc.opt_constraints {
+                        opt_constraints {
                 for i in 0..func_node.fnc.arity {
                     // Either a Function or Terminal Node
                     let rnd_ft_node =
@@ -356,7 +378,7 @@ impl TreeSet {
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
                         Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                        funcs, terms);
+                                        funcs, terms, opt_constraints);
                     }
                 }
             } else {
@@ -366,7 +388,7 @@ impl TreeSet {
                     let node: &mut Node = func_node.set_arg(i, rnd_ft_node);
                     if let FNode(ref mut fn_ref) = node {
                         Self::gen_tree_grow_method_r(rng, fn_ref, c_depth, depth,
-                                        funcs, terms);
+                                        funcs, terms, opt_constraints);
                     }
                 }
             }
@@ -673,9 +695,8 @@ impl TreeSet {
 
                 if let Some((fnc, arg_num)) = opt_ploc {
                     // Note: this branch is taken unless node is a root node.
-                    let constraints: &ArgNodeConsFTPair;
                     if let Some(ref constraints) = fnc.opt_constraints {
-                        let (f_cons, t_cons) = *constraints;
+                        let (f_cons, t_cons) = &*constraints;
                         opt_f_set = Some(&f_cons[arg_num]);
                         opt_t_set = Some(&t_cons[arg_num]);
                     }
@@ -683,10 +704,9 @@ impl TreeSet {
                     // Note: node is a root node
                     // only rpb can have root level constraints (for now)
                     // eventually all roots should have a possible fset in Control.
-                    let rpb_root_constraints: Box<Vec<NodeConsFTPair>>;
                     if let ResultProducing = btype {
                         if let Some(rpb_root_constraints) =
-                                CONTROL.opt_rpb_root_constraints {
+                                &CONTROL.opt_rpb_root_constraints {
 
                             let (ref f_cons, ref t_cons)
                                 = rpb_root_constraints[0];
