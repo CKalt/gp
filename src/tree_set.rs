@@ -780,7 +780,11 @@ impl TreeSet {
                             }
                         }
                     } else {
-                        panic!("opt_f_set not None, but opt_t_set None");
+                        let inspect_num_fnodes =
+                            t2.get_num_function_nodes_bt(&btype).unwrap();
+                        panic!(
+                     "opt_f_set not None, but opt_t_set None. t2.fnodes={}",
+                            inspect_num_fnodes);
                     }
                 }
             } else if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
