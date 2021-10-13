@@ -363,10 +363,10 @@ pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
 pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
 
 #[cfg(gpopt_syntactic_constraints="yes")] 
-type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
+pub type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
 
 #[cfg(gpopt_syntactic_constraints="yes")] 
-pub type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
+type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
 
 #[cfg(gpopt_syntactic_constraints="yes")] 
 pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);

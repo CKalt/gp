@@ -759,7 +759,7 @@ impl TreeSet {
                     // the makeup of the constraints.
                     // OR until attempts_left hits zero.
                     let mut attempts_left = t2.get_num_function_nodes_bt(&btype)
-                            .unwrap() * 2usize;
+                            .unwrap() * 20usize;
                     loop {
                         let node = t2.get_rnd_function_node_ref_bt(rng, &btype);
                         if let FNode(func_node) = node {
@@ -780,7 +780,7 @@ impl TreeSet {
                     // loop until a random terminal node qulaifies as swap point 2
                     // OR until attempts_left hits zero.
                     let mut attempts_left = t2.get_num_terminal_nodes_bt(&btype)
-                        .unwrap() * 2usize;
+                        .unwrap() * 20usize;
                     loop {
                         let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
                         if let TNode(tn_ref) = node {

@@ -5,6 +5,7 @@ use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
 use crate::tree::{FSet,TSet};
+use crate::tree::NodeConstraints;
 
 use crate::fitness::GpFloat;
 use crate::fitness::GpFitness;
@@ -185,6 +186,20 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     #[cfg(gpopt_adf="yes")]
     let mut funcs: Vec<Function>;
 
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    let mut if_arg0_fcons: NodeConstraints;
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    {
+        // IF Arg0 func constraints must be built dynamically since
+        // number of ADFs is not known until compile time.
+        if_arg0_fcons = vec![1,2,3,4]; // arg0: AND,OR,NOT,HOMING
+        // now add in all the ADF ids which begin at 5 (as defined in
+        // get_functions_for_result_branches())
+        for adf_num in 0..NUM_ADF {
+            if_arg0_fcons.push(adf_num + 5);
+        }
+    }
+
     funcs = vec![
         Function {
             fid:  0u8,
@@ -195,7 +210,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             #[cfg(gpopt_syntactic_constraints="yes")] 
             opt_constraints: Some((
                 vec![
-                    vec![1,2,3,4],   // arg0: AND,OR,NOT,HOMING
+                    if_arg0_fcons,
                     vec![0],         // arg1: IF
                     vec![0],         // arg2: IF
                 ],
@@ -244,10 +259,12 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
     ];
 
     #[cfg(gpopt_adf="yes")]
-    for adf_num in 0..ADF_ARITY {
+    for adf_num in 0..NUM_ADF {
+        let fid = (funcs.len()-1) as u8;
+        assert_eq!(fid, 5u8 + adf_num as u8);
         funcs.push(
             Function {
-                fid:  5u8 + adf_num,
+                fid,
                 name: format!("ADF{}", adf_num),
                 arity: 0,
                 code: function_adf,
