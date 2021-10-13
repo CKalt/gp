@@ -180,7 +180,12 @@ fn terminal_adf_arg(rc: &RunContext, term: &Terminal) -> GpType {
 }
 
 pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
-    let mut funcs = vec![
+    #[cfg(gpopt_adf="no")]
+    let funcs: Vec<Function>;
+    #[cfg(gpopt_adf="yes")]
+    let mut funcs: Vec<Function>;
+
+    funcs = vec![
         Function {
             fid:  0u8,
             name: "IF".to_string(),
@@ -238,6 +243,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
         },
     ];
 
+    #[cfg(gpopt_adf="yes")]
     for adf_num in 0..ADF_ARITY {
         funcs.push(
             Function {
@@ -251,6 +257,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
             }
         );
     }
+
     vec![funcs]
 }
 
