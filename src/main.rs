@@ -95,11 +95,6 @@ fn report_results(rng: &mut GpRng, trees: &mut TreeSet,header_need: &mut bool,
         trees.print();
     }
 
-if true {
-    panic!("here");
-}
-
-
     if CONTROL.show_all_tree_results {
         println!("gen {}", trees.gen);
         Tree::print_result_header(None, hits);

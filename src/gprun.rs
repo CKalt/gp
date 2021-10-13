@@ -260,7 +260,7 @@ pub fn get_functions_for_result_branches() -> Vec<Vec<Function>> {
 
     #[cfg(gpopt_adf="yes")]
     for adf_num in 0..NUM_ADF {
-        let fid = (funcs.len()-1) as u8;
+        let fid = (funcs.len()) as u8;  // index for next pushed item
         assert_eq!(fid, 5u8 + adf_num as u8);
         funcs.push(
             Function {
