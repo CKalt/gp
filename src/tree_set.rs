@@ -666,8 +666,8 @@ impl TreeSet {
         assert_ne!(t1.get_num_terminal_nodes(), None);
         assert_ne!(t2.get_num_terminal_nodes(), None);
 
-        let mut opt_f_set: Option<&NodeConstraints> = None;
-        let mut opt_t_set: Option<&NodeConstraints> = None;
+        let mut opt_constraints: Option<(&NodeConstraints, &NodeConstraints)>
+            = None;
 
         // Swap target1 Node is randomly chosen with across all t1 nodes ( favoring internal nodes
         // per rnd_int_pt_decide control. If the selection is t1's root node, then the Syntactic
@@ -697,8 +697,7 @@ impl TreeSet {
                     // Note: this branch is taken unless node is a root node.
                     if let Some(ref constraints) = fnc.opt_constraints {
                         let (f_cons, t_cons) = &*constraints;
-                        opt_f_set = Some(&f_cons[arg_num]);
-                        opt_t_set = Some(&t_cons[arg_num]);
+                        opt_constraints = Some((&f_cons[arg_num], &t_cons[arg_num]));
                     }
                 } else {
                     // Note: node is a root node
@@ -710,12 +709,8 @@ impl TreeSet {
 
                             let (ref f_cons, ref t_cons)
                                 = rpb_root_constraints[0];
-                            if f_cons.len() > 0 {
-                                opt_f_set = Some(f_cons);
-                            }
-                            if t_cons.len() > 0 {
-                                opt_t_set = Some(t_cons);
-                            }
+
+                            opt_constraints = Some((f_cons, t_cons));
                         }
                     }
                 }
@@ -729,10 +724,32 @@ impl TreeSet {
             };
 
         let swap_target2 =
-            if let Some(f_set) = opt_f_set {
+            if let Some(constraints) = opt_constraints {
+                let (f_set, t_set) = constraints;
+
+                let internal_point: bool;
+                if t2.get_num_function_nodes_bt(&btype).unwrap() > 0 {
+                    if f_set.len() > 0 {
+                        if t_set.len() > 0 {
+                            internal_point = Self::rnd_int_pt_decide(rng);
+                        }
+                        else {
+                            internal_point = true;
+                        }
+                    } else if t_set.len() > 0 {
+                        internal_point = false;
+                    }
+                    else {
+                        return false;
+                    }
+                } else if t2.get_num_terminal_nodes_bt(&btype).unwrap() > 0 {
+                    internal_point = false;
+                } else {
+                    panic!("swap_target2 is empty for syntactic crossover.");
+                }
+
                 // apply syntactic constraint
-                if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
-                   && Self::rnd_int_pt_decide(rng) {
+                if internal_point {
                     // loop until a random function node qulaifies as swap point 2
                     // note that we currently do a shallow (avoid deep) check as it's not
                     // required for this program. Future versions may require
@@ -758,33 +775,25 @@ impl TreeSet {
                         }
                     }
                 } else {
-                    if let Some(t_set) = opt_t_set {
-                        // loop until a random terminal node qulaifies as swap point 2
-                        // OR until attempts_left hits zero.
-                        let mut attempts_left = t2.get_num_terminal_nodes_bt(&btype)
-                            .unwrap() * 2usize;
-                        loop {
-                            let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
-                            if let TNode(tn_ref) = node {
-                                if t_set.iter()
-                                        .any(|&x| x == tn_ref.tid) {
-                                    break node;
-                                }
-                            }
-                            else {
-                                panic!("not func_node");
-                            }
-                            attempts_left -= 1;
-                            if attempts_left == 0 {
-                                return false;
+                    // loop until a random terminal node qulaifies as swap point 2
+                    // OR until attempts_left hits zero.
+                    let mut attempts_left = t2.get_num_terminal_nodes_bt(&btype)
+                        .unwrap() * 2usize;
+                    loop {
+                        let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
+                        if let TNode(tn_ref) = node {
+                            if t_set.iter()
+                                    .any(|&x| x == tn_ref.tid) {
+                                break node;
                             }
                         }
-                    } else {
-                        let inspect_num_fnodes =
-                            t2.get_num_function_nodes_bt(&btype).unwrap();
-                        panic!(
-                     "opt_f_set not None, but opt_t_set None. t2.fnodes={}",
-                            inspect_num_fnodes);
+                        else {
+                            panic!("not func_node");
+                        }
+                        attempts_left -= 1;
+                        if attempts_left == 0 {
+                            return false;
+                        }
                     }
                 }
             } else if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
