@@ -361,12 +361,17 @@ impl Node {
 //   RPB0, RPB1...RPBN
 pub type FSet = Vec<Vec<Function>>; // [branch_i][func_i]
 pub type TSet = Vec<Vec<Terminal>>; // [branch_i][term_i]
-//pub type FTSet = (FSet, TSet);
+
 #[cfg(gpopt_syntactic_constraints="yes")] 
 type ArgNodeConstraints = Vec<NodeConstraints>; // constraints [argnum][ftids]
+
+#[cfg(gpopt_syntactic_constraints="yes")] 
 pub type NodeConstraints = Vec<u8>; // constraints [argnum][ftids]
+
 #[cfg(gpopt_syntactic_constraints="yes")] 
 pub type ArgNodeConsFTPair = (ArgNodeConstraints, ArgNodeConstraints);
+
+#[cfg(gpopt_syntactic_constraints="yes")] 
 pub type NodeConsFTPair = (NodeConstraints, NodeConstraints);
 
 pub struct Function {
@@ -477,18 +482,13 @@ impl FunctionNode {
         let rand_fid: u8 = rng.gen_range(0..funcs.len() as i32) as u8;
         FunctionNode::new(rand_fid, funcs)
     }
-    pub fn new_rnd_constrained(rng: &mut GpRng, funcs: &'static Vec<Function>,
-            func_constraints: &'static NodeConstraints) -> FunctionNode {
-        assert_ne!(funcs.len(), 0);
-        let cons_idx = rng.gen_range(0..func_constraints.len());
-        let rand_fid = func_constraints[cons_idx];
-        FunctionNode::new(rand_fid, funcs)
-    }
 
     /// create a new FunctionNode choosing which Function from a subset of 
     /// available Function's indicated by constraints vector.
     /// (formerly called newRndFNode() in gp.c)
-    pub fn new_rnd_with_constraints(rng: &mut GpRng,
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    pub fn new_rnd_with_constraints(
+            rng: &mut GpRng,
             funcs: &'static Vec<Function>,
             constraints: &NodeConstraints) -> FunctionNode {
         assert_ne!(funcs.len(), 0);

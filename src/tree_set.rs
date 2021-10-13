@@ -16,6 +16,8 @@ use crate::fitness::GpHits;
 use crate::fitness::GpRaw;
 
 use Node::*;
+                
+#[cfg(gpopt_syntactic_constraints="yes")] 
 use BranchType::*;
 
 pub struct TreeSet {
@@ -102,7 +104,7 @@ impl TreeSet {
                 if let Some(root_constraints) =
                         &CONTROL.opt_rpb_root_constraints {
                     let (f_set, _) = &root_constraints[0];
-                    FunctionNode::new_rnd_constrained(
+                    FunctionNode::new_rnd_with_constraints(
                         rng, &CONTROL.funcs_rpb[0], &f_set)
                 } else {
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0])
@@ -268,7 +270,7 @@ impl TreeSet {
         let mut result_branch_root = {
                 if let Some(root_constraints) = &CONTROL.opt_rpb_root_constraints {
                     let (f_set, _) = &root_constraints[0];
-                    FunctionNode::new_rnd_constrained(
+                    FunctionNode::new_rnd_with_constraints(
                         rng, &CONTROL.funcs_rpb[0], &f_set)
                 } else {
                     FunctionNode::new_rnd(rng, &CONTROL.funcs_rpb[0])
@@ -831,6 +833,8 @@ impl TreeSet {
                 println!("TP003.1:breeding crossover branch");
 
                 let (mut nt1, mut nt2);
+                    
+                #[cfg(gpopt_syntactic_constraints="no")] 
                 loop {
                     let t1 = self.select_tree(rng);
                     let t2 = self.select_tree(rng);
@@ -840,25 +844,34 @@ impl TreeSet {
 
                     // when syntactic_constraints is off
                     // we use both trees made with crossover
+                    Self::perform_crossover(rng, &mut nt1, &mut nt2);
+                    if nt1.qualifies() && nt2.qualifies() {
+                        break;
+                    }
+                }
+                #[cfg(gpopt_syntactic_constraints="yes")] 
+                loop {
+                    let t1 = self.select_tree(rng);
+
                     // when syntactic_constraints is on
                     // we toss the second, because constraints 
                     // are only enforced for the first one.
-                    #[cfg(gpopt_syntactic_constraints="no")] 
-                    {
-                        Self::perform_crossover(rng, &mut nt1, &mut nt2);
-                        if nt1.qualifies() && nt2.qualifies() {
+                    loop {
+                        let t2 = self.select_tree(rng);
+                        nt1 = t1.clone();
+                        nt2 = t2.clone();
+                        if Self::perform_crossover_with_syntatic_constraints(rng,
+                            &mut nt1, &mut nt2) {
+                            // true means a point in nt2 was found to swap with
+                            // and result is in nt1
                             break;
                         }
                     }
-                    #[cfg(gpopt_syntactic_constraints="yes")] 
-                    {
-                        Self::perform_crossover_with_syntatic_constraints(rng,
-                            &mut nt1, &mut nt2);
-                        if nt1.qualifies() {
-                            break;
-                        }
+                    if nt1.qualifies() {
+                        break;
                     }
                 }
+
                 nt1.clear_node_counts();
                 nt1.count_nodes();
 
