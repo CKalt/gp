@@ -2,7 +2,6 @@
 # gpopt_rng := thread | seedable | file_stream
 # gpopt_trace := on | off
 # gpopt_adf := yes | no
-# gpopt_num_adf := 5
 # gpopt_adf_arity := 0
 # gpopt_mult_threaded := yes | no
 # gpopt_syntactic_constraints := yes | no
@@ -13,7 +12,6 @@ rustflags = """
     --cfg gpopt_trace="off"
     --cfg gpopt_mult_threaded="yes"
     --cfg gpopt_adf="yes"
-    --cfg gpopt_num_adf="5"
     --cfg gpopt_adf_arity="0"
     --cfg gpopt_syntactic_constraints="yes"
 """
