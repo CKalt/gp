@@ -100,7 +100,7 @@ lazy_static! {
             R:                  0,
             W:                  100,
             no_fitness_cases:   0,
-            show_all_trees:     true,
+            show_all_trees:     false,
             show_all_tree_results: false,
             show_best_tree_results: true,
             show_controls: false,
