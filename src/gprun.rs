@@ -5,6 +5,8 @@ use crate::tree::FunctionNode;
 use crate::tree::Terminal;
 use crate::tree::TreeBranch;
 use crate::tree::{FSet,TSet};
+                
+#[cfg(gpopt_syntactic_constraints="yes")] 
 use crate::tree::NodeConstraints;
 
 use crate::fitness::GpFloat;
