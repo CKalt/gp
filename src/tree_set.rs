@@ -679,9 +679,9 @@ impl TreeSet {
         let node:  &mut Node;
         let btype: BranchType;
         let swap_target1 =
-            if t1.get_num_function_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
+            if t1.get_num_internal_nodes().unwrap() > 0 && Self::rnd_int_pt_decide(rng) {
                 let fnode_loc: (BranchType, (&mut Node, Option<(&Function, usize)>))
-                            = t1.get_rnd_function_node_ref_ploc(rng);
+                            = t1.get_rnd_internal_node_ref_ploc(rng);
 
                 let opt_ploc: Option<(&Function, usize)>;
                 {
@@ -719,7 +719,8 @@ impl TreeSet {
 
                 node
             } else {
-                let nref_pair = t1.get_rnd_terminal_node_ref(rng);
+                (UC)
+                let nref_pair = t1.get_rnd_external_node_ref(rng);
                 btype = nref_pair.0;
                 node = nref_pair.1;
                 node
@@ -730,7 +731,7 @@ impl TreeSet {
                 let (f_set, t_set) = constraints;
 
                 let internal_point: bool;
-                if t2.get_num_function_nodes_bt(&btype).unwrap() > 0 {
+                if t2.get_num_internal_nodes_bt(&btype).unwrap() > 0 {
                     if f_set.len() > 0 {
                         if t_set.len() > 0 {
                             internal_point = Self::rnd_int_pt_decide(rng);
@@ -744,7 +745,7 @@ impl TreeSet {
                     else {
                         return false;
                     }
-                } else if t2.get_num_terminal_nodes_bt(&btype).unwrap() > 0 {
+                } else if t2.get_num_external_nodes_bt(&btype).unwrap() > 0 {
                     internal_point = false;
                 } else {
                     panic!("swap_target2 is empty for syntactic crossover.");
@@ -758,10 +759,10 @@ impl TreeSet {
                     // both a deep and a shallow check at this point depending on 
                     // the makeup of the constraints.
                     // OR until attempts_left hits zero.
-                    let mut attempts_left = t2.get_num_function_nodes_bt(&btype)
+                    let mut attempts_left = t2.get_num_external_nodes_bt(&btype)
                             .unwrap() * 20usize;
                     loop {
-                        let node = t2.get_rnd_function_node_ref_bt(rng, &btype);
+                        let node = t2.get_rnd_external_node_ref_bt(rng, &btype);
                         if let FNode(func_node) = node {
                             if f_set.iter()
                                     .any(|&x| x == func_node.fnc.fid) {
@@ -779,10 +780,11 @@ impl TreeSet {
                 } else {
                     // loop until a random terminal node qulaifies as swap point 2
                     // OR until attempts_left hits zero.
-                    let mut attempts_left = t2.get_num_terminal_nodes_bt(&btype)
+                    let mut attempts_left = t2.get_num_external_nodes_bt(&btype)
                         .unwrap() * 20usize;
                     loop {
-                        let node = t2.get_rnd_terminal_node_ref_bt(rng, &btype);
+                        let node = t2.get_rnd_external_node_ref_bt(rng, &btype);
+
                         if let TNode(tn_ref) = node {
                             if t_set.iter()
                                     .any(|&x| x == tn_ref.tid) {
@@ -790,19 +792,29 @@ impl TreeSet {
                             }
                         }
                         else {
+                            #[cfg(gpopt_zero_arity_functions="no")]
                             panic!("not func_node");
+
+                            #[cfg(gpopt_zero_arity_functions="yes")]
+                            if let FNode(func_node) = node {
+                                if f_set.iter()
+                                        .any(|&x| x == func_node.fnc.fid) {
+                                    break node;
+                                }
+                            }
                         }
+
                         attempts_left -= 1;
                         if attempts_left == 0 {
                             return false;
                         }
                     }
                 }
-            } else if t2.get_num_function_nodes_bt(&btype).unwrap() > 0
+            } else if t2.get_num_internal_nodes_bt(&btype).unwrap() > 0
                 && Self::rnd_int_pt_decide(rng) {
-                    t2.get_rnd_function_node_ref_bt(rng, &btype)
+                    t2.get_rnd_internal_node_ref_bt(rng, &btype)
             } else {
-                t2.get_rnd_terminal_node_ref_bt(rng, &btype)
+                t2.get_rnd_external_node_ref_bt(rng, &btype)
             };
 
         mem::swap(swap_target1, swap_target2);

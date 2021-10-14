@@ -132,8 +132,17 @@ impl Node {
             TNode(_) => counts.0 += 1,
             FNode(ref fn_ref) => {
                 counts.1 += 1;
+                #[cfg(gpopt_zero_arity_functions="no")]
                 for node in fn_ref.branch.iter() {
                     node.count_nodes(counts);
+                }
+                #[cfg(gpopt_zero_arity_functions="yes")]
+                if fn_ref.branch.iter() > 0 {
+                    for node in fn_ref.branch.iter() {
+                        node.count_nodes(counts);
+                    }
+                } else {
+                    counts.2 += 1;
                 }
             }
         }
@@ -202,6 +211,28 @@ impl Node {
                 // Since root is not a parent, passing None for parent 
                 // locater (ploc) pair
                 self.find_function_node_ref_ploc_r(fi, &mut cur_fi, None)
+                    .unwrap()
+            }
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    /// always performed against a TreeBranch.root node
+    /// which is why a tree is used instead of a Node here.
+    /// It sets up the recursive call to find_function_node_ref_ploc_r.
+    /// This is an extended version of find_function_node_ref() that returns
+    /// an optional ploc (parent locater value) that defines the found node's
+    /// parent and child arg position that is required for syntactic
+    /// constraints.
+    fn find_internal_node_ref_ploc(&mut self, ii: TreeNodeIndex) -> 
+            (&mut Node, Option<(&Function, usize)>) {
+        match self {
+            TNode(_) => panic!(
+              "Invalid attempt to find a Function node with a terminal tree."),
+            FNode(_) => {
+                let mut cur_ii: TreeNodeIndex = 0;
+                // Since root is not a parent, passing None for parent 
+                // locater (ploc) pair
+                self.find_internal_node_ref_ploc_r(ii, &mut cur_ii, None)
                     .unwrap()
             }
         }
@@ -278,6 +309,68 @@ impl Node {
                                     cur_fi, Some((fn_ref.fnc, cn_i)));
                             if let Some(_) = result {
                                 return result;
+                            }
+                        }
+                    }
+                }
+                else {
+                    panic!("expected FNode.")
+                }
+            }
+            return None;
+        }
+        else {
+            panic!("expected function node");
+        }
+    }
+    #[cfg(gpopt_syntactic_constraints="yes")] 
+    /// recursively iterate Node tree using depth first search to locate function
+    /// node at index `fi`. At each entry `self` is a candidate function node.
+    /// `*cur_fi` is incremented for each candidate and when equal to `fi`
+    /// `self` is the found Some(result) returned up the recursive call stack,
+    /// recursive iteration continues for None return values.
+    /// ploc: optional tuple consisting of : (parent node, zero based child
+    /// arg position of node inside parent node branch vector)
+    /// This is an extended version of find_function_node_ref_r() that returns
+    /// an optional ploc (parent locater value) that defines the found node's
+    /// parent and child arg position that is required for syntactic
+    /// constraints.
+    fn find_internal_node_ref_ploc_r<'a>(&'a mut self, fi: TreeNodeIndex,
+            cur_ii: &mut TreeNodeIndex,
+            ploc: Option<(&'a Function, usize)>) -> 
+                  Option<(&'a mut Node, Option<(&'a Function, usize)>)> {
+        if let FNode(_) = self {
+            if fi == *cur_ii {
+                return Some((self, ploc));
+            }
+            else {
+                // not found yet, so recursively descend into each
+                // child function node of this function node (skiping
+                // terminal nodes and zero arity functions). Before each call
+                // (descent) the `self` currencly values are set according to
+                // the location in tree.
+                if let FNode(ref mut fn_ref) = self {
+                    for (cn_i, cn) in fn_ref.branch.iter_mut().enumerate() {
+                        #[cfg(gpopt_zero_arity_functions="no")]
+                        if let FNode(fnref) = cn {
+                            *cur_ii += 1;
+                            let result = 
+                                cn.find_function_node_ref_ploc_r(fi,
+                                    cur_ii, Some((fn_ref.fnc, cn_i)));
+                            if let Some(_) = result {
+                                return result;
+                            }
+                        }
+                        #[cfg(gpopt_zero_arity_functions="yes")]
+                        if let FNode(fnref) = cn {
+                            if fnref.branch.len() > 0 { // skip zero arity functions
+                                *cur_ii += 1;
+                                let result = 
+                                    cn.find_function_node_ref_ploc_r(fi,
+                                        cur_ii, Some((fn_ref.fnc, cn_i)));
+                                if let Some(_) = result {
+                                    return result;
+                                }
                             }
                         }
                     }
@@ -537,6 +630,8 @@ pub struct TreeBranch {
     pub root: Node,
     pub num_function_nodes: Option<TreeNodeIndex>,
     pub num_terminal_nodes: Option<TreeNodeIndex>,
+    #[cfg(gpopt_zero_arity_functions="yes")]
+    pub num_zero_arity_fnodes: Option<TreeNodeIndex>,
 }
 impl TreeBranch {
     pub fn new(root: Node) -> TreeBranch {
@@ -544,6 +639,8 @@ impl TreeBranch {
             root,
             num_function_nodes: None,     // None until count_nodes is called
             num_terminal_nodes: None,     // None until count_nodes is called
+            #[cfg(gpopt_zero_arity_functions="yes")]
+            num_zero_arity_fnodes: None,  // None until count_nodes is called
         }
     }
     fn clone(&self) -> TreeBranch {
@@ -551,17 +648,26 @@ impl TreeBranch {
             root: self.root.clone(),
             num_function_nodes: self.num_function_nodes,
             num_terminal_nodes: self.num_terminal_nodes,
+            #[cfg(gpopt_zero_arity_functions="yes")]
+            num_zero_arity_fnodes: None,  // None until count_nodes is called
         }
     }
     pub fn clear_node_counts(&mut self) {
         self.num_terminal_nodes = None;
         self.num_function_nodes = None;
+        #[cfg(gpopt_zero_arity_functions="yes")]
+        self.num_zero_arity_fnodes = None,
     }
     pub fn count_nodes(&mut self) {
+        #[cfg(gpopt_zero_arity_functions="no")]
         let mut counts = (0usize, 0usize);
+        #[cfg(gpopt_zero_arity_functions="yes")]
+        let mut counts = (0usize, 0usize, 0usize);
         self.root.count_nodes(&mut counts);
         self.num_terminal_nodes = Some(counts.0);
         self.num_function_nodes = Some(counts.1);
+        #[cfg(gpopt_zero_arity_functions="yes")]
+        self.num_zero_arity_fnodes = Some(counts.2);
     }
 }
 
@@ -669,6 +775,37 @@ impl Tree {
                         num_fnodes_total += func_def_branch.num_function_nodes.unwrap();
                     }
                     Some(num_fnodes_total)
+                },
+        }
+    }
+    /// Get total num internal nodes across all branches
+    pub fn get_num_internal_nodes(&self) -> Option<TreeNodeIndex> {
+        match &self.opt_func_def_branches {
+            // no adf case (just pass through result branch node count)
+            #[cfg(gpopt_zero_arity_functions="no")]
+            None => self.result_branch.num_function_nodes,
+            #[cfg(gpopt_zero_arity_functions="yes")]
+            None => self.result_branch.num_function_nodes -
+                        self.num_zero_arity_fnodes,
+            // adf case - unwrap branches and reassemble optional (some) total
+            Some(func_def_branches) =>
+                if self.result_branch.num_function_nodes == None {
+                    None // a pretty useless tree here.
+                } else {
+                    let mut num_inodes_total: TreeNodeIndex =
+                            self.result_branch.num_function_nodes.unwrap() -
+                            self.result_branch.num_zero_arity_fnodes.unwrap();
+                    for func_def_branch in func_def_branches.iter() {
+                        #[cfg(gpopt_zero_arity_functions="no")]
+                        num_inodes_total += 
+                             func_def_branch.num_function_nodes.unwrap();
+                        #[cfg(gpopt_zero_arity_functions="yes")]
+                        num_inodes_total += 
+                            (func_def_branch.num_function_nodes.unwrap() -
+                             func_def_branch.result_branch
+                                .num_zero_arity_fnodes.unwrap());
+                    }
+                    Some(num_inodes_total)
                 },
         }
     }
@@ -852,6 +989,46 @@ impl Tree {
             }
         }
     }
+    /// get a random internal node over all branches. return branch type and
+    /// mutable ref to node and optional parent ref and arg_num.
+    /// An internal node is a function node with one ore more branches.
+    pub fn get_rnd_internal_node_ref_ploc(&mut self,
+            rng: &mut GpRng) ->
+                (BranchType, (&mut Node, Option<(&Function, usize)>)) {
+        let ii = self.get_rnd_internal_index(rng);
+        match &mut self.opt_func_def_branches {
+            // no adf case
+            None =>
+                (ResultProducing,
+                    self.result_branch.root.find_internal_node_ref_ploc(ii)),
+
+            // adf case
+            Some(func_def_branches) => {
+                let mut sum_inodes: TreeNodeIndex = 0;
+                let mut ii_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter_mut().enumerate() {
+
+                    #[cfg(gpopt_zero_arity_functions="no")]
+                    sum_inodes += func_def_branch.num_function_nodes.unwrap();
+                    #[cfg(gpopt_zero_arity_functions="yes")]
+                    sum_inodes += 
+                        (func_def_branch.num_function_nodes.unwrap() -
+                            func_def_branch.num_zero_arity_fnodes.unwrap());
+
+                    if ii < sum_inodes {
+                        return (FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_internal_node_ref_ploc(ii - ii_offset))
+                    }
+                    ii_offset = sum_inodes;
+                }
+                (ResultProducing, 
+                    self.result_branch.root
+                        .find_internal_node_ref_ploc(ii - ii_offset))
+            }
+        }
+    }
     /// get a random function node by branch type (i.e. for a specific branch)
     /// return mutable ref to node.
     pub fn get_rnd_function_node_ref_bt(&mut self,
@@ -882,11 +1059,54 @@ impl Tree {
 
         rng.gen_range(0..num_fnodes)
     }
+    /// get a random internal index across all nodes
+    fn get_rnd_internal_index(&self, rng: &mut GpRng)
+            -> TreeNodeIndex {
+        let num_fnodes = self
+            .get_num_internal_nodes()
+            .expect("Tree does not have count of function nodes.");
+
+        rng.gen_range(0..num_fnodes)
+    }
     /// get a random terminal node over all branches. return node index, branch
     /// type and ref to node. Index sequence is in branch order major
     /// adf0..adf1, rb0, rb0..rbN and and minor within each branch tree, depth
     /// first.
     pub fn get_rnd_terminal_node_ref(&mut self,
+            rng: &mut GpRng) -> (BranchType, &mut Node) {
+        let ti = self.get_rnd_terminal_index(rng);
+        match &mut self.opt_func_def_branches {
+            // no adf case
+            None => (ResultProducing,
+                self.result_branch.root.find_terminal_node_ref(ti)),
+            // adf case
+            Some(func_def_branches) => {
+                let mut sum_tnodes: TreeNodeIndex = 0;
+                let mut ti_offset: TreeNodeIndex = 0;
+                for (adf_num, func_def_branch) in
+                    func_def_branches.iter_mut().enumerate() {
+                    sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
+
+                    if ti < sum_tnodes {
+                        return (FunctionDefining(adf_num), 
+                            func_def_branch.root
+                                .find_terminal_node_ref(ti - ti_offset))
+                    }
+                    ti_offset = sum_tnodes;
+                }
+                (ResultProducing, 
+                    self.result_branch.root
+                        .find_terminal_node_ref(ti - ti_offset))
+            }
+        }
+    }
+    /// get a random external node over all branches. return node index, branch
+    /// type and ref to node. Index sequence is in branch order major
+    /// adf0..adf1, rb0, rb0..rbN and and minor within each branch tree, depth
+    /// first.
+    /// An external node is a terminal or a function node with zero arity.
+    (UC)
+    pub fn get_rnd_external_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
         let ti = self.get_rnd_terminal_index(rng);
         match &mut self.opt_func_def_branches {
