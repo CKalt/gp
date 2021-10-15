@@ -719,13 +719,13 @@ impl TreeSet {
 
                 node
             } else {
-                (UC)
                 let nref_pair = t1.get_rnd_external_node_ref(rng);
                 btype = nref_pair.0;
                 node = nref_pair.1;
                 node
             };
 
+                (UC)
         let swap_target2 =
             if let Some(constraints) = opt_constraints {
                 let (f_set, t_set) = constraints;

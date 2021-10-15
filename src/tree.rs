@@ -397,12 +397,52 @@ impl Node {
             }
         }
     }
+    /// always performed against a TreeBranch::root node
+    /// which is why a tree is used instead of a Node here.
+    /// It sets up the recursive call to find_external_node_ref_r.
+    fn find_external_node_ref(&mut self, ei: TreeNodeIndex) -> &mut Node {
+        match self {
+            TNode(_) => self,  // tree is just a node
+            FNode(_) => {
+                let mut cur_ei: TreeNodeIndex = 0;
+                self.find_external_node_ref_r(ei, &mut cur_ei).unwrap()
+            }
+        }
+    }
     /// recursively iterate tree using depth first search to locate terminal
     /// node at index `ti`. Function children are recursiviely called, and 
     /// Terminal Nodes either return Some(self) if `ti` == `*cur_ti` or None
     /// causing iteration to continue.
     fn find_terminal_node_ref_r(&mut self, ti: TreeNodeIndex,
             cur_ti: &mut TreeNodeIndex) -> Option<&mut Node> {
+        match self {
+            TNode(_) => 
+                if ti == *cur_ti {
+                    Some(self) // found terminal we're looking for.
+                } else {
+                    *cur_ti += 1;
+                    None // not found yet
+                },
+            FNode(fn_ref) => {
+                    // not found yet, so recursively descend into each
+                    // child function node 
+                    for cn in fn_ref.branch.iter_mut() {
+                        let result = cn.find_terminal_node_ref_r(ti, cur_ti);
+                        if let Some(_) = result {
+                            return result;
+                        }
+                    }
+                    None
+                }
+        }
+    }
+    /// recursively iterate tree using depth first search to locate external
+    /// node at index `ti`. Function children are recursiviely called, and 
+    /// Terminal Nodes either return Some(self) if `ei` == `*cur_ei` or None
+    /// causing iteration to continue.
+    fn find_external_node_ref_r(&mut self, ei: TreeNodeIndex,
+            cur_ei: &mut TreeNodeIndex) -> Option<&mut Node> {
+    (UC)
         match self {
             TNode(_) => 
                 if ti == *cur_ti {
@@ -833,6 +873,33 @@ impl Tree {
             },
         }
     }
+    /// Get total num external nodes across all branches
+    /// (external nodes are terminal nodes and zero arity function nodes.)
+    pub fn get_num_external_nodes(&self) -> Option<TreeNodeIndex> {
+        #[cfg(gpopt_zero_arity_functions="no")]
+        let num_rb_external_nodes = self.result_branch.num_terminal_nodes.unwrap();
+        #[cfg(gpopt_zero_arity_functions="yes")]
+        let num_rb_external_nodes =
+            (self.result_branch.num_terminal_nodes.unwrap() +
+                self.result_branch.num_zero_arity_fnodes.unwrap());
+        match &self.opt_func_def_branches {
+            // no adf case - only need count of external nodes in result branch
+            None => Some(num_rb_external_nodes),
+            // adf case - need to add up result branch and func def branches
+            Some(func_def_branches) => {
+                let mut sum_tnodes = num_rb_external_nodes;
+                for func_def_branch in func_def_branches.iter() {
+                    #[cfg(gpopt_zero_arity_functions="no")]
+                    sum_tnodes += func_def_branch.num_terminal_nodes.unwrap();
+                    #[cfg(gpopt_zero_arity_functions="yes")]
+                    sum_tnodes +=
+                        (func_def_branch.num_terminal_nodes.unwrap() +
+                            func_def_branch.num_external_nodes.unwrap());
+                }
+                Some(sum_tnodes)
+            },
+        }
+    }
     /// clear node counts across all branches
     pub fn clear_node_counts(&mut self) {
         self.result_branch.clear_node_counts(); // for adf and no-adf cases
@@ -1105,14 +1172,14 @@ impl Tree {
     /// adf0..adf1, rb0, rb0..rbN and and minor within each branch tree, depth
     /// first.
     /// An external node is a terminal or a function node with zero arity.
-    (UC)
     pub fn get_rnd_external_node_ref(&mut self,
             rng: &mut GpRng) -> (BranchType, &mut Node) {
-        let ti = self.get_rnd_terminal_index(rng);
+        let ei = self.get_rnd_external_index(rng);
         match &mut self.opt_func_def_branches {
             // no adf case
             None => (ResultProducing,
-                self.result_branch.root.find_terminal_node_ref(ti)),
+                self.result_branch.root.find_external_node_ref(ei)),
+    (UC)
             // adf case
             Some(func_def_branches) => {
                 let mut sum_tnodes: TreeNodeIndex = 0;
@@ -1189,12 +1256,21 @@ impl Tree {
 
         rng.gen_range(0..num_tnodes)
     }
-    /// get a random function index across all nodes
+    /// get a random termainl index across all nodes
     fn get_rnd_terminal_index(&self, rng: &mut GpRng)
             -> TreeNodeIndex {
         let num_tnodes = self
             .get_num_terminal_nodes()
             .expect("Tree does not have count of terminal nodes. ");
+
+        rng.gen_range(0..num_tnodes)
+    }
+    /// get a random external index across all nodes
+    fn get_rnd_external_index(&self, rng: &mut GpRng)
+            -> TreeNodeIndex {
+        let num_tnodes = self
+            .get_num_external_nodes()
+            .expect("Tree does not have count of external nodes. ");
 
         rng.gen_range(0..num_tnodes)
     }
