@@ -725,44 +725,44 @@ impl TreeSet {
                 node
             };
 
-                (UC)
         let swap_target2 =
             if let Some(constraints) = opt_constraints {
                 let (f_set, t_set) = constraints;
 
-                let internal_point: bool;
+                let swap_internal_point: bool;
                 if t2.get_num_internal_nodes_bt(&btype).unwrap() > 0 {
                     if f_set.len() > 0 {
                         if t_set.len() > 0 {
-                            internal_point = Self::rnd_int_pt_decide(rng);
+                            swap_internal_point = Self::rnd_int_pt_decide(rng);
                         }
                         else {
-                            internal_point = true;
+                            swap_internal_point = true;
                         }
                     } else if t_set.len() > 0 {
-                        internal_point = false;
+                        swap_internal_point = false;
                     }
                     else {
                         return false;
                     }
                 } else if t2.get_num_external_nodes_bt(&btype).unwrap() > 0 {
-                    internal_point = false;
+                    swap_internal_point = false;
                 } else {
                     panic!("swap_target2 is empty for syntactic crossover.");
                 }
 
                 // apply syntactic constraint
-                if internal_point {
+                if swap_internal_point {
                     // loop until a random function node qulaifies as swap point 2
                     // note that we currently do a shallow (avoid deep) check as it's not
                     // required for this program. Future versions may require
                     // both a deep and a shallow check at this point depending on 
                     // the makeup of the constraints.
                     // OR until attempts_left hits zero.
-                    let mut attempts_left = t2.get_num_external_nodes_bt(&btype)
+                    let mut attempts_left = t2.get_num_internal_nodes_bt(&btype)
                             .unwrap() * 20usize;
+                    (UC)
                     loop {
-                        let node = t2.get_rnd_external_node_ref_bt(rng, &btype);
+                        let node = t2.get_rnd_internal_node_ref_bt(rng, &btype);
                         if let FNode(func_node) = node {
                             if f_set.iter()
                                     .any(|&x| x == func_node.fnc.fid) {
